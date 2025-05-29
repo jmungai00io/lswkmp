@@ -12,8 +12,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // Remove Koin initialization - it's already done in the Application class
+        
         setContent {
-            App()
+            AppWithKoin() // Using Koin for dependency injection
         }
     }
 }

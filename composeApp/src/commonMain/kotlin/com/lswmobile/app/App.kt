@@ -1,44 +1,76 @@
 package com.lswmobile.app
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
+import com.lswmobile.app.network.KtorClient
+import com.lswmobile.app.network.LivestockWealthApi
+import com.lswmobile.app.network.SimpleTokenProvider
+import com.lswmobile.app.network.repository.AuthRepository
+import com.lswmobile.app.ui.navigation.AppNavigation
+import com.lswmobile.app.ui.theme.LivestockWealthTheme
+import com.lswmobile.app.viewmodel.AuthViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 
-import livestockwealth.composeapp.generated.resources.Res
-import livestockwealth.composeapp.generated.resources.compose_multiplatform
+/**
+ * Main app entry point
+ */
+@Composable
+fun App() {
+    // Initialize app dependencies if needed
+    // This would be better in a platform-specific initialization point
+    // LivestockWealthApp.initialize()
+    
+    LivestockWealthTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            // Manual dependency injection (for now)
+            val tokenProvider = remember { SimpleTokenProvider() }
+            val ktorClient = remember { 
+                KtorClient(
+                    tokenProvider = tokenProvider,
+                    baseUrl = "https://api.livestockwealth.com/api/v1",
+                    enableLogging = true
+                ) 
+            }
+            val api = remember { LivestockWealthApi(ktorClient) }
+            val authRepository = remember { AuthRepository(api, tokenProvider) }
+            val authViewModel = remember { AuthViewModel(authRepository) }
+            
+            // Use our navigation component
+            AppNavigation(authViewModel = authViewModel)
+        }
+    }
+}
+
+/**
+ * Alternative version using Koin for dependency injection
+ * To use this, you need to initialize Koin first with LivestockWealthApp.initialize()
+ */
+@Composable
+fun AppWithKoin() {
+    LivestockWealthTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            // Use Koin for dependency injection
+            val authViewModel: AuthViewModel = koinInject()
+            
+            // Use our navigation component
+            AppNavigation(authViewModel = authViewModel)
+        }
+    }
+}
 
 @Composable
 @Preview
-fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
-            }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
-            }
-        }
-    }
+fun AppPreview() {
+    App()
 }
