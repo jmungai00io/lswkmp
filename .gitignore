@@ -16,3 +16,44 @@ captures
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# iOS specific
+iosApp/Pods/
+iosApp/Podfile.lock
+iosApp/iosApp.xcworkspace/xcuserdata/
+iosApp/iosApp.xcodeproj/xcuserdata/
+*.xcconfig
+*.modulemap
+*-resources.sh
+*-dummy.m
+*-umbrella.h
+*-Info.plist
+*.acknowledgements.*
+Manifest.lock
+*.pbxproj
+!project.pbxproj
+
+# CocoaPods generated
+**/Pods-*
+
+# Xcode
+*.xcworkspace
+!*.xcworkspace/
+contents.xcworkspacedata
+**/DerivedData/
+
+# Kotlin Multiplatform specific
+.konan/
+*.framework/
+**/xcuserdata/**
+*.dSYM.zip
+*.dSYM
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+
+# Old scripts that have been replaced
+setup_ios_resources.sh
+fix_ios_build*.sh

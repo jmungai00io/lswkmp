@@ -21,6 +21,7 @@ class KtorClient(
     private val baseUrl: String,
     private val enableLogging: Boolean = true
 ) {
+
     val client = HttpClient {
         install(ContentNegotiation) {
             json(Json { 

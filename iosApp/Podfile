@@ -1,0 +1,9 @@
+platform :ios, '14.1'
+
+target 'iosApp' do
+  use_frameworks!
+  platform :ios, '14.1'
+  
+  # This is the line that will include the Kotlin framework
+  pod 'ComposeApp', :path => '../composeApp'
+end

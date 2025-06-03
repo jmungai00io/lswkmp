@@ -12,10 +12,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Remove Koin initialization - it's already done in the Application class
+        // Initialize app dependencies
+        AppInitializer.initialize()
         
         setContent {
-            AppWithKoin() // Using Koin for dependency injection
+            App() // Use the standard App composable that's shared with iOS
         }
     }
 }
