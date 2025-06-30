@@ -49,6 +49,10 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
+            
+            // Material Icons - Android only
+            implementation("androidx.compose.material:material-icons-core:1.5.4")
+            implementation("androidx.compose.material:material-icons-extended:1.5.4")
         }
         
         iosMain.dependencies {
@@ -64,10 +68,6 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            
-            // Material Icons
-//            implementation("androidx.compose.material:material-icons-core:1.5.4")
-//            implementation("androidx.compose.material:material-icons-extended:1.5.4")
             
             // Ktor
             implementation(libs.ktor.core)

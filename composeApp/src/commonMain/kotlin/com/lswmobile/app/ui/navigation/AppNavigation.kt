@@ -18,6 +18,7 @@ import com.lswmobile.app.ui.screens.ForgotPasswordScreen
 import com.lswmobile.app.ui.screens.LoginScreen
 import com.lswmobile.app.ui.screens.OtpVerificationScreen
 import com.lswmobile.app.ui.screens.RegisterScreen
+import com.lswmobile.app.viewmodel.AuthUiState
 import com.lswmobile.app.viewmodel.AuthViewModel
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
@@ -50,6 +51,17 @@ fun AppNavigation(
 
     // Check authentication state
     val uiState by authViewModel.uiState.collectAsState(initial = null)
+    
+    // Handle global authentication state changes
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is AuthUiState.Success.OtpVerification -> {
+                println("Navigation: OTP verification successful, changing to MAIN")
+                currentRoute = AppRoute.MAIN
+            }
+            else -> { /* No action for other states */ }
+        }
+    }
     
     when (currentRoute) {
         AppRoute.LOGIN -> {
@@ -113,11 +125,11 @@ fun AppNavigation(
 }
 
 /**
- * Main container for the app after authentication
+ * Simple container displayed after successful authentication
  */
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun MainAppContainer() {
+fun AuthSuccessContainer() {
     // A simple dashboard to show successful authentication
     Box(
         modifier = Modifier
