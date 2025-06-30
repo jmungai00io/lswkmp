@@ -44,6 +44,7 @@ class KtorClient(
                 loadTokens {
                     val accessToken = tokenProvider.getAccessToken()
                     val refreshToken = tokenProvider.getRefreshToken()
+                    println("KtorClient: Loading tokens - Access token available: ${accessToken != null}, length: ${accessToken?.length ?: 0}")
                     if (accessToken != null) {
                         BearerTokens(accessToken, refreshToken ?: "")
                     } else {
@@ -53,20 +54,31 @@ class KtorClient(
                 
                 refreshTokens {
                     val refreshToken = tokenProvider.getRefreshToken() ?: return@refreshTokens null
+                    println("KtorClient: Attempting to refresh tokens")
                     
                     try {
                         val tokenResponse = tokenProvider.refreshTokens(refreshToken)
                         if (tokenResponse != null) {
                             val (newAccessToken, newRefreshToken) = tokenResponse
+                            println("KtorClient: Tokens refreshed successfully")
                             tokenProvider.saveTokens(newAccessToken, newRefreshToken)
                             BearerTokens(newAccessToken, newRefreshToken)
                         } else {
+                            println("KtorClient: Token refresh failed, no new tokens returned")
                             null
                         }
                     } catch (e: Exception) {
+                        println("KtorClient: Token refresh failed with exception: ${e.message}")
                         tokenProvider.clearTokens()
                         null
                     }
+                }
+                
+                sendWithoutRequest { request ->
+                    // Always check for auth header to help troubleshoot auth issues
+                    val authHeader = request.headers["Authorization"]
+                    println("KtorClient: Request to ${request.url.encodedPath} - Auth header present: ${authHeader != null}")
+                    !request.url.encodedPath.contains("/auth/")
                 }
             }
         }

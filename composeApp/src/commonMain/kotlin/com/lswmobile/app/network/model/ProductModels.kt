@@ -18,28 +18,54 @@ data class ProductsResponse(
  */
 @Serializable
 data class ProductFarmland(
-    @SerialName("_id") 
+    @SerialName("_id")
     val _id: String,
-    val name: String,
-    val description: String,
     val price: Double,
-    val imageUrl: String,
-    val status: String,
-    val createdAt: String,
-    val updatedAt: String
+    val name: String?,
+    val productName: String?,
+    val location: String?,
+    val images: MutableList<String>?,
+    val profitRate: String?,
+    val profitCycle: String?,
+    val isArchived: Boolean?,
+    val infoUrl: String?,
+    val __v: String?,
+    val unitCount: String?,
+    val productType: String?,
+    val investmentTerm: String?,
+    val dividendCycle: String?,
+    val profitInformation: String?,
+    val count: String?,
+    val inStock: Boolean?
 )
 
 /**
  * Farmland model
  */
 @Serializable
-data class Farmaland(
-    @SerialName("_id") 
+data class Farmland(
+    @SerialName("_id")
     val _id: String,
     val name: String,
-    val description: String,
     val price: Double,
-    val imageUrl: String
+    val location: String?,
+    val images: MutableList<String>?,
+    val profitRate: String?,
+    val profitCycle: String?,
+    val isArchived: Boolean?,
+    val infoUrl: String?,
+    val __v: String?,
+    val unitCount: String?,
+    val productType: String?,
+)
+
+/**
+ * Response for farmlands
+ */
+@Serializable
+data class FarmlandsResponse(
+    val success: Boolean,
+    val data: List<Farmland>
 )
 
 /**

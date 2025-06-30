@@ -37,6 +37,8 @@ object AppIcons {
         val FilterList: ImageVector
         val Search: ImageVector
         val Schedule: ImageVector
+
+        val LocationOn: ImageVector
     }
     
     interface OutlinedIcons {

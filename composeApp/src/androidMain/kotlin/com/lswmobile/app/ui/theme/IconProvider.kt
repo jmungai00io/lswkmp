@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Schedule
@@ -61,6 +62,7 @@ internal actual object IconProvider {
         override val FilterList: ImageVector = Icons.Filled.FilterList
         override val Search: ImageVector = Icons.Filled.Search
         override val Schedule: ImageVector = Icons.Filled.Schedule
+        override val LocationOn: ImageVector = Icons.Filled.LocationOn
     }
     
     /**

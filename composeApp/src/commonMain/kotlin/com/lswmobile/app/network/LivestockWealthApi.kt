@@ -226,6 +226,17 @@ class LivestockWealthApi(private val client: KtorClient) {
         }.body()
     }
     
+    /**
+     * Get farmlands
+     */
+    suspend fun getFarmlands(limit: Int = 20, offset: Int = 0): FarmlandsResponse {
+        return client.client.get {
+            url("/farmland")
+            parameter("limit", limit)
+            parameter("offset", offset)
+        }.body()
+    }
+    
     // =============== CART ENDPOINTS ===============
     
     /**

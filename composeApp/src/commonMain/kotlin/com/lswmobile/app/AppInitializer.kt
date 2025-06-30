@@ -59,6 +59,40 @@ object AppInitializer {
         }
     }
     
+    /**
+     * Recreates the KtorClient and API instances to pick up token changes
+     * Call this after authentication completes to ensure tokens are used in requests
+     */
+    fun reinitializeNetworkClients() {
+        ensureInitialized()
+        
+        try {
+            println("Reinitializing network clients to pick up authentication changes")
+            
+            // Get platform-specific configuration
+            val appConfig = AppConfigFactory.get()
+            
+            // Recreate the KtorClient with the current tokenProvider
+            ktorClient = KtorClient(
+                tokenProvider = tokenProvider!!,
+                baseUrl = appConfig.baseUrl,
+                enableLogging = appConfig.isDevelopment
+            )
+            
+            // Recreate API with new client
+            api = LivestockWealthApi(ktorClient!!)
+            
+            // Update auth repository with new API
+            authRepository = AuthRepository(api!!, tokenProvider!!)
+            authViewModel = AuthViewModel(authRepository!!)
+            
+            println("Network clients reinitialized successfully")
+        } catch (e: Exception) {
+            println("Error during network client reinitialization: ${e.message}")
+            throw e
+        }
+    }
+    
     // Accessor methods
     fun getTokenProvider(): SimpleTokenProvider {
         ensureInitialized()

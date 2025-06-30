@@ -11,17 +11,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.data.sample.SampleFinanceRepository
-import com.lswmobile.app.data.sample.SampleMarketplaceRepository
 import com.lswmobile.app.data.sample.SampleOrdersRepository
 import com.lswmobile.app.data.sample.SampleProfileRepository
+import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
+import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Main container for the app after authentication
@@ -30,8 +35,18 @@ import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
  */
 @Composable
 fun MainAppContainer() {
-    // Initialize sample repositories for our hardcoded data
-    val marketplaceRepo = remember { SampleMarketplaceRepository.getInstance() }
+    // Initialize repositories
+    // Get the API instance from the AppInitializer
+    val api = remember { AppInitializer.getApi() }
+    val marketplaceRepo = remember { MarketplaceRepository(api) }
+    // Create the ViewModel with the repository
+    val marketplaceViewModel = remember { 
+        MarketplaceViewModel(
+            marketplaceRepo, 
+            CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        )
+    }
+    
     val ordersRepo = remember { SampleOrdersRepository.getInstance() }
     val financeRepo = remember { SampleFinanceRepository.getInstance() }
     val profileRepo = remember { SampleProfileRepository.getInstance() }
@@ -90,7 +105,7 @@ fun MainAppContainer() {
                     // Main bottom nav screens
                     Screen.MarketPlace -> {
                         MarketplaceScreen(
-                            repository = marketplaceRepo,
+                            viewModel = marketplaceViewModel,
                             onNavigateToNewsScreen = { onScreenSelected(Screen.NewsFeed) },
                             onNavigateToCheckout = { onScreenSelected(Screen.Checkout) }
                         )

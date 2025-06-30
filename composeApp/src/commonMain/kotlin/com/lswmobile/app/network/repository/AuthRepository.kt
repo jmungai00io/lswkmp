@@ -1,5 +1,6 @@
 package com.lswmobile.app.network.repository
 
+import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.model.*
@@ -120,7 +121,11 @@ class AuthRepository(
             // Clear temporary credentials after successful verification
             if (response.containsKey("token") && response["token"] != null) {
                 val finalToken = response["token"]?.jsonPrimitive?.content
+                println("AuthRepository.verifyOtp: Final token: $finalToken")
                 tokenProvider.saveTokens(finalToken ?: "", "")
+                
+                // Reinitialize network clients to pick up the new token
+                AppInitializer.reinitializeNetworkClients()
                 
                 // Clear temp storage
                 tempEmail = null
