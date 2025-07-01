@@ -1,8 +1,5 @@
 package com.lswmobile.app.ui.screens.marketplace
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.network.model.Farmland
-import com.lswmobile.app.network.model.ProductFarmland
+import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.ui.components.PullToRefreshContainer
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
@@ -286,7 +282,7 @@ private fun MarketplaceTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductFarmlandCard(
-    product: ProductFarmland,
+    product: ProductClassic,
     onClick: () -> Unit,
     onAddToCart: () -> Unit
 ) {
@@ -521,7 +517,7 @@ private fun FarmlandProductsGrid(
  */
 @Composable
 private fun RegularProductsGrid(
-    products: List<ProductFarmland>,
+    products: List<ProductClassic>,
     isLoading: Boolean,
     onProductClick: (String) -> Unit,
     onAddToCart: (String) -> Unit

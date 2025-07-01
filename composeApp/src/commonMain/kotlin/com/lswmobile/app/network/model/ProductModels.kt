@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProductsResponse(
     val success: Boolean,
-    val products: List<ProductFarmland>,
+    val products: List<ProductClassic>,
     val count: Int
 )
 
@@ -17,7 +17,7 @@ data class ProductsResponse(
  * Product model
  */
 @Serializable
-data class ProductFarmland(
+data class ProductClassic(
     @SerialName("_id")
     val _id: String,
     val price: Double,
@@ -87,7 +87,7 @@ data class CartItem(
     val productId: String,
     val quantity: Int,
     val price: Double,
-    val product: ProductFarmland
+    val product: ProductClassic
 )
 
 /**

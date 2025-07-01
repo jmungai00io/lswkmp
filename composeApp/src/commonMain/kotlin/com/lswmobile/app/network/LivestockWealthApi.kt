@@ -6,8 +6,6 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.http.content.*
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -220,7 +218,7 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Get product
      */
-    suspend fun getProduct(productId: String): ProductFarmland {
+    suspend fun getProduct(productId: String): ProductClassic {
         return client.client.get {
             url("/products/$productId")
         }.body()

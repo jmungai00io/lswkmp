@@ -2,18 +2,16 @@ package com.lswmobile.app.ui.screens.marketplace
 
 import com.lswmobile.app.network.model.CartItem
 import com.lswmobile.app.network.model.Farmland
-import com.lswmobile.app.network.model.ProductFarmland
+import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.network.repository.FarmlandsState
 import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.network.repository.ProductsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -54,8 +52,8 @@ class MarketplaceViewModel(
     val farmlandCartItems: StateFlow<List<CartItem>> = _farmlandCartItems.asStateFlow()
     
     // Cached data
-    private val _products = MutableStateFlow<List<ProductFarmland>>(emptyList())
-    val products: StateFlow<List<ProductFarmland>> = _products.asStateFlow()
+    private val _products = MutableStateFlow<List<ProductClassic>>(emptyList())
+    val products: StateFlow<List<ProductClassic>> = _products.asStateFlow()
     
     private val _farmlands = MutableStateFlow<List<Farmland>>(emptyList())
     val farmlands: StateFlow<List<Farmland>> = _farmlands.asStateFlow()
