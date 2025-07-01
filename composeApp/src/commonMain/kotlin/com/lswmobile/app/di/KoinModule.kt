@@ -1,12 +1,17 @@
 package com.lswmobile.app.di
 
+import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.config.AppConfig
 import com.lswmobile.app.config.AppConfigFactory
+import com.lswmobile.app.data.repository.CartRepository
+import com.lswmobile.app.data.repository.InMemoryCartRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.SimpleTokenProvider
 import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
+import com.lswmobile.app.network.repository.MarketplaceRepository
+import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -21,14 +26,14 @@ object KoinModule {
      * Network module providing API and HTTP client dependencies
      */
     val networkModule = module {
-        // TokenProvider
-        single<TokenProvider> { SimpleTokenProvider() }
+        // TokenProvider - Use the same instance from AppInitializer
+        single<TokenProvider> { AppInitializer.getTokenProvider() }
         
         // AppConfig
         single<AppConfig> { AppConfigFactory.get() }
         
-        // KtorClient
-        single { 
+        // KtorClient - Use factory to always get current instance
+        factory { 
             KtorClient(
                 tokenProvider = get(),
                 baseUrl = get<AppConfig>().baseUrl + "/api/v1", // Add the API path to the base URL
@@ -36,8 +41,17 @@ object KoinModule {
             ) 
         }
         
-        // API Service
-        single { LivestockWealthApi(get()) }
+        // API Service - Use factory to always get current instance
+        factory { LivestockWealthApi(get()) }
+    }
+    
+    /**
+     * Database module providing local storage dependencies
+     */
+    val databaseModule = module {
+        // Use in-memory cart repository for now (easier to test)
+        // TODO: Replace with LocalCartRepository when database is properly set up
+        single<CartRepository> { InMemoryCartRepository() }
     }
     
     /**
@@ -45,6 +59,7 @@ object KoinModule {
      */
     val repositoryModule = module {
         single { AuthRepository(get(), get()) }
+        single { MarketplaceRepository(get()) }
     }
     
     /**
@@ -52,10 +67,11 @@ object KoinModule {
      */
     val viewModelModule = module {
         factory { AuthViewModel(get()) }
+        factory { MarketplaceViewModel(get(), get()) }
     }
     
     /**
      * All application modules combined
      */
-    val allModules = listOf(networkModule, repositoryModule, viewModelModule)
+    val allModules = listOf(networkModule, databaseModule, repositoryModule, viewModelModule)
 }

@@ -1,6 +1,9 @@
 package com.lswmobile.app.ui.screens.marketplace
 
-import com.lswmobile.app.network.model.CartItem
+import com.lswmobile.app.data.model.CartItem
+import com.lswmobile.app.data.model.CartItemType
+import com.lswmobile.app.data.model.CartSummary
+import com.lswmobile.app.data.repository.CartRepository
 import com.lswmobile.app.network.model.Farmland
 import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.network.repository.FarmlandsState
@@ -12,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -19,6 +23,7 @@ import kotlinx.coroutines.launch
  */
 class MarketplaceViewModel(
     private val repository: MarketplaceRepository,
+    private val cartRepository: CartRepository? = null,
     private val viewModelScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 ) {
     
@@ -44,12 +49,16 @@ class MarketplaceViewModel(
     private val _farmlandError = MutableStateFlow<String?>(null)
     val farmlandError: StateFlow<String?> = _farmlandError.asStateFlow()
     
-    // Cart items
+    // Cart items from local repository
     private val _productCartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val productCartItems: StateFlow<List<CartItem>> = _productCartItems.asStateFlow()
     
     private val _farmlandCartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val farmlandCartItems: StateFlow<List<CartItem>> = _farmlandCartItems.asStateFlow()
+    
+    // Cart summary
+    private val _cartSummary = MutableStateFlow(CartSummary(0, 0, 0.0))
+    val cartSummary: StateFlow<CartSummary> = _cartSummary.asStateFlow()
     
     // Cached data
     private val _products = MutableStateFlow<List<ProductClassic>>(emptyList())
@@ -57,6 +66,10 @@ class MarketplaceViewModel(
     
     private val _farmlands = MutableStateFlow<List<Farmland>>(emptyList())
     val farmlands: StateFlow<List<Farmland>> = _farmlands.asStateFlow()
+    
+    // Total cart items
+    private val _totalCartItems = MutableStateFlow(0)
+    val totalCartItems: StateFlow<Int> = _totalCartItems.asStateFlow()
     
     init {
         // Observe repository states
@@ -106,15 +119,23 @@ class MarketplaceViewModel(
             }
         }
         
+        // Observe local cart repository
         viewModelScope.launch {
-            repository.productCartItems.collect { items ->
+            cartRepository?.getCartItemsByType(CartItemType.PRODUCT)?.collect { items ->
                 _productCartItems.value = items
             }
         }
         
         viewModelScope.launch {
-            repository.farmlandCartItems.collect { items ->
+            cartRepository?.getCartItemsByType(CartItemType.FARMLAND)?.collect { items ->
                 _farmlandCartItems.value = items
+            }
+        }
+        
+        viewModelScope.launch {
+            cartRepository?.cartSummary?.collect { summary ->
+                _cartSummary.value = summary
+                _totalCartItems.value = summary.itemCount
             }
         }
     }
@@ -150,7 +171,10 @@ class MarketplaceViewModel(
      */
     fun addProductToCart(productId: String, quantity: Int) {
         viewModelScope.launch {
-            repository.addProductToCart(productId, quantity)
+            val product = _products.value.find { it._id == productId }
+            product?.let {
+                cartRepository?.addProductToCart(it, quantity)
+            }
         }
     }
     
@@ -160,25 +184,37 @@ class MarketplaceViewModel(
     fun addFarmlandToCart(farmlandId: String, quantity: Int) {
         println("Adding farmland to cart: $farmlandId")
         viewModelScope.launch {
-            repository.addFarmlandToCart(farmlandId, quantity)
+            val farmland = _farmlands.value.find { it._id == farmlandId }
+            farmland?.let {
+                cartRepository?.addFarmlandToCart(it, quantity)
+            }
         }
     }
     
     /**
-     * Get total number of items in both carts
+     * Update cart item quantity
      */
-    val totalCartItems: StateFlow<Int> = MutableStateFlow(0).also { result ->
+    fun updateCartItemQuantity(itemId: String, quantity: Int) {
         viewModelScope.launch {
-            launch {
-                productCartItems.collect { items ->
-                    result.value = items.size + (farmlandCartItems.value.size)
-                }
-            }
-            launch {
-                farmlandCartItems.collect { items ->
-                    result.value = items.size + (productCartItems.value.size)
-                }
-            }
+            cartRepository?.updateCartItemQuantity(itemId, quantity)
         }
-    }.asStateFlow()
+    }
+    
+    /**
+     * Remove item from cart
+     */
+    fun removeFromCart(itemId: String) {
+        viewModelScope.launch {
+            cartRepository?.removeFromCart(itemId)
+        }
+    }
+    
+    /**
+     * Clear cart
+     */
+    fun clearCart() {
+        viewModelScope.launch {
+            cartRepository?.clearCart()
+        }
+    }
 }

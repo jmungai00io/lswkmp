@@ -15,18 +15,15 @@ import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.data.sample.SampleFinanceRepository
 import com.lswmobile.app.data.sample.SampleOrdersRepository
 import com.lswmobile.app.data.sample.SampleProfileRepository
-import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
-import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import com.lswmobile.app.ui.screens.cart.CartScreen
+import org.koin.compose.koinInject
 
 /**
  * Main container for the app after authentication
@@ -35,17 +32,8 @@ import kotlinx.coroutines.SupervisorJob
  */
 @Composable
 fun MainAppContainer() {
-    // Initialize repositories
-    // Get the API instance from the AppInitializer
-    val api = remember { AppInitializer.getApi() }
-    val marketplaceRepo = remember { MarketplaceRepository(api) }
-    // Create the ViewModel with the repository
-    val marketplaceViewModel = remember { 
-        MarketplaceViewModel(
-            marketplaceRepo, 
-            CoroutineScope(SupervisorJob() + Dispatchers.Main)
-        )
-    }
+    // Get the ViewModel from Koin DI
+    val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     
     val ordersRepo = remember { SampleOrdersRepository.getInstance() }
     val financeRepo = remember { SampleFinanceRepository.getInstance() }
@@ -142,6 +130,28 @@ fun MainAppContainer() {
                         )
                     }
                     
+                    Screen.Checkout -> {
+                        com.lswmobile.app.ui.screens.cart.CartScreen(
+                            productCartItems = marketplaceViewModel.productCartItems.collectAsState().value,
+                            farmlandCartItems = marketplaceViewModel.farmlandCartItems.collectAsState().value,
+                            cartSummary = marketplaceViewModel.cartSummary.collectAsState().value,
+                            onUpdateQuantity = { itemId, quantity ->
+                                marketplaceViewModel.updateCartItemQuantity(itemId, quantity)
+                            },
+                            onRemoveItem = { itemId ->
+                                marketplaceViewModel.removeFromCart(itemId)
+                            },
+                            onClearCart = {
+                                marketplaceViewModel.clearCart()
+                            },
+                            onCheckout = {
+                                // TODO: Implement actual checkout logic
+                                println("Checkout pressed - implement checkout flow")
+                            }
+                        )
+                    }
+                   
+
                     // Other screens would be implemented in a real app
                     // For now, just show a placeholder
                     else -> {

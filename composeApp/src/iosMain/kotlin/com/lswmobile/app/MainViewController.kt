@@ -14,6 +14,9 @@ fun MainViewController(): UIViewController {
     // Initialize the AppInitializer - this is critical!
     AppInitializer.initialize(isIOS = true)
     
+    // Initialize Koin for dependency injection
+    LivestockWealthApp.initialize()
+    
     // Initialize any additional resources needed
     initializeResources()
     

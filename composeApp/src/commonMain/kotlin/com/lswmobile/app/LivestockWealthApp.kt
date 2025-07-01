@@ -12,6 +12,10 @@ object LivestockWealthApp {
      * Initialize the application
      */
     fun initialize() {
+        // Initialize AppInitializer first to ensure token provider is available
+        AppInitializer.initialize()
+        
+        // Then initialize Koin
         initializeKoin()
     }
     
