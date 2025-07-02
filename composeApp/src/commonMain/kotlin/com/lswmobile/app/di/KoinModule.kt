@@ -4,7 +4,7 @@ import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.config.AppConfig
 import com.lswmobile.app.config.AppConfigFactory
 import com.lswmobile.app.data.repository.CartRepository
-import com.lswmobile.app.data.repository.InMemoryCartRepository
+import com.lswmobile.app.data.repository.LocalCartRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.SimpleTokenProvider
@@ -49,9 +49,8 @@ object KoinModule {
      * Database module providing local storage dependencies
      */
     val databaseModule = module {
-        // Use in-memory cart repository for now (easier to test)
-        // TODO: Replace with LocalCartRepository when database is properly set up
-        single<CartRepository> { InMemoryCartRepository() }
+        // Use LocalCartRepository with in-memory storage (no persistence for now)
+        single<CartRepository> { LocalCartRepository(currentUserId = "default_user") }
     }
     
     /**

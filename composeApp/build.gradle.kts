@@ -22,7 +22,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -54,16 +53,10 @@ kotlin {
             // Material Icons - Android only
             implementation("androidx.compose.material:material-icons-core:1.5.4")
             implementation("androidx.compose.material:material-icons-extended:1.5.4")
-            
-            // SQLDelight - Android
-            implementation(libs.sqldelight.android)
         }
         
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
-            
-            // SQLDelight - iOS
-            implementation(libs.sqldelight.ios)
         }
         
         commonMain.dependencies {
@@ -91,9 +84,6 @@ kotlin {
             // Koin for Dependency Injection
             implementation("io.insert-koin:koin-core:3.5.0")
             implementation("io.insert-koin:koin-compose:1.1.0")
-            
-            // SQLDelight - Common
-            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -197,11 +187,4 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-// SQLDelight configuration
-sqldelight {
-    databases {
-        create("CartDatabase") {
-            packageName.set("com.lswmobile.app.database")
-        }
-    }
-}
+

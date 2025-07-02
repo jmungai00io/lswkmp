@@ -1,7 +1,6 @@
 package com.lswmobile.app.data.repository
 
 import com.lswmobile.app.data.model.*
-import com.lswmobile.app.database.DatabaseDriverFactory
 import com.lswmobile.app.network.model.Farmland
 import com.lswmobile.app.network.model.ProductClassic
 import kotlinx.coroutines.flow.Flow
@@ -14,16 +13,13 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
 /**
- * Local cart repository using SQLDelight for persistence
+ * Local cart repository using in-memory storage
  * Handles both products and farmlands in a unified way
+ * Note: This is a temporary implementation without persistence
  */
 class LocalCartRepository(
-    private val databaseDriverFactory: DatabaseDriverFactory,
     private val currentUserId: String
 ) : CartRepository {
-    // TODO: Uncomment when CartDatabase import is resolved
-    // private val database = CartDatabase(databaseDriverFactory.createDriver())
-    // private val cartItemQueries = database.cartItemQueries
     
     // StateFlow for cart items
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
