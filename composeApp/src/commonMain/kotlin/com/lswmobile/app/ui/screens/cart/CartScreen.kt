@@ -31,8 +31,76 @@ fun CartScreen(
     onUpdateQuantity: (String, Int) -> Unit,
     onRemoveItem: (String) -> Unit,
     onClearCart: () -> Unit,
-    onCheckout: () -> Unit
+    onCheckout: () -> Unit,
+    isOrdering: Boolean = false,
+    orderMessage: String? = null,
+    orderSuccess: Boolean = false,
+    onDismissOrderDialog: () -> Unit = {}
 ) {
+    // Show order dialog if there's an order message or if ordering is in progress
+    val showOrderDialog = isOrdering || orderMessage != null
+    
+    // Display order dialog if needed
+    if (showOrderDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // Only allow dismissing if not in loading state
+                if (!isOrdering) {
+                    onDismissOrderDialog()
+                }
+            },
+            title = {
+                Text(
+                    if (isOrdering) "Processing Order"
+                    else if (orderSuccess) "Order Successful"
+                    else "Order Status"
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isOrdering) {
+                        // Show loading indicator
+                        CircularProgressIndicator()
+                        Text("Processing your order...")
+                    } else {
+                        // Show order message
+                        Text(orderMessage ?: "")
+                        
+                        if (orderSuccess) {
+                            Icon(
+                                imageVector = AppIcons.Filled.CheckCircle,
+                                contentDescription = "Success",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = AppIcons.Filled.Error,
+                                contentDescription = "Error",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                // Only show button if not loading
+                if (!isOrdering) {
+                    TextButton(
+                        onClick = onDismissOrderDialog
+                    ) {
+                        Text("OK")
+                    }
+                }
+            }
+        )
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(

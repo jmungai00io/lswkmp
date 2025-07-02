@@ -1,5 +1,6 @@
 package com.lswmobile.app.network.model
 
+import com.lswmobile.app.data.model.CartItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -9,8 +10,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProductsResponse(
     val success: Boolean,
-    val products: List<ProductClassic>,
-    val count: Int
+    @SerialName("data")
+    val products: List<ProductClassic> = emptyList(),
+    val count: Int = 0
 )
 
 /**
@@ -20,23 +22,27 @@ data class ProductsResponse(
 data class ProductClassic(
     @SerialName("_id")
     val _id: String,
+    val id: String? = null,
     val price: Double,
-    val name: String?,
-    val productName: String?,
-    val location: String?,
-    val images: MutableList<String>?,
-    val profitRate: String?,
-    val profitCycle: String?,
-    val isArchived: Boolean?,
-    val infoUrl: String?,
-    val __v: String?,
-    val unitCount: String?,
-    val productType: String?,
-    val investmentTerm: String?,
-    val dividendCycle: String?,
-    val profitInformation: String?,
-    val count: String?,
-    val inStock: Boolean?
+    val name: String? = null,
+    val productName: String? = null,
+    val location: String? = null,
+    val images: List<String>? = null,
+    val imageUrl: String? = null,
+    val profitRate: Double? = null,
+    val profitCycle: Int? = null,
+    val isArchived: Boolean? = null,
+    val infoUrl: String? = null,
+    val __v: Int? = null,
+    val unitCount: Int? = null,
+    val productType: String? = null,
+    val investmentTerm: Int? = null,
+    val dividendCycle: Int? = null,
+    val profitInformation: String? = null,
+    val stockCount: Int? = null,
+    val waitingListCount: Int? = null,
+    val count: Int? = null,
+    val inStock: Boolean? = null
 )
 
 /**
@@ -48,15 +54,17 @@ data class Farmland(
     val _id: String,
     val name: String,
     val price: Double,
-    val location: String?,
-    val images: MutableList<String>?,
-    val profitRate: String?,
-    val profitCycle: String?,
-    val isArchived: Boolean?,
-    val infoUrl: String?,
-    val __v: String?,
-    val unitCount: String?,
-    val productType: String?,
+    val location: String? = null,
+    val images: List<String>? = null,
+    val profitRate: Int? = null,
+    val profitCycle: Int? = null,
+    val isArchived: Boolean? = false,
+    val infoUrl: String? = null,
+    val annualDateOfEvaluation: String? = null,
+    val __v: Int? = null,
+    val unitCount: Int? = null,
+    val productType: String? = null,
+    val inStock: Boolean? = true
 )
 
 /**
@@ -78,17 +86,7 @@ data class CartResponse(
     val message: String
 )
 
-/**
- * Cart item model
- */
-@Serializable
-data class CartItem(
-    val id: String,
-    val productId: String,
-    val quantity: Int,
-    val price: Double,
-    val product: ProductClassic
-)
+
 
 /**
  * Add to cart request
@@ -109,9 +107,58 @@ data class UpdateCartBody(
 )
 
 /**
+ * Preorder request body
+ */
+@Serializable
+data class PreorderRequest(
+    val productType: String
+)
+
+/**
+ * Preorder response model
+ */
+@Serializable
+data class PreorderResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val waitingListPosition: Int? = null,
+    val error: String? = null
+)
+
+/**
  * Error response
  */
 @Serializable
 data class ErrorResponse(
     val message: String
+)
+
+/**
+ * Marketplace order item model for API request
+ */
+@Serializable
+data class MarketplaceOrderItem(
+    val productType: String,  // "farmLand" or "macadamia" or other product types
+    val productId: String,
+    val quantity: Int
+)
+
+/**
+ * Create marketplace order request body
+ */
+@Serializable
+data class CreateMarketplaceOrderRequest(
+    val items: List<MarketplaceOrderItem>,
+    val amount: Double
+)
+
+/**
+ * Marketplace order response model
+ */
+@Serializable
+data class MarketplaceOrderResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val orderId: String? = null,
+    val error: String? = null
 )

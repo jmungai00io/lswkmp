@@ -20,8 +20,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
@@ -91,6 +95,10 @@ fun MarketplaceScreen(
     val isLoadingProducts by viewModel.isLoadingProducts.collectAsState()
     val isLoadingFarmlands by viewModel.isLoadingFarmlands.collectAsState()
 
+    // Add preorder state
+    val preorderMessage by viewModel.preorderMessage.collectAsState()
+    val isPreordering by viewModel.isPreordering.collectAsState()
+
     // Track pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -103,7 +111,8 @@ fun MarketplaceScreen(
     LaunchedEffect(Unit) {
         val token = AppInitializer.getTokenProvider().getAccessToken()
         println("MarketplaceScreen: Current access token: ${token?.take(10)}...")
-        viewModel.loadData()
+        viewModel.loadProducts()
+        viewModel.loadFarmlands()
     }
 
     // Setup scrolling behavior for the large title (iOS-style)
@@ -196,27 +205,82 @@ fun MarketplaceScreen(
                         // Farmland Tab
                         0 -> FarmlandProductsGrid(
                             products = farmlands,
-                            isLoading = isLoadingProducts,
+                            isLoading = isLoadingFarmlands,
                             onProductClick = { /* Handle product click */ },
                             onAddToCart = { productId ->
                                 viewModel.addFarmlandToCart(productId, 1)
 
-                            }
+                            },
+                            viewModel = viewModel
                         )
 
                         // Regular Products Tab
                         1 -> RegularProductsGrid(
                             products = products,
-                            isLoading = isLoadingFarmlands,
+                            isLoading = isLoadingProducts,
                             onProductClick = { /* Handle product click */ },
                             onAddToCart = { productId ->
                                 viewModel.addProductToCart(productId, 1)
-                            }
+                            },
+                            viewModel = viewModel
                         )
                     }
                 }
             }
         }
+    }
+
+    // Show preorder feedback dialog
+    val openDialog = remember { mutableStateOf(false) }
+
+    // Show dialog when preorder message changes
+    LaunchedEffect(preorderMessage) {
+        if (preorderMessage != null) {
+            openDialog.value = true
+        }
+    }
+
+    // Preorder dialog
+    if (openDialog.value && preorderMessage != null) {
+        AlertDialog(
+            onDismissRequest = {
+                openDialog.value = false
+                viewModel.resetPreorderState()
+            },
+            title = { Text("Preorder Status") },
+            text = { Text(preorderMessage ?: "") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        openDialog.value = false
+                        viewModel.resetPreorderState()
+                    }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    // Loading dialog for preorders
+    if (isPreordering) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Processing") },
+            text = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Text("Processing your preorder...")
+                }
+            },
+            confirmButton = { }
+        )
     }
 }
 
@@ -253,8 +317,8 @@ private fun MarketplaceTopBar(
                 BadgedBox(
                     badge = {
                         if (cartItemCount > 0) {
-                            Badge { 
-                                Text(text = cartItemCount.toString()) 
+                            Badge {
+                                Text(text = cartItemCount.toString())
                             }
                         }
                     }
@@ -273,9 +337,121 @@ private fun MarketplaceTopBar(
         )
     )
 }
+
 /**
- * Card component for displaying a ProductFarmland
+ * Grid of ProductFarmland items
  */
+@Composable
+private fun FarmlandProductsGrid(
+    products: List<Farmland>,
+    isLoading: Boolean,
+    onProductClick: (String) -> Unit,
+    onAddToCart: (String) -> Unit,
+    viewModel: MarketplaceViewModel
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isLoading -> CircularProgressIndicator()
+            products.isEmpty() -> Text(
+                text = "No farmlands available",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            else -> {
+                // Show product grid
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 280.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = AppTheme.spacing.medium.dp,
+                        end = AppTheme.spacing.medium.dp,
+                        top = AppTheme.spacing.medium.dp,
+                        bottom = 80.dp // Extra padding for FAB
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                ) {
+                    items(products) { product ->
+                        FarmlandCard(
+                            product = product,
+                            onClick = { onProductClick(product._id) },
+                            onAddToCart = { 
+                                // Check if product is out of stock
+                                if (product.inStock == false) {
+                                    // If farmland is a type of product, get the type for preorder
+                                    val productType = product.productType ?: "farmland"
+                                    viewModel.preorderProduct(productType)
+                                } else {
+                                    onAddToCart(product._id)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Grid of regular Farmland items
+ */
+@Composable
+private fun RegularProductsGrid(
+    products: List<ProductClassic>,
+    isLoading: Boolean,
+    onProductClick: (String) -> Unit,
+    onAddToCart: (String) -> Unit,
+    viewModel: MarketplaceViewModel
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            isLoading -> CircularProgressIndicator()
+            products.isEmpty() -> Text(
+                text = "No products available",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            else -> {
+                // Show product grid
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 280.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = AppTheme.spacing.medium.dp,
+                        end = AppTheme.spacing.medium.dp,
+                        top = AppTheme.spacing.medium.dp,
+                        bottom = 80.dp // Extra padding for FAB
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                ) {
+                    items(products) { product ->
+                        ProductFarmlandCard(
+                            product = product,
+                            onClick = { onProductClick(product._id) },
+                            onAddToCart = { 
+                                // Check if product is out of stock
+                                if (product.inStock == false) {
+                                    // Get product type (if available) or default to "macadamia"
+                                    val productType = product.productType ?: "macadamia"
+                                    viewModel.preorderProduct(productType)
+                                } else {
+                                    onAddToCart(product._id)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
  * Card component for displaying a ProductFarmland
  */
@@ -445,119 +621,36 @@ private fun ProductFarmlandCard(
                             )
                     )
 
-                    // Add to cart button - disabled if out of stock
-                    IconButton(
+                    // Add to cart button or preorder button
+                    val isOutOfStock = product.inStock == false
+
+                    Button(
                         onClick = onAddToCart,
-                        enabled = product.inStock != false,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(DefaultCornerRadius))
-                            .background(
-                                if (product.inStock != false) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            )
+                            .fillMaxWidth()
+                            .padding(horizontal = AppTheme.spacing.medium.dp)
+                            .padding(bottom = AppTheme.spacing.medium.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isOutOfStock)
+                                MaterialTheme.colorScheme.secondary
+                            else
+                                MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
-                            imageVector = AppIcons.Filled.Add,
-                            contentDescription = "Add to Cart",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
+                            imageVector = if (isOutOfStock) AppIcons.Filled.Alarm else AppIcons.Filled.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize)
                         )
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(if (isOutOfStock) "Preorder" else "Add to Cart")
                     }
                 }
             }
         }
     }
 }
-/**
- * Grid of ProductFarmland items
- */
-@Composable
-private fun FarmlandProductsGrid(
-    products: List<Farmland>,
-    isLoading: Boolean,
-    onProductClick: (String) -> Unit,
-    onAddToCart: (String) -> Unit
-) {
-    if (products.isEmpty()) {
-        // Show loading or empty state
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-    } else {
-        // Show product grid
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 280.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = AppTheme.spacing.medium.dp,
-                end = AppTheme.spacing.medium.dp,
-                top = AppTheme.spacing.medium.dp,
-                bottom = 80.dp // Extra padding for FAB
-            ),
-            horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
-        ) {
-            items(products) { product ->
-                FarmlandCard(
-                    product = product,
-                    onClick = { onProductClick(product._id) },
-                    onAddToCart = { onAddToCart(product._id) }
-                )
-            }
-        }
-    }
-}
 
-/**
- * Grid of regular Farmland items
- */
-@Composable
-private fun RegularProductsGrid(
-    products: List<ProductClassic>,
-    isLoading: Boolean,
-    onProductClick: (String) -> Unit,
-    onAddToCart: (String) -> Unit
-) {
-    if (products.isEmpty()) {
-        // Show loading or empty state
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-    } else {
-        // Show product grid
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 280.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = AppTheme.spacing.medium.dp,
-                end = AppTheme.spacing.medium.dp,
-                top = AppTheme.spacing.medium.dp,
-                bottom = 80.dp // Extra padding for FAB
-            ),
-            horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
-        ) {
-            items(products) { product ->
-                ProductFarmlandCard(
-                    product = product,
-                    onClick = { onProductClick(product._id) },
-                    onAddToCart = { onAddToCart(product._id) }
-                )
-            }
-        }
-    }
-}
-
-/**
- * Card component for displaying a regular Farmland
- */
 /**
  * Card component for displaying a regular Farmland
  */
@@ -577,16 +670,16 @@ private fun FarmlandCard(
         )
     ) {
         Column {
-            // Product image
+            // Product image with stock status indicator
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1.5f)
             ) {
-                // Use our cross-platform NetworkImage component with null safety
+                // Use our cross-platform NetworkImage component
                 NetworkImage(
                     url = product.images?.firstOrNull() ?: "",
-                    contentDescription = product.name,
+                    contentDescription = product.name ?: "",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -597,7 +690,7 @@ private fun FarmlandCard(
                         .align(Alignment.BottomEnd)
                         .padding(AppTheme.spacing.small.dp)
                         .clip(RoundedCornerShape(DefaultCornerRadius))
-                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f))
                         .padding(
                             horizontal = AppTheme.spacing.small.dp,
                             vertical = AppTheme.spacing.extraSmall.dp
@@ -606,9 +699,30 @@ private fun FarmlandCard(
                     Text(
                         text = "R${product.price.toInt()}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                // Stock status indicator
+                if (product.inStock == false) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(AppTheme.spacing.small.dp)
+                            .clip(RoundedCornerShape(DefaultCornerRadius))
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.85f))
+                            .padding(
+                                horizontal = AppTheme.spacing.small.dp,
+                                vertical = AppTheme.spacing.extraSmall.dp
+                            )
+                    ) {
+                        Text(
+                            text = "Out of Stock",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onError
+                        )
+                    }
                 }
             }
 
@@ -690,26 +804,36 @@ private fun FarmlandCard(
                             )
                     )
 
-                    // Add to cart button
-                    IconButton(
+                    // Add to cart button or preorder button
+                    val isOutOfStock = product.inStock == false
+
+                    Button(
                         onClick = onAddToCart,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(DefaultCornerRadius))
-                            .background(MaterialTheme.colorScheme.secondary)
+                            .fillMaxWidth()
+                            .padding(horizontal = AppTheme.spacing.medium.dp)
+                            .padding(bottom = AppTheme.spacing.medium.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isOutOfStock)
+                                MaterialTheme.colorScheme.secondary
+                            else
+                                MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
-                            imageVector = AppIcons.Filled.Add,
-                            contentDescription = "Add to Cart",
-                            tint = MaterialTheme.colorScheme.onSecondary,
-                            modifier = Modifier.size(20.dp)
+                            imageVector = if (isOutOfStock) AppIcons.Filled.Alarm else AppIcons.Filled.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize)
                         )
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(if (isOutOfStock) "Preorder" else "Add to Cart")
                     }
                 }
             }
         }
     }
 }
+
 /**
  * Extension function to capitalize a string
  */

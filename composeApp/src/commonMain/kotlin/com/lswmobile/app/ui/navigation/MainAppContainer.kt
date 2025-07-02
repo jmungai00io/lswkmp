@@ -131,10 +131,19 @@ fun MainAppContainer() {
                     }
                     
                     Screen.Checkout -> {
-                        com.lswmobile.app.ui.screens.cart.CartScreen(
-                            productCartItems = marketplaceViewModel.productCartItems.collectAsState().value,
-                            farmlandCartItems = marketplaceViewModel.farmlandCartItems.collectAsState().value,
-                            cartSummary = marketplaceViewModel.cartSummary.collectAsState().value,
+                        val productCartItems by marketplaceViewModel.productCartItems.collectAsState()
+                        val farmlandCartItems by marketplaceViewModel.farmlandCartItems.collectAsState()
+                        val cartSummary by marketplaceViewModel.cartSummary.collectAsState()
+                        
+                        // Order states
+                        val isOrdering by marketplaceViewModel.isOrdering.collectAsState()
+                        val orderMessage by marketplaceViewModel.orderMessage.collectAsState()
+                        val orderSuccess by marketplaceViewModel.orderSuccess.collectAsState()
+                        
+                        CartScreen(
+                            productCartItems = productCartItems,
+                            farmlandCartItems = farmlandCartItems,
+                            cartSummary = cartSummary,
                             onUpdateQuantity = { itemId, quantity ->
                                 marketplaceViewModel.updateCartItemQuantity(itemId, quantity)
                             },
@@ -145,8 +154,31 @@ fun MainAppContainer() {
                                 marketplaceViewModel.clearCart()
                             },
                             onCheckout = {
-                                // TODO: Implement actual checkout logic
-                                println("Checkout pressed - implement checkout flow")
+                                // Create separate orders for products and farmlands
+                                val hasProducts = marketplaceViewModel.productCartItems.value.isNotEmpty()
+                                val hasFarmlands = marketplaceViewModel.farmlandCartItems.value.isNotEmpty()
+                                
+                                if (hasProducts) {
+                                    marketplaceViewModel.createProductOrder()
+                                }
+                                
+                                if (hasFarmlands) {
+                                    marketplaceViewModel.createFarmlandOrder()
+                                }
+                                
+                                if (!hasProducts && !hasFarmlands) {
+                                    println("Checkout pressed but cart is empty")
+                                }
+                            },
+                            isOrdering = isOrdering,
+                            orderMessage = orderMessage,
+                            orderSuccess = orderSuccess,
+                            onDismissOrderDialog = {
+                                marketplaceViewModel.resetOrderState()
+                                // Clear cart if order was successful
+                                if (orderSuccess) {
+                                    marketplaceViewModel.clearCart()
+                                }
                             }
                         )
                     }

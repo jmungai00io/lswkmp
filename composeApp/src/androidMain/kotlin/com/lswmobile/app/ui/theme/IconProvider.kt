@@ -3,10 +3,12 @@ package com.lswmobile.app.ui.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Error
@@ -63,6 +65,8 @@ internal actual object IconProvider {
         override val Search: ImageVector = Icons.Filled.Search
         override val Schedule: ImageVector = Icons.Filled.Schedule
         override val LocationOn: ImageVector = Icons.Filled.LocationOn
+        override val Alarm: ImageVector = Icons.Filled.Alarm
+        override val CheckCircle: ImageVector = Icons.Filled.CheckCircle
     }
     
     /**

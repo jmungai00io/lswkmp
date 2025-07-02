@@ -624,6 +624,8 @@ internal actual object IconProvider {
         override val Search: ImageVector = createPlaceholderIcon("Search")
         override val Schedule: ImageVector = createPlaceholderIcon("Schedule")
         override val LocationOn: ImageVector = createPlaceholderIcon("LocationOn")
+        override val Alarm: ImageVector = createPlaceholderIcon("Alarm")
+        override val CheckCircle: ImageVector = createPlaceholderIcon("CheckCircle")
     }
     
     /**

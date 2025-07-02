@@ -8,6 +8,8 @@ import com.lswmobile.app.network.model.Farmland
 import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.network.repository.FarmlandsState
 import com.lswmobile.app.network.repository.MarketplaceRepository
+import com.lswmobile.app.network.repository.OrderState
+import com.lswmobile.app.network.repository.PreorderState
 import com.lswmobile.app.network.repository.ProductsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +17,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -34,6 +35,23 @@ class MarketplaceViewModel(
     // Farmlands state
     private val _farmlandsState = MutableStateFlow<FarmlandsState>(FarmlandsState.Idle)
     val farmlandsState: StateFlow<FarmlandsState> = _farmlandsState.asStateFlow()
+    
+    // Preorder state
+    private val _preorderState = MutableStateFlow<String?>(null)
+    val preorderMessage = _preorderState.asStateFlow()
+    
+    private val _isPreordering = MutableStateFlow(false)
+    val isPreordering = _isPreordering.asStateFlow()
+    
+    // Order state
+    private val _orderState = MutableStateFlow<String?>(null)
+    val orderMessage = _orderState.asStateFlow()
+    
+    private val _isOrdering = MutableStateFlow(false)
+    val isOrdering = _isOrdering.asStateFlow()
+    
+    private val _orderSuccess = MutableStateFlow(false)
+    val orderSuccess = _orderSuccess.asStateFlow()
     
     // Loading states
     private val _isLoadingProducts = MutableStateFlow(false)
@@ -81,17 +99,25 @@ class MarketplaceViewModel(
                     is ProductsState.Loading -> {
                         _isLoadingProducts.value = true
                         _productError.value = null
+                        println("MarketplaceViewModel: Products loading state activated")
                     }
                     is ProductsState.Success -> {
                         _isLoadingProducts.value = false
                         _products.value = state.products
                         _productError.value = null
+                        println("MarketplaceViewModel: Products loaded successfully. Count: ${state.products.size}")
+                        state.products.forEach { product ->
+                            println("MarketplaceViewModel: Product: ${product._id}, ${product.productName ?: product.name ?: "Unnamed"}")
+                        }
                     }
                     is ProductsState.Error -> {
                         _isLoadingProducts.value = false
                         _productError.value = state.message
+                        println("MarketplaceViewModel: Products loading error: ${state.message}")
                     }
-                    else -> {}
+                    else -> {
+                        println("MarketplaceViewModel: Products idle state")
+                    }
                 }
             }
         }
@@ -115,6 +141,54 @@ class MarketplaceViewModel(
                         _farmlandError.value = state.message
                     }
                     else -> {}
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            repository.preorderState.collect { state ->
+                when (state) {
+                    is PreorderState.Loading -> {
+                        _isPreordering.value = true
+                        _preorderState.value = null
+                    }
+                    is PreorderState.Success -> {
+                        _isPreordering.value = false
+                        val positionText = state.waitingListPosition?.let { " (Position: $it)" } ?: ""
+                        _preorderState.value = state.message + positionText
+                    }
+                    is PreorderState.Error -> {
+                        _isPreordering.value = false
+                        _preorderState.value = "Error: ${state.message}"
+                    }
+                    else -> {
+                        _isPreordering.value = false
+                    }
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            repository.orderState.collect { state ->
+                when (state) {
+                    is OrderState.Loading -> {
+                        _isOrdering.value = true
+                        _orderState.value = null
+                        _orderSuccess.value = false
+                    }
+                    is OrderState.Success -> {
+                        _isOrdering.value = false
+                        _orderState.value = state.message ?: "Order created successfully!"
+                        _orderSuccess.value = true
+                    }
+                    is OrderState.Error -> {
+                        _isOrdering.value = false
+                        _orderState.value = "Error: ${state.message}"
+                        _orderSuccess.value = false
+                    }
+                    else -> {
+                        _isOrdering.value = false
+                    }
                 }
             }
         }
@@ -216,5 +290,69 @@ class MarketplaceViewModel(
         viewModelScope.launch {
             cartRepository?.clearCart()
         }
+    }
+    
+    /**
+     * Preorder a product that is out of stock
+     * @param productType The type of product to preorder (e.g., "macadamia")
+     */
+    fun preorderProduct(productType: String) {
+        viewModelScope.launch {
+            repository.preorderProduct(productType)
+        }
+    }
+    
+    /**
+     * Reset preorder state
+     */
+    fun resetPreorderState() {
+        viewModelScope.launch {
+            repository.resetPreorderState()
+            _preorderState.value = null
+        }
+    }
+    
+    /**
+     * Create order for products in cart
+     */
+    fun createProductOrder() {
+        viewModelScope.launch {
+            val items = productCartItems.value
+            
+            if (items.isEmpty()) {
+                _orderState.value = "No products in cart to checkout"
+                return@launch
+            }
+            
+            // Repository will calculate the correct subtotal for these items
+            repository.createProductOrder(items, 0.0) // Amount will be calculated in repository
+        }
+    }
+    
+    /**
+     * Create order for farmlands in cart
+     */
+    fun createFarmlandOrder() {
+        viewModelScope.launch {
+            val items = farmlandCartItems.value
+            
+            if (items.isEmpty()) {
+                _orderState.value = "No farmlands in cart to checkout"
+                return@launch
+            }
+            
+            // Repository will calculate the correct subtotal for these items
+            repository.createFarmlandOrder(items, 0.0) // Amount will be calculated in repository
+        }
+    }
+    
+    /**
+     * Reset order state
+     */
+    fun resetOrderState() {
+        _orderState.value = null
+        _isOrdering.value = false
+        _orderSuccess.value = false
+        repository.resetOrderState()
     }
 }

@@ -33,12 +33,14 @@ object AppIcons {
         // Status
         val Check: ImageVector
         val Clear: ImageVector
-        val Error: ImageVector
         val FilterList: ImageVector
         val Search: ImageVector
         val Schedule: ImageVector
 
         val LocationOn: ImageVector
+        val Alarm: ImageVector
+        val CheckCircle: ImageVector
+        val Error: ImageVector
     }
     
     interface OutlinedIcons {

@@ -207,12 +207,25 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Get products
      */
     suspend fun getProducts(category: String? = null, limit: Int = 20, offset: Int = 0): ProductsResponse {
-        return client.client.get {
-            url("/products")
-            category?.let { parameter("category", it) }
-            parameter("limit", limit)
-            parameter("offset", offset)
-        }.body()
+        try {
+            val response = client.client.get {
+                url("/products")
+                category?.let { parameter("category", it) }
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw products response: $responseText")
+            
+            // Use the response.body() method to decode instead of manual decoding
+            return response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error parsing products response: ${e.message}")
+            // Return empty response to avoid crashing
+            return ProductsResponse(success = false)
+        }
     }
     
     /**
@@ -228,11 +241,50 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Get farmlands
      */
     suspend fun getFarmlands(limit: Int = 20, offset: Int = 0): FarmlandsResponse {
-        return client.client.get {
-            url("/farmland")
-            parameter("limit", limit)
-            parameter("offset", offset)
-        }.body()
+        try {
+            val response = client.client.get {
+                url("/farmland")
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw farmlands response: $responseText")
+            
+            // Use response.body() for decoding
+            return response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error parsing farmlands response: ${e.message}")
+            // Return empty response to avoid crashing
+            return FarmlandsResponse(success = false, data = emptyList())
+        }
+    }
+    
+    // =============== PRODUCT PREORDER ENDPOINTS ===============
+    
+    /**
+     * Preorder a product that is currently out of stock
+     */
+    suspend fun preorderProduct(productType: String): PreorderResponse {
+        try {
+            val response = client.client.post {
+                url("/transactions/orders/preorder")
+                setBody(PreorderRequest(productType))
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw preorder response: $responseText")
+            
+            return response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error during preorder: ${e.message}")
+            return PreorderResponse(
+                success = false,
+                error = e.message ?: "Unknown error occurred during preorder"
+            )
+        }
     }
     
     // =============== CART ENDPOINTS ===============
@@ -285,6 +337,32 @@ class LivestockWealthApi(private val client: KtorClient) {
     }
     
     // =============== ORDERS ENDPOINTS ===============
+    
+    /**
+     * Create a marketplace order with the given items and amount
+     * This endpoint handles both farmlands and products but they can't be mixed in a single order
+     */
+    suspend fun createMarketplaceOrder(orderItems: List<MarketplaceOrderItem>, amount: Double): MarketplaceOrderResponse {
+        try {
+            val response = client.client.post {
+                url("/transactions/orders")
+                setBody(CreateMarketplaceOrderRequest(orderItems, amount))
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw order creation response: $responseText")
+            
+            return response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error during order creation: ${e.message}")
+            e.printStackTrace()
+            return MarketplaceOrderResponse(
+                success = false,
+                error = e.message ?: "Unknown error occurred during order creation"
+            )
+        }
+    }
     
     /**
      * Create order
