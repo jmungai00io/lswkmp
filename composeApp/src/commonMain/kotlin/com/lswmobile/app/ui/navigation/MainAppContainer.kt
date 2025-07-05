@@ -3,6 +3,7 @@ package com.lswmobile.app.ui.navigation
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.data.sample.SampleFinanceRepository
-import com.lswmobile.app.data.sample.SampleProfileRepository
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
@@ -24,6 +24,8 @@ import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
 import com.lswmobile.app.ui.screens.cart.CartScreen
+import com.lswmobile.app.ui.screens.profile.KycProcessScreen
+import com.lswmobile.app.viewmodel.UserViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -36,9 +38,9 @@ fun MainAppContainer() {
     // Get the ViewModels from Koin DI
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     val orderViewModel = koinInject<OrderViewModel>()
+    val userViewModel = koinInject<UserViewModel>()
     
     val financeRepo = remember { SampleFinanceRepository.getInstance() }
-    val profileRepo = remember { SampleProfileRepository.getInstance() }
     
     // Save only the route name string instead of the Screen object
     var currentRoute by rememberSaveable { mutableStateOf(Screen.MarketPlace.route) }
@@ -72,6 +74,12 @@ fun MainAppContainer() {
     // Function to update the current screen by saving the route
     val onScreenSelected = { screen: Screen ->
         currentRoute = screen.route
+    }
+    
+    // Fetch user data when the container is first loaded
+    LaunchedEffect(Unit) {
+        println("MainAppContainer: Fetching user data after authentication")
+        userViewModel.fetchUser()
     }
     
     // Apply our custom theme
@@ -125,11 +133,20 @@ fun MainAppContainer() {
                     }
                     
                     Screen.Profile -> {
+                        val user by userViewModel.user.collectAsState()
+                        val isLoading by userViewModel.isLoading.collectAsState()
+                        val error by userViewModel.error.collectAsState()
+                        val isKYCVerified by userViewModel.isKYCVerified.collectAsState()
+                        
                         ProfileScreen(
-                            repository = profileRepo,
+                            user = user,
+                            isLoading = isLoading,
+                            error = error,
+                            isKYCVerified = isKYCVerified,
                             onNavigateToKycProcess = { onScreenSelected(Screen.KycProcess) },
                             onNavigateToUpdateUser = { onScreenSelected(Screen.UpdateUser) },
-                            onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) }
+                            onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) },
+                            onRefreshUser = { userViewModel.fetchUser() }
                         )
                     }
                     
@@ -203,6 +220,22 @@ fun MainAppContainer() {
                         }
                     }
 
+                    Screen.KycProcess -> {
+                        val user by userViewModel.user.collectAsState()
+                        val isLoading by userViewModel.isLoading.collectAsState()
+                        val error by userViewModel.error.collectAsState()
+                        val isKYCVerified by userViewModel.isKYCVerified.collectAsState()
+                        
+                        KycProcessScreen(
+                            user = user,
+                            isLoading = isLoading,
+                            error = error,
+                            isKYCVerified = isKYCVerified,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onRefreshUser = { userViewModel.fetchUser() }
+                        )
+                    }
+                    
                     // Other screens would be implemented in a real app
                     // For now, just show a placeholder
                     else -> {

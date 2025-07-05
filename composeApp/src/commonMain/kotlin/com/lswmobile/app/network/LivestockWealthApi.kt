@@ -93,7 +93,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getUser(): UserResponse {
         return client.client.get {
-            url("/users/me")
+            url("/users/current")
         }.body()
     }
     
@@ -101,8 +101,8 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Update user profile
      */
     suspend fun updateProfile(updateProfileBody: UpdateProfileBody): UpdateProfileResponse {
-        return client.client.patch {
-            url("/users/me")
+        return client.client.put {
+            url("/users/current")
             setBody(updateProfileBody)
         }.body()
     }

@@ -4,7 +4,9 @@ import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.config.AppConfig
 import com.lswmobile.app.config.AppConfigFactory
 import com.lswmobile.app.data.repository.CartRepository
+import com.lswmobile.app.data.repository.InMemoryUserRepository
 import com.lswmobile.app.data.repository.LocalCartRepository
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.SimpleTokenProvider
@@ -13,6 +15,7 @@ import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.di.OrderModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -52,6 +55,9 @@ object KoinModule {
     val databaseModule = module {
         // Use LocalCartRepository with in-memory storage (no persistence for now)
         single<CartRepository> { LocalCartRepository(currentUserId = "default_user") }
+        
+        // User repository
+        single<UserRepository> { InMemoryUserRepository(get()) }
     }
     
     /**
@@ -66,8 +72,9 @@ object KoinModule {
      * ViewModel module providing ViewModels
      */
     val viewModelModule = module {
-        factory { AuthViewModel(get()) }
+        factory { AuthViewModel(get(), get()) }
         factory { MarketplaceViewModel(get(), get()) }
+        factory { UserViewModel(get()) }
     }
     
     /**

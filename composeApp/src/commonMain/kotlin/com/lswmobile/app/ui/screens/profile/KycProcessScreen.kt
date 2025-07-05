@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -22,24 +21,19 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.network.model.UserResponse
-import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
-import com.lswmobile.app.viewmodel.UserViewModel
 
 /**
- * Profile screen showing user information and account settings
+ * KYC Process screen for user verification
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    repository: UserViewModel? = null,
+fun KycProcessScreen(
     user: UserResponse? = null,
     isLoading: Boolean = false,
     error: String? = null,
     isKYCVerified: Boolean = false,
-    onNavigateToKycProcess: () -> Unit = {},
-    onNavigateToUpdateUser: () -> Unit = {},
-    onNavigateToUploadAvatar: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
     onRefreshUser: () -> Unit = {}
 ) {
     // Setup scrolling behavior for the large title (iOS-style)
@@ -48,7 +42,10 @@ fun ProfileScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            ProfileTopBar(scrollBehavior = scrollBehavior)
+            KycProcessTopBar(
+                scrollBehavior = scrollBehavior,
+                onNavigateBack = onNavigateBack
+            )
         }
     ) { innerPadding ->
         Column(
@@ -58,16 +55,9 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = AppIcons.Filled.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.padding(bottom = 16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            
             if (isLoading) {
                 Text(
-                    text = "Loading user data...",
+                    text = "Loading KYC status...",
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center
                 )
@@ -78,32 +68,25 @@ fun ProfileScreen(
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.error
                 )
-            } else if (user != null) {
+            } else if (isKYCVerified) {
                 Text(
-                    text = "${user.firstName} ${user.lastName}",
+                    text = "✅ KYC Verification Complete",
                     style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = user.email,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = if (isKYCVerified) "✅ KYC Verified" else "❌ KYC Not Verified",
+                    text = "Your account has been verified successfully.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
-                    color = if (isKYCVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    modifier = Modifier.padding(horizontal = AppTheme.spacing.large.dp)
                 )
             } else {
                 Text(
-                    text = "Profile Screen",
+                    text = "KYC Verification Required",
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center
                 )
@@ -111,8 +94,17 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "This screen will show user profile information and settings",
+                    text = "Please complete your KYC verification to access all features.",
                     style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = AppTheme.spacing.large.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = "This screen will contain the KYC form and document upload functionality.",
+                    style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = AppTheme.spacing.large.dp)
                 )
@@ -122,13 +114,19 @@ fun ProfileScreen(
 }
 
 /**
- * Top app bar for the Profile screen with large title
+ * Top app bar for the KYC Process screen with large title
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProfileTopBar(scrollBehavior: TopAppBarScrollBehavior) {
+private fun KycProcessTopBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+    onNavigateBack: () -> Unit
+) {
     LargeTopAppBar(
-        title = { Text("Profile") },
-        scrollBehavior = scrollBehavior
+        title = { Text("KYC Verification") },
+        scrollBehavior = scrollBehavior,
+        navigationIcon = {
+            // Add back button here if needed
+        }
     )
-}
+} 

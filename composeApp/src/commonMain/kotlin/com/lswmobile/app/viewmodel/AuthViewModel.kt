@@ -2,6 +2,7 @@ package com.lswmobile.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.LoginState
 import com.lswmobile.app.network.repository.RegistrationState
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
  * ViewModel for authentication-related operations
  */
 class AuthViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository? = null
 ) : ViewModel() {
     
     // StateFlows from the repository
@@ -101,6 +103,8 @@ class AuthViewModel(
             _uiState.value = AuthUiState.Loading
             authRepository.logout()
                 .onSuccess {
+                    // Clear user data when logging out
+                    userRepository?.clearUser()
                     _uiState.value = AuthUiState.Success.Generic("Logged out successfully")
                 }
                 .onFailure {

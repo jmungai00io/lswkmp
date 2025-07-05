@@ -1,11 +1,14 @@
 package com.lswmobile.app
 
 import com.lswmobile.app.config.AppConfigFactory
+import com.lswmobile.app.data.repository.InMemoryUserRepository
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.SimpleTokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.viewmodel.UserViewModel
 
 /**
  * Centralizes initialization of app components to ensure they're only created once
@@ -18,6 +21,8 @@ object AppInitializer {
     private var api: LivestockWealthApi? = null
     private var authRepository: AuthRepository? = null
     private var authViewModel: AuthViewModel? = null
+    private var userRepository: UserRepository? = null
+    private var userViewModel: UserViewModel? = null
     
     // Track initialization state
     private var isInitialized = false
@@ -50,6 +55,8 @@ object AppInitializer {
             api = LivestockWealthApi(ktorClient!!)
             authRepository = AuthRepository(api!!, tokenProvider!!)
             authViewModel = AuthViewModel(authRepository!!)
+            userRepository = InMemoryUserRepository(api!!)
+            userViewModel = UserViewModel(userRepository!!)
             
             isInitialized = true
             println("App initialization complete")
@@ -85,6 +92,8 @@ object AppInitializer {
             // Update auth repository with new API
             authRepository = AuthRepository(api!!, tokenProvider!!)
             authViewModel = AuthViewModel(authRepository!!)
+            userRepository = InMemoryUserRepository(api!!)
+            userViewModel = UserViewModel(userRepository!!)
             
             println("Network clients reinitialized successfully")
         } catch (e: Exception) {
@@ -117,6 +126,16 @@ object AppInitializer {
     fun getAuthViewModel(): AuthViewModel {
         ensureInitialized()
         return authViewModel!!
+    }
+    
+    fun getUserRepository(): UserRepository {
+        ensureInitialized()
+        return userRepository!!
+    }
+    
+    fun getUserViewModel(): UserViewModel {
+        ensureInitialized()
+        return userViewModel!!
     }
     
     private fun ensureInitialized() {
