@@ -13,11 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.data.sample.SampleFinanceRepository
-import com.lswmobile.app.data.sample.SampleOrdersRepository
 import com.lswmobile.app.data.sample.SampleProfileRepository
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
+import com.lswmobile.app.ui.screens.orders.OrderDetailScreen
+import com.lswmobile.app.ui.screens.orders.OrderViewModel
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
@@ -32,15 +33,18 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun MainAppContainer() {
-    // Get the ViewModel from Koin DI
+    // Get the ViewModels from Koin DI
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
+    val orderViewModel = koinInject<OrderViewModel>()
     
-    val ordersRepo = remember { SampleOrdersRepository.getInstance() }
     val financeRepo = remember { SampleFinanceRepository.getInstance() }
     val profileRepo = remember { SampleProfileRepository.getInstance() }
     
     // Save only the route name string instead of the Screen object
     var currentRoute by rememberSaveable { mutableStateOf(Screen.MarketPlace.route) }
+    
+    // Selected order number for detail view
+    var selectedOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     
     // Convert the route string to a Screen object
     val currentScreen = remember(currentRoute) {
@@ -101,10 +105,9 @@ fun MainAppContainer() {
                     
                     Screen.MyOrders -> {
                         MyOrdersScreen(
-                            repository = ordersRepo,
-                            onNavigateToOrderDetails = { orderId ->
-                                // We'd store the selected order ID in a ViewModel in a real app
-                                // For now, we just navigate to the details screen
+                            viewModel = orderViewModel,
+                            onNavigateToOrderDetails = { orderNumber ->
+                                selectedOrderNumber = orderNumber
                                 onScreenSelected(Screen.ViewOrder)
                             }
                         )
@@ -183,6 +186,22 @@ fun MainAppContainer() {
                         )
                     }
                    
+                    Screen.ViewOrder -> {
+                        // Only show order detail if we have a valid order number
+                        selectedOrderNumber?.let { orderNumber ->
+                            OrderDetailScreen(
+                                viewModel = orderViewModel,
+                                orderNumber = orderNumber,
+                                onNavigateBack = {
+                                    // Go back to order list
+                                    onScreenSelected(Screen.MyOrders)
+                                }
+                            )
+                        } ?: run {
+                            // Fallback if no order number is provided
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
+                    }
 
                     // Other screens would be implemented in a real app
                     // For now, just show a placeholder

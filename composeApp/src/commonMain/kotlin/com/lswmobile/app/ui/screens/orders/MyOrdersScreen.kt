@@ -1,6 +1,5 @@
 package com.lswmobile.app.ui.screens.orders
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -34,6 +34,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,25 +43,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.lswmobile.app.data.sample.SampleOrdersRepository
-import com.lswmobile.app.network.model.OrderItem
+import com.lswmobile.app.network.model.OrderWithUserId
 import com.lswmobile.app.ui.components.PullToRefreshContainer
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.DefaultCornerRadius
+import com.lswmobile.app.ui.utils.formatDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Screen showing the user's orders
@@ -68,29 +63,21 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyOrdersScreen(
-    repository: SampleOrdersRepository,
-    onNavigateToOrderDetails: (String) -> Unit
+    viewModel: OrderViewModel,
+    onNavigateToOrderDetails: (Int) -> Unit
 ) {
-    // Collect orders from the repository
-    val orders by repository.orders.collectAsState(initial = emptyList())
+    // Collect orders from the viewModel
+    val orders by viewModel.filteredOrders.collectAsState()
+    val isLoading by viewModel.isLoadingOrders.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     
     // Track pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
     
-    // Search query state
-    var searchQuery by remember { mutableStateOf("") }
-    
-    // Filter orders based on search query
-    val filteredOrders = remember(orders, searchQuery) {
-        if (searchQuery.isBlank()) {
-            orders
-        } else {
-            orders.filter { order ->
-                order.productId.contains(searchQuery, ignoreCase = true) ||
-                order._id.contains(searchQuery, ignoreCase = true) ||
-                order.status.contains(searchQuery, ignoreCase = true)
-            }
-        }
+    // Load orders on initial composition
+    LaunchedEffect(Unit) {
+        viewModel.loadOrders()
     }
     
     // Setup scrolling behavior for the large title (iOS-style)
@@ -109,9 +96,11 @@ fun MyOrdersScreen(
             isRefreshing = isRefreshing,
             onRefresh = {
                 isRefreshing = true
-                // Simulate a refresh
+                // Fetch orders
+                viewModel.loadOrders()
+                // Simulate minimum refresh time for better UX
                 kotlinx.coroutines.GlobalScope.launch {
-                    delay(1500) // Simulate network delay
+                    delay(1000) // Ensure minimum refresh animation time
                     isRefreshing = false
                 }
             }
@@ -124,7 +113,7 @@ fun MyOrdersScreen(
                 // Search field
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = { viewModel.updateSearchQuery(it) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AppTheme.spacing.medium.dp)
@@ -138,7 +127,7 @@ fun MyOrdersScreen(
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
+                            IconButton(onClick = { viewModel.updateSearchQuery("") }) {
                                 Icon(
                                     imageVector = AppIcons.Filled.Clear,
                                     contentDescription = "Clear"
@@ -150,56 +139,110 @@ fun MyOrdersScreen(
                     shape = RoundedCornerShape(DefaultCornerRadius)
                 )
                 
-                if (filteredOrders.isEmpty()) {
-                    // Empty state
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(AppTheme.spacing.medium.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                when {
+                    // Show loading state
+                    isLoading && orders.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = AppIcons.Filled.Schedule,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                            )
-                            
-                            Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
-                            
-                            Text(
-                                text = if (searchQuery.isNotEmpty()) 
-                                    "No orders matching '$searchQuery'" 
-                                else 
-                                    "You don't have any orders yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center
-                            )
+                            CircularProgressIndicator()
                         }
                     }
-                } else {
-                    // Orders list
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            horizontal = AppTheme.spacing.medium.dp,
-                            vertical = AppTheme.spacing.small.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
-                    ) {
-                        items(filteredOrders) { order ->
-                            OrderCard(
-                                order = order,
-                                onClick = { onNavigateToOrderDetails(order._id) }
-                            )
+                    
+                    // Show error state
+                    errorMessage != null -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(AppTheme.spacing.medium.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Filled.Error,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                )
+                                
+                                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+                                
+                                Text(
+                                    text = errorMessage ?: "Failed to load orders",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Center
+                                )
+                                
+                                Spacer(modifier = Modifier.height(AppTheme.spacing.large.dp))
+                                
+                                FilledTonalIconButton(onClick = { viewModel.loadOrders() }) {
+                                    Icon(
+                                        imageVector = AppIcons.Filled.Refresh,
+                                        contentDescription = "Retry"
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Retry")
+                                }
+                            }
                         }
-                        
-                        // Bottom spacing
-                        item {
-                            Spacer(modifier = Modifier.height(AppTheme.spacing.large.dp))
+                    }
+                    
+                    // Show empty state
+                    orders.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(AppTheme.spacing.medium.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Filled.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                                
+                                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+                                
+                                Text(
+                                    text = if (searchQuery.isNotEmpty()) 
+                                        "No orders matching '$searchQuery'" 
+                                    else 
+                                        "You don't have any orders yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Show orders list
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                horizontal = AppTheme.spacing.medium.dp,
+                                vertical = AppTheme.spacing.small.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                        ) {
+                            items(orders) { order ->
+                                OrderCard(
+                                    order = order,
+                                    onClick = { order.orderNumber?.let { onNavigateToOrderDetails(it) } }
+                                )
+                            }
+                            
+                            // Bottom spacing
+                            item {
+                                Spacer(modifier = Modifier.height(AppTheme.spacing.large.dp))
+                            }
                         }
                     }
                 }
@@ -213,37 +256,21 @@ fun MyOrdersScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OrdersTopBar(
+fun OrdersTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     onFilterClick: () -> Unit
 ) {
     LargeTopAppBar(
-        title = {
-            Text(
-                text = "My Orders",
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        },
+        title = { Text("My Orders") },
+        scrollBehavior = scrollBehavior,
         actions = {
-            FilledTonalIconButton(
-                onClick = onFilterClick,
-                modifier = Modifier.padding(end = AppTheme.spacing.small.dp)
-            ) {
+            IconButton(onClick = onFilterClick) {
                 Icon(
                     imageVector = AppIcons.Filled.FilterList,
-                    contentDescription = "Filter Orders"
+                    contentDescription = "Filter"
                 )
             }
-        },
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.largeTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
-        )
+        }
     )
 }
 
@@ -252,87 +279,86 @@ private fun OrdersTopBar(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OrderCard(
-    order: OrderItem,
+fun OrderCard(
+    order: OrderWithUserId,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = AppTheme.spacing.medium.dp,
-                vertical = AppTheme.spacing.small.dp
-            ),
-        shape = RoundedCornerShape(DefaultCornerRadius),
         onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 1.dp
-        )
+            defaultElevation = 2.dp
+        ),
+        shape = RoundedCornerShape(DefaultCornerRadius)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(AppTheme.spacing.medium.dp)
         ) {
-            // Top row with order ID
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Order #${order._id.takeLast(6)}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    text = "Order #${order.orderNumber}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 
-                OrderStatusChip(status = order.status)
+                OrderStatusChip(status = order.status ?: "Unknown")
             }
             
-            Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+            
+            Divider()
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
             
             // Order details
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Order info
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column {
                     Text(
-                        text = "Product ID: ${order.productId}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = "Amount: $${order.amount}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = "Created: ${formatDate(order.createdAt)}",
+                        text = "Amount",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    
+                    Text(
+                        text = "R ${order.amount?.toString() ?: "0.00"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
                 
-                // Arrow icon
-                Icon(
-                    imageVector = AppIcons.Filled.ArrowForward,
-                    contentDescription = "View Details",
-                    tint = MaterialTheme.colorScheme.primary
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Date",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    
+                    Text(
+                        text = formatDate(order.createdAt ?: ""),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            
+            // Reference
+            if (!order.reference.isNullOrBlank()) {
+                Text(
+                    text = "Ref: ${order.reference}",
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
@@ -343,95 +369,26 @@ private fun OrderCard(
  * Chip component for displaying order status
  */
 @Composable
-private fun OrderStatusChip(status: String) {
-    // Define explicit types to avoid ambiguous destructuring
-    val statusInfo: Pair<Color, ImageVector> = when (status.lowercase()) {
-        "completed" -> Pair(MaterialTheme.colorScheme.tertiary, AppIcons.Filled.Check)
-        "processing" -> Pair(MaterialTheme.colorScheme.primary, AppIcons.Filled.Schedule)
-        "pending" -> Pair(MaterialTheme.colorScheme.secondary, AppIcons.Filled.Schedule)
-        else -> Pair(MaterialTheme.colorScheme.error, AppIcons.Filled.Error)
+fun OrderStatusChip(status: String) {
+    val (backgroundColor, contentColor) = when (status.lowercase()) {
+        "completed" -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
+        "pending" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+        "processing" -> MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.onSecondary
+        "cancelled" -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
+        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
-    
-    val color = statusInfo.first
-    val icon = statusInfo.second
     
     Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.padding(4.dp)
+        color = backgroundColor,
+        contentColor = contentColor,
+        shape = CircleShape,
+        modifier = Modifier.clip(CircleShape)
     ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = AppTheme.spacing.small.dp,
-                vertical = 4.dp
-            ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = color
-            )
-            
-            Spacer(modifier = Modifier.width(4.dp))
-            
-            Text(
-                text = status.capitalize(),
-                style = MaterialTheme.typography.labelMedium,
-                color = color
-            )
-        }
+        Text(
+            text = status.capitalize(),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+        )
     }
 }
 
-/**
- * Format a date to a readable string
- */
-private fun formatDate(date: String): String {
-    return try {
-        val localDate = LocalDate.parse(date.split("T")[0])
-        "${localDate.dayOfMonth} ${getMonthName(localDate.monthNumber)} ${localDate.year}"
-    } catch (e: Exception) {
-        date // Fallback to raw date if parsing fails
-    }
-}
-
-/**
- * Get month name from month number
- */
-private fun getMonthName(month: Int): String {
-    return when (month) {
-        1 -> "Jan"
-        2 -> "Feb"
-        3 -> "Mar"
-        4 -> "Apr"
-        5 -> "May"
-        6 -> "Jun"
-        7 -> "Jul"
-        8 -> "Aug"
-        9 -> "Sep"
-        10 -> "Oct"
-        11 -> "Nov"
-        12 -> "Dec"
-        else -> "Unknown"
-    }
-}
-
-/**
- * Extension function to capitalize a string
- */
-private fun String.capitalize(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-}
-
-@Preview
-@Composable
-private fun MyOrdersScreenPreview() {
-    val repository = SampleOrdersRepository.getInstance()
-    
-    MyOrdersScreen(
-        repository = repository,
-        onNavigateToOrderDetails = {}
-    )
-}

@@ -394,6 +394,70 @@ class LivestockWealthApi(private val client: KtorClient) {
         }.body()
     }
     
+    /**
+     * Get my orders from transactions
+     * Returns a list of the user's marketplace orders
+     */
+    suspend fun getMyOrders(): MyOrdersResponse {
+        try {
+            val response = client.client.get {
+                url("/transactions/orders/my-orders")
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw my orders response: $responseText")
+            
+            return response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error fetching my orders: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
+    /**
+     * Get order details by order number from transactions
+     * Returns detailed information about a specific marketplace order
+     */
+    suspend fun getOrderByNumber(orderNumber: Int): OrderWithFullUserResponse {
+        try {
+            val response = client.client.get {
+                url("/transactions/orders/$orderNumber")
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+            println("LivestockWealthApi: Raw order details response: $responseText")
+            
+            // Parse the response
+            val parsedResponse = response.body<OrderWithFullUserResponse>()
+            
+            // Log the parsed object
+            println("LivestockWealthApi: Order details parsed. Success=${parsedResponse.success}")
+            if (parsedResponse.success) {
+                val orderData = parsedResponse.data
+                println("LivestockWealthApi: Order #$orderNumber - Item count: ${orderData.items.size}")
+                println("LivestockWealthApi: Order amount: ${orderData.amount}, status: ${orderData.status}")
+                
+                // Examine items more closely
+                orderData.items.forEachIndexed { index, item ->
+                    println("LivestockWealthApi: Item $index details:")
+                    println("  ID: ${item._id}")
+                    println("  Product Type: ${item.productType}")
+                    println("  Price: ${item.priceOfAsset}")
+                    println("  Is Unallocated: ${item.isUnallocated}")
+                }
+            }
+            
+            return parsedResponse
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error fetching order details: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
     // =============== BENEFICIARY ENDPOINTS ===============
     
     /**

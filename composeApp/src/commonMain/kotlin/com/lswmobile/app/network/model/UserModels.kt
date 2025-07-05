@@ -25,12 +25,12 @@ data class UserResponse(
     val lastLoginDate: String,
     val customerId: Int,
     @SerialName("_preferences")
-    val _preferences: Preferences,
-    val kycVerification: KycVerification,
+    val _preferences: Preferences? = null,
+    val kycVerification: KycVerification? = null,
     val updatedAt: String,
-    val kycDocumentsSubmissionDate: String,
+    val kycDocumentsSubmissionDate: String? = "",
     val lastLoginLocation: String,
-    val avatarUrl: String,
+    val avatarUrl: String? = "",
     val dateOfBirth: String = "",
     val gender: String = "",
     val country: String = "",
@@ -55,7 +55,7 @@ data class UserResponse(
 
     @Serializable
     data class KycVerification(
-        val status: String
+        val status: String = "",
     )
 }
 

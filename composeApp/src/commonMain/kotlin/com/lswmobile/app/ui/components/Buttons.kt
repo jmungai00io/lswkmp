@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -17,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.BrandColors
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Primary button for important actions
@@ -187,5 +191,15 @@ fun LivestockButton(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Composable
+fun BackButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = AppIcons.Filled.Back,
+            contentDescription = "Retry"
+        )
     }
 }

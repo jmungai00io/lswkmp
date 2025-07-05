@@ -13,6 +13,7 @@ import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.di.OrderModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -72,5 +73,11 @@ object KoinModule {
     /**
      * All application modules combined
      */
-    val allModules = listOf(networkModule, databaseModule, repositoryModule, viewModelModule)
+    val allModules = listOf(
+        networkModule, 
+        databaseModule, 
+        repositoryModule, 
+        viewModelModule,
+        OrderModule.orderModule // Include the order module from OrderModule.kt
+    )
 }

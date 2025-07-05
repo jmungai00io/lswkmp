@@ -572,24 +572,106 @@ internal actual object IconProvider {
                     }
                 }
                 
+                "Close" -> {
+                    // X/close symbol
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(19f, 6.41f)
+                        lineTo(17.59f, 5f)
+                        lineTo(12f, 10.59f)
+                        lineTo(6.41f, 5f)
+                        lineTo(5f, 6.41f)
+                        lineTo(10.59f, 12f)
+                        lineTo(5f, 17.59f)
+                        lineTo(6.41f, 19f)
+                        lineTo(12f, 13.41f)
+                        lineTo(17.59f, 19f)
+                        lineTo(19f, 17.59f)
+                        lineTo(13.41f, 12f)
+                        close()
+                    }
+                }
+                
+                "Refresh" -> {
+                    // Refresh/reload circular arrow
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(17.65f, 6.35f)
+                        curveTo(16.2f, 4.9f, 14.21f, 4f, 12f, 4f)
+                        curveTo(7.58f, 4f, 4f, 7.58f, 4f, 12f)
+                        curveTo(4f, 16.42f, 7.58f, 20f, 12f, 20f)
+                        curveTo(15.73f, 20f, 18.84f, 17.45f, 19.73f, 14f)
+                        horizontalLineTo(17.65f)
+                        curveTo(16.83f, 16.33f, 14.61f, 18f, 12f, 18f)
+                        curveTo(8.69f, 18f, 6f, 15.31f, 6f, 12f)
+                        curveTo(6f, 8.69f, 8.69f, 6f, 12f, 6f)
+                        curveTo(13.66f, 6f, 15.14f, 6.69f, 16.22f, 7.78f)
+                        lineTo(13f, 11f)
+                        horizontalLineTo(20f)
+                        verticalLineTo(4f)
+                        lineTo(17.65f, 6.35f)
+                        close()
+                    }
+                }
+                
+                "Back" -> {
+                    // Back arrow (iOS style)
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(17.77f, 3.77f)
+                        lineTo(16f, 2f)
+                        lineTo(6f, 12f)
+                        lineTo(16f, 22f)
+                        lineTo(17.77f, 20.23f)
+                        lineTo(9.54f, 12f)
+                        close()
+                    }
+                }
+                
                 else -> {
                     // Default square shape for other icons like Add, FilterList, etc.
                     path(
-                        fill = SolidColor(Color.Transparent),
-                        stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
                     ) {
-                        // Draw a rectangle using lines
-                        val left = 5f
-                        val top = 5f
-                        val right = 19f
-                        val bottom = 19f
-                        
-                        // Draw the rectangle with individual lines and close it
-                        moveTo(left, top)
-                        lineTo(right, top)
-                        lineTo(right, bottom)
-                        lineTo(left, bottom)
+                        moveTo(3f, 3f)
+                        horizontalLineToRelative(18f)
+                        verticalLineToRelative(18f)
+                        horizontalLineToRelative(-18f)
                         close()
                     }
                 }
@@ -626,6 +708,8 @@ internal actual object IconProvider {
         override val LocationOn: ImageVector = createPlaceholderIcon("LocationOn")
         override val Alarm: ImageVector = createPlaceholderIcon("Alarm")
         override val CheckCircle: ImageVector = createPlaceholderIcon("CheckCircle")
+        override val Refresh: ImageVector = createPlaceholderIcon("Refresh")
+        override val Back: ImageVector = createPlaceholderIcon("Back")
     }
     
     /**

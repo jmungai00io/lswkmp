@@ -41,6 +41,9 @@ object AppIcons {
         val Alarm: ImageVector
         val CheckCircle: ImageVector
         val Error: ImageVector
+
+        val Refresh: ImageVector
+        val Back: ImageVector
     }
     
     interface OutlinedIcons {

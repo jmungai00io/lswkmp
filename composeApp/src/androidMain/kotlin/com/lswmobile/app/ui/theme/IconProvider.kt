@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -67,6 +70,8 @@ internal actual object IconProvider {
         override val LocationOn: ImageVector = Icons.Filled.LocationOn
         override val Alarm: ImageVector = Icons.Filled.Alarm
         override val CheckCircle: ImageVector = Icons.Filled.CheckCircle
+        override val Back: ImageVector = Icons.Filled.ArrowBackIosNew
+        override val Refresh: ImageVector = Icons.Filled.Refresh
     }
     
     /**
