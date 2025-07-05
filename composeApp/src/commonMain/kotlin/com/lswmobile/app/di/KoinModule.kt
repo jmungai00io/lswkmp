@@ -5,6 +5,7 @@ import com.lswmobile.app.config.AppConfig
 import com.lswmobile.app.config.AppConfigFactory
 import com.lswmobile.app.data.repository.CartRepository
 import com.lswmobile.app.data.repository.InMemoryUserRepository
+import com.lswmobile.app.data.repository.KycRepository
 import com.lswmobile.app.data.repository.LocalCartRepository
 import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.KtorClient
@@ -15,6 +16,7 @@ import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.viewmodel.KycViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.di.OrderModule
 import org.koin.core.module.Module
@@ -66,6 +68,7 @@ object KoinModule {
     val repositoryModule = module {
         single { AuthRepository(get(), get()) }
         single { MarketplaceRepository(get()) }
+        single { KycRepository(get()) }
     }
     
     /**
@@ -75,6 +78,7 @@ object KoinModule {
         factory { AuthViewModel(get(), get()) }
         factory { MarketplaceViewModel(get(), get()) }
         factory { UserViewModel(get()) }
+        factory { KycViewModel(get(), get()) }
     }
     
     /**

@@ -25,7 +25,9 @@ import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
 import com.lswmobile.app.ui.screens.cart.CartScreen
 import com.lswmobile.app.ui.screens.profile.KycProcessScreen
+import com.lswmobile.app.ui.screens.profile.KycDocumentUploadScreen
 import com.lswmobile.app.viewmodel.UserViewModel
+import com.lswmobile.app.viewmodel.KycViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -222,17 +224,13 @@ fun MainAppContainer() {
 
                     Screen.KycProcess -> {
                         val user by userViewModel.user.collectAsState()
-                        val isLoading by userViewModel.isLoading.collectAsState()
-                        val error by userViewModel.error.collectAsState()
-                        val isKYCVerified by userViewModel.isKYCVerified.collectAsState()
-                        
-                        KycProcessScreen(
+                        val kycViewModel = koinInject<KycViewModel>()
+                        KycDocumentUploadScreen(
                             user = user,
-                            isLoading = isLoading,
-                            error = error,
-                            isKYCVerified = isKYCVerified,
+                            kycViewModel = kycViewModel,
+                            userViewModel = userViewModel,
                             onNavigateBack = { onScreenSelected(Screen.Profile) },
-                            onRefreshUser = { userViewModel.fetchUser() }
+                            onNavigateToKycInfo = { onScreenSelected(Screen.KycProcess) }
                         )
                     }
                     

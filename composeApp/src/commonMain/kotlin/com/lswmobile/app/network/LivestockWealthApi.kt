@@ -579,4 +579,61 @@ class LivestockWealthApi(private val client: KtorClient) {
             url("/news/$newsId/like")
         }.body()
     }
+    
+    // =============== KYC ENDPOINTS ===============
+    
+    /**
+     * Upload KYC documents
+     */
+    suspend fun uploadKycDocuments(
+        governmentIdBytes: ByteArray,
+        proofOfAddressBytes: ByteArray,
+        selfieBytes: ByteArray,
+        governmentIdFileName: String,
+        proofOfAddressFileName: String,
+        selfieFileName: String
+    ): KycUploadResponse {
+        return try {
+            val response = client.client.submitFormWithBinaryData(
+                url = "/kyc/upload-documents",
+                formData = formData {
+                    append(
+                        "govtId", 
+                        governmentIdBytes, 
+                        Headers.build {
+                            append(HttpHeaders.ContentDisposition, "filename=$governmentIdFileName")
+                        }
+                    )
+                    append(
+                        "proofOfAddress", 
+                        proofOfAddressBytes, 
+                        Headers.build {
+                            append(HttpHeaders.ContentDisposition, "filename=$proofOfAddressFileName")
+                        }
+                    )
+                    append(
+                        "selfie", 
+                        selfieBytes, 
+                        Headers.build {
+                            append(HttpHeaders.ContentDisposition, "filename=$selfieFileName")
+                        }
+                    )
+                }
+            )
+            
+            response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error uploading KYC documents: ${e.message}")
+            throw e
+        }
+    }
+    
+    /**
+     * Get KYC status
+     */
+    suspend fun getKycStatus(): KycStatusResponse {
+        return client.client.get {
+            url("/kyc/status")
+        }.body()
+    }
 }

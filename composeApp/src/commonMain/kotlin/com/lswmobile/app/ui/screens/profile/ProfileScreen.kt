@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
@@ -101,6 +102,20 @@ fun ProfileScreen(
                     textAlign = TextAlign.Center,
                     color = if (isKYCVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
+                
+                // Show KYC button if not VERIFIED
+                val kycStatus = user.kycVerification?.status
+                if (kycStatus != KycStatuses.VERIFIED) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    androidx.compose.material3.Button(
+                        onClick = onNavigateToKycProcess,
+                        modifier = Modifier
+                            .padding(horizontal = 32.dp)
+                            .fillMaxSize(0.7f)
+                    ) {
+                        Text("Verify Identity (KYC)")
+                    }
+                }
             } else {
                 Text(
                     text = "Profile Screen",
