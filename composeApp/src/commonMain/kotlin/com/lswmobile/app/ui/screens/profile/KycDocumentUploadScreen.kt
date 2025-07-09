@@ -1,5 +1,6 @@
 package com.lswmobile.app.ui.screens.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,13 +9,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.ui.screens.CameraScreen
+import com.lswmobile.app.ui.components.CameraPermissionHandler
+import com.lswmobile.app.ui.components.ImagePreview
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.ui.theme.AppTheme
+
 import com.lswmobile.app.viewmodel.KycViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 
@@ -51,6 +58,10 @@ fun KycDocumentUploadScreen(
     val currentKycStatus = user?.kycVerification?.status
     val canProceed = kycViewModel.canProceedWithKyc(currentKycStatus)
     
+    var showCamera by remember { mutableStateOf(false) }
+    var currentDocumentType by remember { mutableStateOf<String?>(null) }
+    var hasPermission by remember { mutableStateOf(false) }
+    
     // Handle upload success
     LaunchedEffect(uploadSuccess) {
         if (uploadSuccess) {
@@ -59,125 +70,142 @@ fun KycDocumentUploadScreen(
         }
     }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("KYC Verification") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Text("← Back")
-                    }
-                }
-            )
+    CameraPermissionHandler(
+        onPermissionGranted = {
+            hasPermission = true
+            kycViewModel.setCameraPermission(true)
+        },
+        onPermissionDenied = {
+            hasPermission = false
+            kycViewModel.setCameraPermission(false)
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // KYC Status Check
-            item {
-                KycStatusCard(
-                    user = user,
-                    canProceed = canProceed,
-                    onProceed = { /* Will be handled by the UI flow */ }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("KYC Verification") },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Text("← Back")
+                        }
+                    }
                 )
             }
-            
-            // Only show upload section if user can proceed
-            if (canProceed) {
-                // Information Section
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // KYC Status Check
                 item {
-                    KycInformationCard()
+                    KycStatusCard(
+                        user = user,
+                        canProceed = canProceed,
+                        onProceed = { /* Will be handled by the UI flow */ }
+                    )
                 }
                 
-                // Camera Permission Section
-                item {
-                    CameraPermissionCard(
-                        hasPermission = hasCameraPermission,
-                        onRequestPermission = {
-                            // This will be handled by platform-specific code
-                            kycViewModel.setCameraPermission(true)
+                // Only show upload section if user can proceed
+                if (canProceed) {
+                    // Information Section
+                    item {
+                        KycInformationCard()
+                    }
+                
+                    // Document Upload Sections
+                    item {
+                        DocumentUploadSection(
+                            title = "Government ID",
+                            description = "Upload a clear photo of your government-issued ID (passport, driver's license, national ID)",
+                            imageBytes = governmentIdBytes,
+                            fileName = governmentIdFileName,
+                            onUpload = {
+                                currentDocumentType = "Government ID"
+                                showCamera = true
+                            },
+                            onRemove = { kycViewModel.removeGovernmentId() }
+                        )
+                    }
+                    
+                    item {
+                        DocumentUploadSection(
+                            title = "Proof of Address",
+                            description = "Upload a recent utility bill, bank statement, or lease agreement",
+                            imageBytes = proofOfAddressBytes,
+                            fileName = proofOfAddressFileName,
+                            onUpload = {
+                                currentDocumentType = "Proof of Address"
+                                showCamera = true
+                            },
+                            onRemove = { kycViewModel.removeProofOfAddress() }
+                        )
+                    }
+                    
+                    item {
+                        DocumentUploadSection(
+                            title = "Selfie with ID",
+                            description = "Take a selfie while holding your government ID",
+                            imageBytes = selfieBytes,
+                            fileName = selfieFileName,
+                            onUpload = {
+                                currentDocumentType = "Selfie with ID"
+                                showCamera = true
+                            },
+                            onRemove = { kycViewModel.removeSelfie() }
+                        )
+                    }
+                    
+                    // Submit Button
+                    item {
+                        SubmitButton(
+                            isSubmitting = isSubmitting,
+                            canSubmit = kycViewModel.areDocumentsReady(),
+                            onSubmit = { kycViewModel.submitDocuments() }
+                        )
+                    }
+                    
+                    // Error Message
+                    if (error != null) {
+                        item {
+                            ErrorCard(
+                                message = error!!,
+                                onDismiss = { kycViewModel.clearError() }
+                            )
                         }
-                    )
-                }
-                
-                // Document Upload Sections
-                item {
-                    DocumentUploadSection(
-                        title = "Government ID",
-                        description = "Upload a clear photo of your government-issued ID (passport, driver's license, national ID)",
-                        hasDocument = governmentIdBytes != null,
-                        fileName = governmentIdFileName,
-                        onUpload = {
-                            // This will be handled by platform-specific camera/gallery picker
-                            // For now, we'll simulate with dummy data
-                            val dummyBytes = "dummy_id_data".encodeToByteArray()
-                            kycViewModel.setGovernmentId(dummyBytes, "government_id.jpg")
-                        },
-                        onRemove = { kycViewModel.removeGovernmentId() }
-                    )
-                }
-                
-                item {
-                    DocumentUploadSection(
-                        title = "Proof of Address",
-                        description = "Upload a recent utility bill, bank statement, or lease agreement",
-                        hasDocument = proofOfAddressBytes != null,
-                        fileName = proofOfAddressFileName,
-                        onUpload = {
-                            val dummyBytes = "dummy_address_data".encodeToByteArray()
-                            kycViewModel.setProofOfAddress(dummyBytes, "proof_of_address.jpg")
-                        },
-                        onRemove = { kycViewModel.removeProofOfAddress() }
-                    )
-                }
-                
-                item {
-                    DocumentUploadSection(
-                        title = "Selfie with ID",
-                        description = "Take a selfie while holding your government ID",
-                        hasDocument = selfieBytes != null,
-                        fileName = selfieFileName,
-                        onUpload = {
-                            val dummyBytes = "dummy_selfie_data".encodeToByteArray()
-                            kycViewModel.setSelfie(dummyBytes, "selfie_with_id.jpg")
-                        },
-                        onRemove = { kycViewModel.removeSelfie() }
-                    )
-                }
-                
-                // Submit Button
-                item {
-                    SubmitButton(
-                        isSubmitting = isSubmitting,
-                        canSubmit = kycViewModel.areDocumentsReady(),
-                        onSubmit = { kycViewModel.submitDocuments() }
-                    )
-                }
-                
-                // Error Message
-                if (error != null) {
-                    item {
-                        ErrorCard(
-                            message = error!!,
-                            onDismiss = { kycViewModel.clearError() }
-                        )
+                    }
+                    
+                    // Upload Message
+                    if (uploadMessage != null) {
+                        item {
+                            UploadMessageCard(
+                                message = uploadMessage!!,
+                                isSuccess = uploadSuccess
+                            )
+                        }
                     }
                 }
-                
-                // Upload Message
-                if (uploadMessage != null) {
-                    item {
-                        UploadMessageCard(
-                            message = uploadMessage!!,
-                            isSuccess = uploadSuccess
-                        )
+            }
+            
+            // Camera overlay
+            if (showCamera) {
+                CameraScreen(
+                    onPhotoTaken = { photoBytes ->
+                        when (currentDocumentType) {
+                            "Government ID" -> kycViewModel.setGovernmentId(photoBytes, "government_id.jpg")
+                            "Proof of Address" -> kycViewModel.setProofOfAddress(photoBytes, "proof_of_address.jpg")
+                            "Selfie with ID" -> kycViewModel.setSelfie(photoBytes, "selfie.jpg")
+                        }
+                        showCamera = false
+                        currentDocumentType = null
+                    },
+                    onNavigateBack = {
+                        showCamera = false
+                        currentDocumentType = null
                     }
-                }
+                )
             }
         }
     }
@@ -307,71 +335,19 @@ private fun KycInformationCard() {
 }
 
 @Composable
-private fun CameraPermissionCard(
-    hasPermission: Boolean,
-    onRequestPermission: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasPermission) 
-                MaterialTheme.colorScheme.surface 
-            else 
-                MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = if (hasPermission) "📷 Camera Access Granted" else "📷 Camera Permission Required",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = if (hasPermission) 
-                    "You can now take photos for your KYC documents." 
-                else 
-                    "Camera access is required to take photos of your documents and selfie.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
-            
-            if (!hasPermission) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onRequestPermission,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Grant Camera Permission")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun DocumentUploadSection(
     title: String,
     description: String,
-    hasDocument: Boolean,
+    imageBytes: ByteArray?,
     fileName: String?,
     onUpload: () -> Unit,
     onRemove: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (hasDocument) 
-                MaterialTheme.colorScheme.surface 
-            else 
-                MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -387,54 +363,25 @@ private fun DocumentUploadSection(
             
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
             )
             
             Spacer(modifier = Modifier.height(16.dp))
-            
-            if (hasDocument) {
-                // Document uploaded state
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("✓", color = MaterialTheme.colorScheme.primary)
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Document Uploaded",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        fileName?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    
-                    TextButton(onClick = onRemove) {
-                        Text("Remove", color = MaterialTheme.colorScheme.error)
-                    }
-                }
+
+            if (imageBytes != null) {
+                // Use the new ImagePreview component
+                ImagePreview(
+                    imageBytes = imageBytes,
+                    title = title,
+                    fileName = fileName,
+                    onRemove = onRemove
+                )
             } else {
-                // Upload button
-                OutlinedButton(
+                Button(
                     onClick = onUpload,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = true
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Upload $title")
+                    Text("Take Photo of $title")
                 }
             }
         }
@@ -532,4 +479,4 @@ private fun UploadMessageCard(
             )
         }
     }
-} 
+}
