@@ -30,7 +30,7 @@ data class OrderItem(
     @SerialName("_id")
     val _id: String = "",
     val productType: String = "",
-    val farmLand: String? = null,
+    val farmLand: Farmland? = null,
     val asset: String? = null,
     val order: String? = null,
     val user: String? = null,
@@ -192,9 +192,19 @@ data class NotifyAvailableBody(
 )
 
 /**
+ * Payment completion types
+ */
+object PaymentCompletionType {
+    const val TOPUP_ONLY = "PureTopUp"
+    const val PARTIAL_TOPUP = "PartialOrderPay"
+    const val FULL_PAYMENT = "CompleteOrderPay"
+}
+
+/**
  * Payment body
  */
 @Serializable
 data class PaymentBody(
-    val paymentMethod: String
+    val paymentMethod: String,
+    val paymentType: String
 )

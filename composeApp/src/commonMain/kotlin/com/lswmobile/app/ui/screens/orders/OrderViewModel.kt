@@ -3,6 +3,7 @@ package com.lswmobile.app.ui.screens.orders
 import com.lswmobile.app.network.model.OrderWithFullUser
 import com.lswmobile.app.network.model.OrderWithUserId
 import com.lswmobile.app.network.repository.OrderRepository
+import com.lswmobile.app.network.repository.WalletService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,10 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for order management screens
  */
-class OrderViewModel(private val repository: OrderRepository) {
+class OrderViewModel(
+    private val repository: OrderRepository,
+    private val walletService: WalletService
+) {
     
     private val viewModelScope = CoroutineScope(Dispatchers.Main)
     
@@ -44,6 +48,13 @@ class OrderViewModel(private val repository: OrderRepository) {
     
     private val _filteredOrders = MutableStateFlow<List<OrderWithUserId>>(emptyList())
     val filteredOrders: StateFlow<List<OrderWithUserId>> = _filteredOrders.asStateFlow()
+    
+    // Wallet state
+    private val _walletBalance = MutableStateFlow(0.0)
+    val walletBalance: StateFlow<Double> = _walletBalance.asStateFlow()
+    
+    private val _isProcessingWalletPayment = MutableStateFlow(false)
+    val isProcessingWalletPayment: StateFlow<Boolean> = _isProcessingWalletPayment.asStateFlow()
     
     init {
         // Observe repository states
@@ -142,6 +153,49 @@ class OrderViewModel(private val repository: OrderRepository) {
                     order.orderNumber.toString().contains(query) ||
                     order.status?.lowercase()?.contains(query) == true
                 }
+            }
+        }
+    }
+    
+    /**
+     * Load wallet balance
+     */
+    fun loadWalletBalance() {
+        viewModelScope.launch {
+            try {
+                val balance = walletService.getWalletBalance()
+                _walletBalance.value = balance
+            } catch (e: Exception) {
+                println("OrderViewModel: Error loading wallet balance: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * Check if wallet has sufficient balance for payment
+     */
+    suspend fun hasSufficientBalance(amount: Double): Boolean {
+        return walletService.hasSufficientBalance(amount)
+    }
+    
+    /**
+     * Process wallet payment
+     */
+    fun processWalletPayment(orderNumber: Int, amount: Double) {
+        viewModelScope.launch {
+            try {
+                _isProcessingWalletPayment.value = true
+                val success = walletService.processWalletPayment(orderNumber, amount)
+                if (success) {
+                    // Refresh order details after successful payment
+                    loadOrderDetails(orderNumber)
+                    // Refresh wallet balance
+                    loadWalletBalance()
+                }
+            } catch (e: Exception) {
+                println("OrderViewModel: Error processing wallet payment: ${e.message}")
+            } finally {
+                _isProcessingWalletPayment.value = false
             }
         }
     }

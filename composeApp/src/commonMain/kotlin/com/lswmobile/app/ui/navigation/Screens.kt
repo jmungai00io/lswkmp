@@ -35,8 +35,8 @@ sealed class Screen(
     object ViewWithdrawal : Screen("view_withdrawal", "Withdrawal Details", hasBottomBar = false)
     object AddBeneficiary : Screen("add_beneficiary", "Add Beneficiary", hasBottomBar = false)
     object MyBeneficiaries : Screen("my_beneficiaries", "My Beneficiaries", hasBottomBar = true)
-    object EftPayment : Screen("eft_payment", "EFT Payment", hasBottomBar = false)
-    object DebitPayment : Screen("debit_payment", "Debit Payment", hasBottomBar = false)
+    object EftPayment : Screen("eft_payment/{orderNumber}", "EFT Payment", hasBottomBar = false)
+    object DebitPayment : Screen("debit_payment/{orderNumber}", "Debit Payment", hasBottomBar = false)
     
     // Profile graph
     object KycProcess : Screen("kyc_process", "KYC Process", hasBottomBar = false)

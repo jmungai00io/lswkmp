@@ -52,7 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.lswmobile.app.data.sample.SampleFinanceRepository
 import com.lswmobile.app.network.model.Statement
 import com.lswmobile.app.ui.components.PullToRefreshContainer
 import com.lswmobile.app.ui.theme.AppIcons
@@ -72,7 +71,7 @@ import kotlin.math.absoluteValue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
-    repository: SampleFinanceRepository,
+
     onNavigateToPortfolio: () -> Unit,
     onNavigateToAssets: () -> Unit,
     onNavigateToStatement: () -> Unit,
@@ -80,8 +79,8 @@ fun WalletScreen(
     onRequestWithdrawal: () -> Unit
 ) {
     // Collect data from the repository
-    val walletOverview by repository.walletOverview.collectAsState(initial = null)
-    val statements by repository.statements.collectAsState(initial = emptyList())
+//    val walletOverview by repository.walletOverview.collectAsState(initial = null)
+//    val statements by repository.statements.collectAsState(initial = emptyList())
     
     // Track pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
@@ -118,12 +117,12 @@ fun WalletScreen(
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
             ) {
                 // Balance Card
-                item {
-                    BalanceCard(
-                        balance = walletOverview?.balance ?: 0.0,
-                        onRequestWithdrawal = onRequestWithdrawal
-                    )
-                }
+//                item {
+//                    BalanceCard(
+//                        balance = walletOverview?.balance ?: 0.0,
+//                        onRequestWithdrawal = onRequestWithdrawal
+//                    )
+//                }
                 
                 // Quick Actions
                 item {
@@ -149,9 +148,9 @@ fun WalletScreen(
                 }
                 
                 // Transaction items
-                items(statements.take(10)) { statement ->
-                    TransactionItem(statement = statement)
-                }
+//                items(statements.take(10)) { statement ->
+//                    TransactionItem(statement = statement)
+//                }
                 
                 // View All button
                 item {
@@ -459,10 +458,10 @@ private fun getMonthName(month: Int): String {
 @Preview
 @Composable
 private fun WalletScreenPreview() {
-    val repository = SampleFinanceRepository.getInstance()
+//    val repository = SampleFinanceRepository.getInstance()
     
     WalletScreen(
-        repository = repository,
+//        repository = repository,
         onNavigateToPortfolio = {},
         onNavigateToAssets = {},
         onNavigateToStatement = {},
