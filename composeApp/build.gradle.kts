@@ -40,7 +40,10 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            // Ensure resources are included in the framework
+            export(compose.components.resources)
         }
+
     }
     
     sourceSets {
@@ -53,10 +56,18 @@ kotlin {
             // Material Icons - Android only
             implementation("androidx.compose.material:material-icons-core:1.5.4")
             implementation("androidx.compose.material:material-icons-extended:1.5.4")
+            
+            // CameraX dependencies
+            implementation("androidx.camera:camera-core:1.3.1")
+            implementation("androidx.camera:camera-camera2:1.3.1")
+            implementation("androidx.camera:camera-lifecycle:1.3.1")
+            implementation("androidx.camera:camera-view:1.3.1")
+            implementation("androidx.camera:camera-extensions:1.3.1")
         }
         
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            api(compose.components.resources)
         }
         
         commonMain.dependencies {
@@ -84,6 +95,9 @@ kotlin {
             // Koin for Dependency Injection
             implementation("io.insert-koin:koin-core:3.5.0")
             implementation("io.insert-koin:koin-compose:1.1.0")
+            
+            // Permissions
+            implementation("dev.icerock.moko:permissions-compose:0.18.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -177,14 +191,12 @@ android {
     }
 }
 
-// Fix for syncComposeResourcesForIos task configuration issues
+// Enable syncComposeResourcesForIos task to ensure resources are properly included in iOS bundle
 tasks.named("syncComposeResourcesForIos") {
-    enabled = false  // Completely disable this task
-    outputs.upToDateWhen { true }  // Make it always up-to-date
+    enabled = true
 }
 
 dependencies {
+    implementation(libs.androidx.camera.lifecycle)
     debugImplementation(compose.uiTooling)
 }
-
-

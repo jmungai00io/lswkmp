@@ -35,7 +35,8 @@ fun CartScreen(
     isOrdering: Boolean = false,
     orderMessage: String? = null,
     orderSuccess: Boolean = false,
-    onDismissOrderDialog: () -> Unit = {}
+    onDismissOrderDialog: () -> Unit = {},
+    onBack: () -> Unit
 ) {
     // Show order dialog if there's an order message or if ordering is in progress
     val showOrderDialog = isOrdering || orderMessage != null
@@ -111,6 +112,14 @@ fun CartScreen(
                             fontWeight = FontWeight.Bold
                         )
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = AppIcons.Filled.Back,
+                            contentDescription = "Back"
+                        )
+                    }
                 },
                 actions = {
                     if (cartSummary.itemCount > 0) {

@@ -75,9 +75,7 @@ class KtorClient(
                 }
                 
                 sendWithoutRequest { request ->
-                    // Always check for auth header to help troubleshoot auth issues
-                    val authHeader = request.headers["Authorization"]
-                    println("KtorClient: Request to ${request.url.encodedPath} - Auth header present: ${authHeader != null}")
+                    // Don't send auth for auth endpoints
                     !request.url.encodedPath.contains("/auth/")
                 }
             }

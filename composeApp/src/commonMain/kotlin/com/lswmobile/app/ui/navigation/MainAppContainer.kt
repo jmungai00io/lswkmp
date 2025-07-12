@@ -201,7 +201,8 @@ fun MainAppContainer() {
                                 if (orderSuccess) {
                                     marketplaceViewModel.clearCart()
                                 }
-                            }
+                            },
+                            onBack = { onScreenSelected(Screen.MarketPlace) }
                         )
                     }
                    

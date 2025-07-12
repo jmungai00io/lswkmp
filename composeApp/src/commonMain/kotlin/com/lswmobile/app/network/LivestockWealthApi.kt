@@ -6,6 +6,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -594,36 +595,43 @@ class LivestockWealthApi(private val client: KtorClient) {
         selfieFileName: String
     ): KycUploadResponse {
         return try {
-            val response = client.client.submitFormWithBinaryData(
-                url = "/kyc/upload-documents",
-                formData = formData {
-                    append(
-                        "govtId", 
-                        governmentIdBytes, 
-                        Headers.build {
-                            append(HttpHeaders.ContentDisposition, "filename=$governmentIdFileName")
-                        }
-                    )
-                    append(
-                        "proofOfAddress", 
-                        proofOfAddressBytes, 
-                        Headers.build {
-                            append(HttpHeaders.ContentDisposition, "filename=$proofOfAddressFileName")
-                        }
-                    )
-                    append(
-                        "selfie", 
-                        selfieBytes, 
-                        Headers.build {
-                            append(HttpHeaders.ContentDisposition, "filename=$selfieFileName")
-                        }
-                    )
-                }
-            )
+            println("LivestockWealthApi: Starting KYC document upload")
+            println("LivestockWealthApi: Government ID size: ${governmentIdBytes.size} bytes, filename: $governmentIdFileName")
+            println("LivestockWealthApi: Proof of Address size: ${proofOfAddressBytes.size} bytes, filename: $proofOfAddressFileName")
+            println("LivestockWealthApi: Selfie size: ${selfieBytes.size} bytes, filename: $selfieFileName")
+            println("LivestockWealthApi: Using MultiPartFormDataContent with explicit boundary")
             
-            response.body()
+            val response = client.client.post("/kyc/upload-documents") {
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append("govtId", governmentIdBytes, Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "form-data; name=\"govtId\"; filename=\"$governmentIdFileName\"")
+                            })
+                            append("proofOfAddress", proofOfAddressBytes, Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "form-data; name=\"proofOfAddress\"; filename=\"$proofOfAddressFileName\"")
+                            })
+                            append("selfie", selfieBytes, Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "form-data; name=\"selfie\"; filename=\"$selfieFileName\"")
+                            })
+                        },
+                        boundary = "WebAppBoundary"
+                    )
+                )
+            }
+            
+            println("LivestockWealthApi: KYC document upload completed successfully")
+            println("LivestockWealthApi: Response status: ${response.status}")
+            println("LivestockWealthApi: Response headers: ${response.headers}")
+            val responseBody: KycUploadResponse = response.body()
+            println("LivestockWealthApi: Response body: $responseBody")
+            responseBody
         } catch (e: Exception) {
             println("LivestockWealthApi: Error uploading KYC documents: ${e.message}")
+            e.printStackTrace()
             throw e
         }
     }
