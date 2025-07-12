@@ -1,8 +1,10 @@
 package com.lswmobile.app.di
 
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.repository.OrderRepository
 import com.lswmobile.app.network.repository.WalletService
 import com.lswmobile.app.ui.screens.orders.OrderViewModel
+import com.lswmobile.app.ui.screens.payment.DebitPaymentViewModel
 import com.lswmobile.app.ui.screens.payment.EftPaymentViewModel
 import org.koin.dsl.module
 
@@ -22,5 +24,8 @@ object OrderModule {
         
         // Create a single instance of EftPaymentViewModel
         single { EftPaymentViewModel(get(), get(), get()) }
+        
+        // Create a single instance of DebitPaymentViewModel
+        single { DebitPaymentViewModel(get(), get(), get(), get()) }
     }
 }

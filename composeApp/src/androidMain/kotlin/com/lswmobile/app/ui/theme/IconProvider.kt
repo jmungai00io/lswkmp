@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Newspaper
@@ -72,6 +73,7 @@ internal actual object IconProvider {
         override val CheckCircle: ImageVector = Icons.Filled.CheckCircle
         override val Back: ImageVector = Icons.Filled.ArrowBackIosNew
         override val Refresh: ImageVector = Icons.Filled.Refresh
+        override val KeyboardArrowDown: ImageVector = Icons.Filled.KeyboardArrowDown
     }
     
     /**

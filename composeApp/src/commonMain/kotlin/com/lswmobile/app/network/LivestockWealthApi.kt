@@ -558,9 +558,29 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun setupDebitOrder(debitOrderBody: DebitOrderBody): JsonObject {
         return client.client.post {
-            url("/finance/debit-order")
+            url("/transactions/debit-orders")
             setBody(debitOrderBody)
         }.body()
+    }
+    
+    /**
+     * Get local banks
+     */
+    suspend fun getLocalBanks(): BanksResponse {
+        return try {
+            println("LivestockWealthApi: Starting getLocalBanks request")
+            val response = client.client.get {
+                url("/transactions/local-banks")
+            }
+            println("LivestockWealthApi: getLocalBanks response status: ${response.status}")
+            val body = response.body<BanksResponse>()
+            println("LivestockWealthApi: getLocalBanks response body: $body")
+            body
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error in getLocalBanks: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
     
     /**

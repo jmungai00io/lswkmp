@@ -19,6 +19,7 @@ import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
 import com.lswmobile.app.ui.screens.orders.OrderDetailScreen
 import com.lswmobile.app.ui.screens.orders.OrderViewModel
 import com.lswmobile.app.ui.screens.payment.DebitPaymentScreen
+import com.lswmobile.app.ui.screens.payment.DebitPaymentViewModel
 import com.lswmobile.app.ui.screens.payment.EftPaymentScreen
 import com.lswmobile.app.ui.screens.payment.EftPaymentViewModel
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
@@ -44,6 +45,7 @@ fun MainAppContainer() {
     val orderViewModel = koinInject<OrderViewModel>()
     val userViewModel = koinInject<UserViewModel>()
     val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
+    val debitPaymentViewModel = koinInject<DebitPaymentViewModel>()
     
 //    val financeRepo = remember { SampleFinanceRepository.getInstance() }
     
@@ -277,7 +279,13 @@ fun MainAppContainer() {
                                 onNavigateBack = {
                                     // Go back to order detail
                                     onScreenSelected(Screen.ViewOrder)
-                                }
+                                },
+                                onPaymentSuccess = {
+                                    // Navigate back to order detail after successful payment
+                                    onScreenSelected(Screen.ViewOrder)
+                                },
+                                viewModel = debitPaymentViewModel,
+                                orderViewModel = orderViewModel
                             )
                         } ?: run {
                             // Fallback if no order number is provided
