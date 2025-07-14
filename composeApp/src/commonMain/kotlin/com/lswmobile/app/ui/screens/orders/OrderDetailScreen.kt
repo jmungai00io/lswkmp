@@ -623,7 +623,7 @@ fun InsufficientBalanceDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Pay with Debit Card")
+                    Text("Pay with Debit Order")
                 }
             }
         },

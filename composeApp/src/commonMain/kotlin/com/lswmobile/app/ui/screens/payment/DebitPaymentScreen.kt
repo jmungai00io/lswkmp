@@ -82,13 +82,45 @@ fun DebitPaymentScreen(
     val mandateError by viewModel.mandateError.collectAsState()
     val signTouched by viewModel.signTouched.collectAsState()
     
-    // Default to full payment type for now
-    val paymentType = PaymentType.FULL_PAYMENT
+    // Payment type selection
+    var selectedPaymentType by remember { mutableStateOf<PaymentType?>(null) }
     
-    // Calculate payment amount
-    val paymentAmount = remember(selectedOrder, walletBalance, paymentType) {
+    // Calculate available payment types based on wallet balance
+    val availablePaymentTypes = remember(selectedOrder, walletBalance) {
         selectedOrder?.let { order ->
-            viewModel.calculatePaymentAmount(order.amount, walletBalance, paymentType)
+            val orderAmount = order.amount
+            val balance = walletBalance
+            
+            val types = if (balance >= orderAmount) {
+                // Can pay full amount with wallet, but still offer both options
+                listOf(PaymentType.FULL_PAYMENT, PaymentType.PARTIAL_TOPUP)
+            } else if (balance > 0) {
+                // Can pay partially with wallet
+                listOf(PaymentType.PARTIAL_TOPUP, PaymentType.FULL_PAYMENT)
+            } else {
+                // No wallet balance, only full payment
+                listOf(PaymentType.FULL_PAYMENT)
+            }
+            
+            println("DebitPaymentScreen: Order amount: $orderAmount, Wallet balance: $balance")
+            println("DebitPaymentScreen: Available payment types: $types")
+            types
+        } ?: listOf(PaymentType.FULL_PAYMENT)
+    }
+    
+    // Set default payment type
+    LaunchedEffect(availablePaymentTypes) {
+        if (selectedPaymentType == null && availablePaymentTypes.isNotEmpty()) {
+            selectedPaymentType = availablePaymentTypes.first()
+        }
+    }
+    
+    // Calculate payment amount based on selected type
+    val paymentAmount = remember(selectedOrder, walletBalance, selectedPaymentType) {
+        selectedOrder?.let { order ->
+            selectedPaymentType?.let { paymentType ->
+                viewModel.calculatePaymentAmount(order.amount, walletBalance, paymentType)
+            }
         } ?: 0.0
     }
     
@@ -143,6 +175,24 @@ fun DebitPaymentScreen(
                     .padding(AppTheme.spacing.medium.dp)
             )
             
+            // Payment Type Selection Card (only on step 1)
+            LaunchedEffect(currentStep, availablePaymentTypes.size) {
+                println("DebitPaymentScreen: Current step: $currentStep, Available payment types: ${availablePaymentTypes.size}")
+                println("DebitPaymentScreen: Should show payment type card: ${currentStep == 1 && availablePaymentTypes.size > 1}")
+            }
+            
+            if (currentStep == 1 && availablePaymentTypes.size > 1) {
+                PaymentTypeSelectionCard(
+                    availablePaymentTypes = availablePaymentTypes,
+                    selectedPaymentType = selectedPaymentType,
+                    onPaymentTypeSelected = { selectedPaymentType = it },
+                    selectedOrder = selectedOrder,
+                    paymentAmount = paymentAmount
+                )
+                
+                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            }
+            
             // Content area with weight to take available space
             Box(
                 modifier = Modifier
@@ -185,7 +235,10 @@ fun DebitPaymentScreen(
                         paymentAmount = paymentAmount,
                         isLoading = isLoading,
                         errorMessage = errorMessage,
-                        isStepValid = viewModel.isStep1Valid()
+                        isStepValid = viewModel.isStep1Valid(),
+                        availablePaymentTypes = availablePaymentTypes,
+                        selectedPaymentType = selectedPaymentType,
+                        onPaymentTypeSelected = { selectedPaymentType = it }
                     )
                     2 -> DebitMandateStep(
                         fullName = fullName,
@@ -227,7 +280,9 @@ fun DebitPaymentScreen(
                 },
                 onConfirm = {
                     println("DebitPaymentScreen: Submitting debit payment")
-                    viewModel.confirmDebitPayment(orderNumber, paymentType, onPaymentSuccess)
+                    selectedPaymentType?.let { paymentType ->
+                        viewModel.confirmDebitPayment(orderNumber, paymentType, onPaymentSuccess)
+                    }
                 },
                 isConfirming = isConfirming,
                 isStepValid = if (currentStep == 1) step1Valid else step2Valid
@@ -364,7 +419,10 @@ private fun DebitPaymentForm(
     paymentAmount: Double,
     isLoading: Boolean,
     errorMessage: String?,
-    isStepValid: Boolean
+    isStepValid: Boolean,
+    availablePaymentTypes: List<PaymentType>,
+    selectedPaymentType: PaymentType?,
+    onPaymentTypeSelected: (PaymentType) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -377,10 +435,13 @@ private fun DebitPaymentForm(
             orderNumber = orderNumber,
             selectedOrder = selectedOrder,
             walletBalance = walletBalance,
-            paymentAmount = paymentAmount
+            paymentAmount = paymentAmount,
+            selectedPaymentType = selectedPaymentType
         )
         
         Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+        
+
         
         // Loading indicator
         if (isLoading) {
@@ -681,7 +742,8 @@ private fun PaymentSummaryCard(
     orderNumber: Int,
     selectedOrder: OrderWithFullUser?,
     walletBalance: Double,
-    paymentAmount: Double
+    paymentAmount: Double,
+    selectedPaymentType: PaymentType? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -711,6 +773,10 @@ private fun PaymentSummaryCard(
             DetailRow("Wallet Balance", formatCurrency(walletBalance))
             DetailRow("Order Amount", formatCurrency(selectedOrder?.amount ?: 0.0))
             DetailRow("Payment Method", "Debit Order")
+            
+            if (selectedPaymentType == PaymentType.PARTIAL_TOPUP && walletBalance > 0) {
+                DetailRow("Wallet Contribution", formatCurrency(walletBalance))
+            }
             
             Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
             
@@ -1120,6 +1186,111 @@ private fun BottomActionButtons(
                             Text("Processing...")
                         } else {
                             Text("Submit Debit")
+                        }
+                    }
+                }
+            }
+        }
+    }
+} 
+
+@Composable
+private fun PaymentTypeSelectionCard(
+    availablePaymentTypes: List<PaymentType>,
+    selectedPaymentType: PaymentType?,
+    onPaymentTypeSelected: (PaymentType) -> Unit,
+    selectedOrder: OrderWithFullUser?,
+    paymentAmount: Double
+) {
+    if (availablePaymentTypes.size > 1) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(DefaultCornerRadius),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppTheme.spacing.medium.dp)
+            ) {
+                Text(
+                    text = "Payment Type",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                
+                Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                
+                availablePaymentTypes.forEach { paymentType ->
+                    val isSelected = selectedPaymentType == paymentType
+                    val description = when (paymentType) {
+                        PaymentType.FULL_PAYMENT -> "Pay the full order amount (R${selectedOrder?.amount ?: 0.0})"
+                        PaymentType.PARTIAL_TOPUP -> "Pay remaining amount after wallet (R${paymentAmount})"
+                        PaymentType.TOPUP_ONLY -> "Top up wallet only"
+                    }
+                    
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surface
+                            }
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(AppTheme.spacing.medium.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { onPaymentTypeSelected(paymentType) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    }
+                                )
+                            )
+                            
+                            Spacer(modifier = Modifier.width(AppTheme.spacing.small.dp))
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = when (paymentType) {
+                                        PaymentType.FULL_PAYMENT -> "Complete Order Payment"
+                                        PaymentType.PARTIAL_TOPUP -> "Partial Order Payment"
+                                        PaymentType.TOPUP_ONLY -> "Top Up Only"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                                
+                                Text(
+                                    text = description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
                         }
                     }
                 }
