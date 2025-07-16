@@ -14,11 +14,17 @@ import com.lswmobile.app.network.SimpleTokenProvider
 import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
+import com.lswmobile.app.network.repository.UserRepository as NetworkUserRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
+import com.lswmobile.app.viewmodel.UpdateProfileViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.di.OrderModule
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -49,6 +55,9 @@ object KoinModule {
         
         // API Service - Use factory to always get current instance
         factory { LivestockWealthApi(get()) }
+        
+        // CoroutineScope for ViewModels
+        factory { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
     }
     
     /**
@@ -69,6 +78,7 @@ object KoinModule {
         single { AuthRepository(get(), get()) }
         single { MarketplaceRepository(get()) }
         single { KycRepository(get()) }
+        single { NetworkUserRepository(get()) }
     }
     
     /**
@@ -79,6 +89,8 @@ object KoinModule {
         factory { MarketplaceViewModel(get(), get()) }
         factory { UserViewModel(get()) }
         factory { KycViewModel(get(), get()) }
+        factory { BeneficiaryViewModel(get(), get()) }
+        factory { UpdateProfileViewModel(get<NetworkUserRepository>(), get()) }
     }
     
     /**

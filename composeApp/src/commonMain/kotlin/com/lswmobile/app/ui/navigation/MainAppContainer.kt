@@ -29,6 +29,11 @@ import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
 import com.lswmobile.app.ui.screens.cart.CartScreen
 import com.lswmobile.app.ui.screens.profile.KycProcessScreen
 import com.lswmobile.app.ui.screens.profile.KycDocumentUploadScreen
+import com.lswmobile.app.ui.screens.profile.AccountVerificationScreen
+import com.lswmobile.app.ui.screens.profile.UpdateProfileScreen
+import com.lswmobile.app.ui.screens.profile.AddBeneficiaryScreen
+import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
+import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
 import org.koin.compose.koinInject
@@ -44,6 +49,7 @@ fun MainAppContainer() {
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     val orderViewModel = koinInject<OrderViewModel>()
     val userViewModel = koinInject<UserViewModel>()
+    val beneficiaryViewModel = koinInject<BeneficiaryViewModel>()
     val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
     val debitPaymentViewModel = koinInject<DebitPaymentViewModel>()
     
@@ -76,8 +82,11 @@ fun MainAppContainer() {
             currentRoute == Screen.RequestWithdrawal.route -> Screen.RequestWithdrawal
             currentRoute == Screen.MyWithdrawals.route -> Screen.MyWithdrawals
             currentRoute == Screen.ViewWithdrawal.route -> Screen.ViewWithdrawal
+            currentRoute == Screen.AccountVerification.route -> Screen.AccountVerification
             currentRoute == Screen.KycProcess.route -> Screen.KycProcess
-            currentRoute == Screen.UpdateUser.route -> Screen.UpdateUser
+            currentRoute == Screen.UpdateProfile.route -> Screen.UpdateProfile
+            currentRoute == Screen.AddBeneficiary.route -> Screen.AddBeneficiary
+            currentRoute == Screen.MyBeneficiaries.route -> Screen.MyBeneficiaries
             currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
             else -> Screen.MarketPlace // Default fallback
         }
@@ -155,8 +164,10 @@ fun MainAppContainer() {
                             isLoading = isLoading,
                             error = error,
                             isKYCVerified = isKYCVerified,
-                            onNavigateToKycProcess = { onScreenSelected(Screen.KycProcess) },
-                            onNavigateToUpdateUser = { onScreenSelected(Screen.UpdateUser) },
+                            onNavigateToAccountVerification = { onScreenSelected(Screen.AccountVerification) },
+                            onNavigateToUpdateProfile = { onScreenSelected(Screen.UpdateProfile) },
+                            onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
+                            onNavigateToMyBeneficiaries = { onScreenSelected(Screen.MyBeneficiaries) },
                             onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) },
                             onRefreshUser = { userViewModel.fetchUser() }
                         )
@@ -293,6 +304,18 @@ fun MainAppContainer() {
                         }
                     }
 
+                    Screen.AccountVerification -> {
+                        val user by userViewModel.user.collectAsState()
+                        val kycViewModel = koinInject<KycViewModel>()
+                        AccountVerificationScreen(
+                            user = user,
+                            kycViewModel = kycViewModel,
+                            userViewModel = userViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateToKycProcess = { onScreenSelected(Screen.KycProcess) }
+                        )
+                    }
+                    
                     Screen.KycProcess -> {
                         val user by userViewModel.user.collectAsState()
                         val kycViewModel = koinInject<KycViewModel>()
@@ -300,8 +323,40 @@ fun MainAppContainer() {
                             user = user,
                             kycViewModel = kycViewModel,
                             userViewModel = userViewModel,
-                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateBack = { onScreenSelected(Screen.AccountVerification) },
                             onNavigateToKycInfo = { onScreenSelected(Screen.KycProcess) }
+                        )
+                    }
+                    
+                    Screen.UpdateProfile -> {
+                        val user by userViewModel.user.collectAsState()
+                        UpdateProfileScreen(
+                            user = user,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) }
+                        )
+                    }
+                    
+                    Screen.AddBeneficiary -> {
+                        AddBeneficiaryScreen(
+                            beneficiaryViewModel = beneficiaryViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onSuccess = { onScreenSelected(Screen.Profile) }
+                        )
+                    }
+                    
+                    Screen.MyBeneficiaries -> {
+                        MyBeneficiariesScreen(
+                            beneficiaryViewModel = beneficiaryViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
+                            onEditBeneficiary = { beneficiaryId ->
+                                // TODO: Implement edit beneficiary logic
+                                println("Edit beneficiary: $beneficiaryId")
+                            },
+                            onDeleteBeneficiary = { beneficiaryId ->
+                                // Show confirmation dialog and delete
+                                beneficiaryViewModel.deleteBeneficiary(beneficiaryId)
+                            }
                         )
                     }
                     

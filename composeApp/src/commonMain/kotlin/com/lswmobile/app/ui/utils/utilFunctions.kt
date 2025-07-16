@@ -49,3 +49,48 @@ fun getMonthName(month: Int): String {
 fun String.capitalize(): String {
     return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
+
+/**
+ * Format ID type from snake_case to Title Case
+ */
+fun formatIdType(idType: String): String {
+    return when (idType.uppercase()) {
+        "PASSPORT" -> "Passport"
+        "NATIONAL_ID" -> "National ID"
+        else -> idType.replace("_", " ").split(" ").joinToString(" ") { word ->
+            word.lowercase().capitalize()
+        }
+    }
+}
+
+/**
+ * Format name to Title Case
+ */
+fun formatName(name: String): String {
+    return name.split(" ").joinToString(" ") { word ->
+        word.lowercase().capitalize()
+    }
+}
+
+/**
+ * Validate international phone number
+ * Supports formats like: +1234567890, +1-234-567-8900, +1 (234) 567-8900, etc.
+ */
+fun isValidPhoneNumber(phone: String): Boolean {
+    // Remove spaces, dashes, parentheses, and dots
+    val cleanedPhone = phone.replace(Regex("[\\s\\-\\(\\)\\.]"), "")
+    
+    // International phone number regex
+    // Matches: +[country code][number] where country code is 1-3 digits and number is 7-15 digits
+    val phoneRegex = Regex("^\\+[1-9]\\d{1,3}\\d{7,15}$")
+    
+    return phoneRegex.matches(cleanedPhone)
+}
+
+/**
+ * Validate email address
+ */
+fun isValidEmail(email: String): Boolean {
+    val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    return emailRegex.matches(email)
+}

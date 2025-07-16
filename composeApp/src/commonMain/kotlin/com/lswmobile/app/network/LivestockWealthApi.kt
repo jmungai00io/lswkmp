@@ -486,18 +486,20 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Get beneficiaries
      */
-    suspend fun getBeneficiaries(): MyBeneficiariesResponse {
+    suspend fun getBeneficiaries(page: Int = 1, limit: Int = 10): MyBeneficiariesResponse {
         return client.client.get {
-            url("/beneficiaries")
+            url("/users/beneficiaries")
+            parameter("page", page)
+            parameter("limit", limit)
         }.body()
     }
     
     /**
      * Add beneficiary
      */
-    suspend fun addBeneficiary(beneficiary: Beneficiary): MyBeneficiariesResponse {
+    suspend fun addBeneficiary(beneficiary: Beneficiary): AddBeneficiaryResponse {
         return client.client.post {
-            url("/beneficiaries")
+            url("/users/add-beneficiary")
             setBody(beneficiary)
         }.body()
     }
@@ -507,7 +509,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun updateBeneficiary(beneficiaryId: String, beneficiary: Beneficiary): MyBeneficiariesResponse {
         return client.client.patch {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/beneficiaries/$beneficiaryId")
             setBody(beneficiary)
         }.body()
     }
@@ -517,7 +519,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun deleteBeneficiary(beneficiaryId: String): JsonObject {
         return client.client.delete {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/delete-beneficiary/$beneficiaryId")
         }.body()
     }
     

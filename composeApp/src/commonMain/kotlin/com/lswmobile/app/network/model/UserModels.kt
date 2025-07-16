@@ -38,7 +38,7 @@ data class UserResponse(
     val address: String = "",
     val zipCode: String = "",
     val province: String? = null,
-    val idDocument: IdDocument? = null,
+    val ID: IdDocument? = null,
     var getEnabled: Boolean = false
 ) {
     @Serializable
@@ -73,7 +73,7 @@ data class UpdateProfileBody(
     val town: String? = null,
     val zipCode: String? = null,
     val gender: String? = null,
-    val idDocument: UserResponse.IdDocument? = null,
+    val ID: UserResponse.IdDocument? = null,
     val address: String? = null
 )
 
@@ -82,9 +82,9 @@ data class UpdateProfileBody(
  */
 @Serializable
 data class UpdateProfileResponse(
-    val success: Boolean,
-    val message: String,
-    val user: UserResponse
+    val success: Boolean=false,
+    val message: String="",
+    val data: UserResponse
 )
 
 /**
