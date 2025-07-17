@@ -15,12 +15,14 @@ import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.network.repository.UserRepository as NetworkUserRepository
+import com.lswmobile.app.network.repository.WithdrawalRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
 import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
 import com.lswmobile.app.viewmodel.UpdateProfileViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
+import com.lswmobile.app.viewmodel.WithdrawalViewModel
 import com.lswmobile.app.di.OrderModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +81,7 @@ object KoinModule {
         single { MarketplaceRepository(get()) }
         single { KycRepository(get()) }
         single { NetworkUserRepository(get()) }
+        single { WithdrawalRepository(get()) }
     }
     
     /**
@@ -91,6 +94,7 @@ object KoinModule {
         factory { KycViewModel(get(), get()) }
         factory { BeneficiaryViewModel(get(), get()) }
         factory { UpdateProfileViewModel(get<NetworkUserRepository>(), get()) }
+        factory { WithdrawalViewModel(get(), get()) }
     }
     
     /**

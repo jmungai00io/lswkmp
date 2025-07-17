@@ -530,17 +530,35 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWithdrawals(): MyWithdrawalsResponse {
         return client.client.get {
-            url("/transactions/withdrawals")
+            url("/transactions/withdrawals/my-withdrawals")
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal by ID
+     */
+    suspend fun getWithdrawal(withdrawalId: String): GetWithdrawalResponse {
+        return client.client.get {
+            url("/transactions/withdrawals/$withdrawalId")
         }.body()
     }
     
     /**
      * Request withdrawal
      */
-    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): GetWithdrawalResponse {
+    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): CreateWithdrawalResponse {
         return client.client.post {
             url("/transactions/withdrawals")
             setBody(withdrawal)
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal fees and local banks
+     */
+    suspend fun getWithdrawalFeesAndBanks(): LocalBanksResponse {
+        return client.client.get {
+            url("/transactions/withdrawal-fees-and-banks")
         }.body()
     }
     
