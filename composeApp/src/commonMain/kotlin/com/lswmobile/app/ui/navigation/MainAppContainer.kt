@@ -13,12 +13,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
-import com.lswmobile.app.data.sample.SampleFinanceRepository
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
 import com.lswmobile.app.ui.screens.orders.OrderDetailScreen
 import com.lswmobile.app.ui.screens.orders.OrderViewModel
+import com.lswmobile.app.ui.screens.payment.DebitPaymentScreen
+import com.lswmobile.app.ui.screens.payment.EftPaymentScreen
+import com.lswmobile.app.ui.screens.payment.EftPaymentViewModel
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
@@ -41,8 +43,9 @@ fun MainAppContainer() {
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     val orderViewModel = koinInject<OrderViewModel>()
     val userViewModel = koinInject<UserViewModel>()
+    val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
     
-    val financeRepo = remember { SampleFinanceRepository.getInstance() }
+//    val financeRepo = remember { SampleFinanceRepository.getInstance() }
     
     // Save only the route name string instead of the Screen object
     var currentRoute by rememberSaveable { mutableStateOf(Screen.MarketPlace.route) }
@@ -50,25 +53,30 @@ fun MainAppContainer() {
     // Selected order number for detail view
     var selectedOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     
+    // Payment order number for payment screens
+    var paymentOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    
     // Convert the route string to a Screen object
     val currentScreen = remember(currentRoute) {
-        when (currentRoute) {
-            Screen.MarketPlace.route -> Screen.MarketPlace
-            Screen.MyOrders.route -> Screen.MyOrders
-            Screen.Wallet.route -> Screen.Wallet
-            Screen.Profile.route -> Screen.Profile
-            Screen.NewsFeed.route -> Screen.NewsFeed
-            Screen.Checkout.route -> Screen.Checkout
-            Screen.ViewOrder.route -> Screen.ViewOrder
-            Screen.MyPortfolio.route -> Screen.MyPortfolio
-            Screen.MyAssets.route -> Screen.MyAssets
-            Screen.MyStatement.route -> Screen.MyStatement
-            Screen.RequestWithdrawal.route -> Screen.RequestWithdrawal
-            Screen.MyWithdrawals.route -> Screen.MyWithdrawals
-            Screen.ViewWithdrawal.route -> Screen.ViewWithdrawal
-            Screen.KycProcess.route -> Screen.KycProcess
-            Screen.UpdateUser.route -> Screen.UpdateUser
-            Screen.UploadAvatar.route -> Screen.UploadAvatar
+        when {
+            currentRoute.startsWith("eft_payment/") -> Screen.EftPayment
+            currentRoute.startsWith("debit_payment/") -> Screen.DebitPayment
+            currentRoute == Screen.MarketPlace.route -> Screen.MarketPlace
+            currentRoute == Screen.MyOrders.route -> Screen.MyOrders
+            currentRoute == Screen.Wallet.route -> Screen.Wallet
+            currentRoute == Screen.Profile.route -> Screen.Profile
+            currentRoute == Screen.NewsFeed.route -> Screen.NewsFeed
+            currentRoute == Screen.Checkout.route -> Screen.Checkout
+            currentRoute == Screen.ViewOrder.route -> Screen.ViewOrder
+            currentRoute == Screen.MyPortfolio.route -> Screen.MyPortfolio
+            currentRoute == Screen.MyAssets.route -> Screen.MyAssets
+            currentRoute == Screen.MyStatement.route -> Screen.MyStatement
+            currentRoute == Screen.RequestWithdrawal.route -> Screen.RequestWithdrawal
+            currentRoute == Screen.MyWithdrawals.route -> Screen.MyWithdrawals
+            currentRoute == Screen.ViewWithdrawal.route -> Screen.ViewWithdrawal
+            currentRoute == Screen.KycProcess.route -> Screen.KycProcess
+            currentRoute == Screen.UpdateUser.route -> Screen.UpdateUser
+            currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
             else -> Screen.MarketPlace // Default fallback
         }
     }
@@ -125,7 +133,7 @@ fun MainAppContainer() {
                     
                     Screen.Wallet -> {
                         WalletScreen(
-                            repository = financeRepo,
+//                            repository = financeRepo,
                             onNavigateToPortfolio = { onScreenSelected(Screen.MyPortfolio) },
                             onNavigateToAssets = { onScreenSelected(Screen.MyAssets) },
                             onNavigateToStatement = { onScreenSelected(Screen.MyStatement) },
@@ -215,6 +223,60 @@ fun MainAppContainer() {
                                 onNavigateBack = {
                                     // Go back to order list
                                     onScreenSelected(Screen.MyOrders)
+                                },
+                                onNavigateToEftPayment = { orderNum ->
+                                    // Navigate to EFT payment with order number
+                                    paymentOrderNumber = orderNum
+                                    currentRoute = "eft_payment/$orderNum"
+                                },
+                                onNavigateToDebitPayment = { orderNum ->
+                                    // Navigate to debit payment with order number
+                                    paymentOrderNumber = orderNum
+                                    currentRoute = "debit_payment/$orderNum"
+                                },
+                                onNavigateToWalletPayment = { orderNum ->
+                                    // Handle wallet payment - this could be a direct API call
+                                    // For now, we'll navigate to a wallet payment screen or handle it directly
+                                    println("Wallet payment for order #$orderNum")
+                                    // You could implement direct wallet payment here
+                                }
+                            )
+                        } ?: run {
+                            // Fallback if no order number is provided
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
+                    }
+                    
+                    Screen.EftPayment -> {
+                        // Show EFT payment screen if we have a valid order number
+                        paymentOrderNumber?.let { orderNumber ->
+                            EftPaymentScreen(
+                                orderNumber = orderNumber,
+                                viewModel = eftPaymentViewModel,
+                                orderViewModel = orderViewModel,
+                                onNavigateBack = {
+                                    // Go back to order detail
+                                    onScreenSelected(Screen.ViewOrder)
+                                },
+                                onPaymentSuccess = {
+                                    // Navigate back to order detail after successful payment
+                                    onScreenSelected(Screen.ViewOrder)
+                                }
+                            )
+                        } ?: run {
+                            // Fallback if no order number is provided
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
+                    }
+                    
+                    Screen.DebitPayment -> {
+                        // Show Debit payment screen if we have a valid order number
+                        paymentOrderNumber?.let { orderNumber ->
+                            DebitPaymentScreen(
+                                orderNumber = orderNumber,
+                                onNavigateBack = {
+                                    // Go back to order detail
+                                    onScreenSelected(Screen.ViewOrder)
                                 }
                             )
                         } ?: run {

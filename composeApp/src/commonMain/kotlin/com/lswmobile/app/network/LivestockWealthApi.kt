@@ -459,6 +459,28 @@ class LivestockWealthApi(private val client: KtorClient) {
         }
     }
     
+    /**
+     * Update payment method for an order
+     */
+    suspend fun updatePaymentMethod(orderId: String, paymentBody: PaymentBody): JsonObject {
+        return try {
+            println("LivestockWealthApi: Updating payment method for order #$orderId")
+            println("LivestockWealthApi: Payment method: ${paymentBody.paymentMethod}, Payment type: ${paymentBody.paymentType}")
+            
+            val response = client.client.put {
+                url("/transactions/orders/$orderId/payment-method")
+                setBody(paymentBody)
+            }
+            
+            println("LivestockWealthApi: Payment method update successful")
+            response.body()
+        } catch (e: Exception) {
+            println("LivestockWealthApi: Error updating payment method: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
     // =============== BENEFICIARY ENDPOINTS ===============
     
     /**
@@ -506,7 +528,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWithdrawals(): MyWithdrawalsResponse {
         return client.client.get {
-            url("/withdrawals")
+            url("/transactions/withdrawals")
         }.body()
     }
     
@@ -515,7 +537,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun requestWithdrawal(withdrawal: WithdrawalBody): GetWithdrawalResponse {
         return client.client.post {
-            url("/withdrawals")
+            url("/transactions/withdrawals")
             setBody(withdrawal)
         }.body()
     }
@@ -527,7 +549,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getBankDetails(): EftDetailsServerResponse {
         return client.client.get {
-            url("/finance/bank-details")
+            url("/transactions/eft-bank-details")
         }.body()
     }
     
@@ -546,7 +568,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWalletOverview(): WalletOverview {
         return client.client.get {
-            url("/finance/wallet")
+            url("/transactions/statements/balance")
         }.body()
     }
     

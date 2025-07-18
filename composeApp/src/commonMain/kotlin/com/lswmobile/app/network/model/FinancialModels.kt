@@ -16,11 +16,15 @@ data class EftDetailsServerResponse(
  */
 @Serializable
 data class EftDetailsType(
-    val bankName: String,
+    val accountHolder: String,
     val accountNumber: String,
+    val bank: String,
     val accountType: String,
+    val branch: String,
+    val bankAddress: String,
+    val swiftCode: String,
     val branchCode: String,
-    val accountHolderName: String
+//    var reference: String,
 )
 
 /**

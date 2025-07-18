@@ -30,15 +30,26 @@ import kotlinx.datetime.toLocalDateTime
 fun OrderDetailScreen(
     viewModel: OrderViewModel,
     orderNumber: Int,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToEftPayment: (Int) -> Unit,
+    onNavigateToDebitPayment: (Int) -> Unit,
+    onNavigateToWalletPayment: (Int) -> Unit
 ) {
     val selectedOrder by viewModel.selectedOrder.collectAsState()
     val isLoading by viewModel.isLoadingOrderDetail.collectAsState()
     val errorMessage by viewModel.orderDetailErrorMessage.collectAsState()
+    val walletBalance by viewModel.walletBalance.collectAsState()
+    val isProcessingWalletPayment by viewModel.isProcessingWalletPayment.collectAsState()
     
-    // Load order details on initial composition
+    // Payment state
+    var showPaymentBottomSheet by remember { mutableStateOf(false) }
+    var showWalletConfirmationDialog by remember { mutableStateOf(false) }
+    var showInsufficientBalanceDialog by remember { mutableStateOf(false) }
+    
+    // Load order details and wallet balance on initial composition
     LaunchedEffect(orderNumber) {
         viewModel.loadOrderDetails(orderNumber)
+        viewModel.loadWalletBalance()
     }
     
     Scaffold(
@@ -106,7 +117,10 @@ fun OrderDetailScreen(
                 
                 selectedOrder != null -> {
                     // Order details
-                    OrderDetailContent(order = selectedOrder!!)
+                    OrderDetailContent(
+                        order = selectedOrder!!,
+                        onPayClick = { showPaymentBottomSheet = true }
+                    )
                 }
                 
                 else -> {
@@ -123,6 +137,65 @@ fun OrderDetailScreen(
                 }
             }
         }
+        
+        // Payment Bottom Sheet
+        if (showPaymentBottomSheet) {
+            PaymentBottomSheet(
+                order = selectedOrder,
+                onDismiss = { showPaymentBottomSheet = false },
+                onWalletPayment = {
+                    showPaymentBottomSheet = false
+                    // Check wallet balance first
+                    if (selectedOrder != null) {
+                        if (walletBalance >= selectedOrder!!.amount) {
+                            showWalletConfirmationDialog = true
+                        } else {
+                            showInsufficientBalanceDialog = true
+                        }
+                    }
+                },
+                onDebitPayment = {
+                    showPaymentBottomSheet = false
+                    onNavigateToDebitPayment(orderNumber)
+                },
+                onEftPayment = {
+                    showPaymentBottomSheet = false
+                    onNavigateToEftPayment(orderNumber)
+                }
+            )
+        }
+        
+                // Wallet Confirmation Dialog
+        if (showWalletConfirmationDialog && selectedOrder != null) {
+            WalletConfirmationDialog(
+                order = selectedOrder!!,
+                walletBalance = walletBalance,
+                onConfirm = {
+                    showWalletConfirmationDialog = false
+                    if (selectedOrder != null) {
+                        viewModel.processWalletPayment(orderNumber, selectedOrder!!.amount)
+                    }
+                },
+                onDismiss = { showWalletConfirmationDialog = false }
+            )
+        }
+        
+        // Insufficient Balance Dialog
+        if (showInsufficientBalanceDialog && selectedOrder != null) {
+            InsufficientBalanceDialog(
+                order = selectedOrder!!,
+                walletBalance = walletBalance,
+                onEftPayment = {
+                    showInsufficientBalanceDialog = false
+                    onNavigateToEftPayment(orderNumber)
+                },
+                onDebitPayment = {
+                    showInsufficientBalanceDialog = false
+                    onNavigateToDebitPayment(orderNumber)
+                },
+                onDismiss = { showInsufficientBalanceDialog = false }
+            )
+        }
     }
 }
 
@@ -130,7 +203,10 @@ fun OrderDetailScreen(
  * Content of the order detail screen
  */
 @Composable
-fun OrderDetailContent(order: OrderWithFullUser) {
+fun OrderDetailContent(
+    order: OrderWithFullUser,
+    onPayClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -154,7 +230,409 @@ fun OrderDetailContent(order: OrderWithFullUser) {
         
         // Payment details card
         PaymentCard(order)
+        
+        Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+        
+        // Payment action button for pending orders
+        if (order.status?.lowercase() == "pending" && order.selectedPaymentMethod.isNullOrEmpty()) {
+            PaymentActionButton(
+                order = order,
+                onClick = onPayClick
+            )
+        }
     }
+}
+
+/**
+ * Payment action button for pending orders
+ */
+@Composable
+fun PaymentActionButton(
+    order: OrderWithFullUser,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(DefaultCornerRadius),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppTheme.spacing.medium.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Payment Required",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+            
+            Text(
+                text = "Order #${order.orderNumber} is pending payment",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(
+                    imageVector = AppIcons.Filled.Wallet,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Pay Now")
+            }
+        }
+    }
+}
+
+/**
+ * Payment options bottom sheet
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaymentBottomSheet(
+    order: OrderWithFullUser?,
+    onDismiss: () -> Unit,
+    onWalletPayment: () -> Unit,
+    onDebitPayment: () -> Unit,
+    onEftPayment: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(
+            topStart = 16.dp,
+            topEnd = 16.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppTheme.spacing.medium.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Choose Payment Method",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = AppIcons.Filled.Clear,
+                        contentDescription = "Close"
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            
+            // Payment amount
+            if (order != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AppTheme.spacing.medium.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total Amount",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "R ${order.amount}",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            }
+            
+            // Payment options
+            PaymentOptionItem(
+                icon = AppIcons.Filled.Wallet,
+                title = "Wallet Payment",
+                subtitle = "Pay using your wallet balance",
+                onClick = onWalletPayment
+            )
+            
+            PaymentOptionItem(
+                icon = AppIcons.Filled.Receipt,
+                title = "Debit Payment",
+                subtitle = "Pay with your bank card",
+                onClick = onDebitPayment
+            )
+            
+            PaymentOptionItem(
+                icon = AppIcons.Filled.Description,
+                title = "EFT Payment",
+                subtitle = "Pay via bank transfer",
+                onClick = onEftPayment
+            )
+            
+            Spacer(modifier = Modifier.height(AppTheme.spacing.large.dp))
+        }
+    }
+}
+
+/**
+ * Individual payment option item
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaymentOptionItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(DefaultCornerRadius),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppTheme.spacing.medium.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(AppTheme.spacing.medium.dp))
+            
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Icon(
+                imageVector = AppIcons.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Wallet confirmation dialog
+ */
+@Composable
+fun WalletConfirmationDialog(
+    order: OrderWithFullUser,
+    walletBalance: Double,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Confirm Wallet Payment",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = AppIcons.Filled.Wallet,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Your available wallet balance is R${walletBalance}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Pay R${order.amount} from your wallet?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Confirm Payment")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * Insufficient balance dialog
+ */
+@Composable
+fun InsufficientBalanceDialog(
+    order: OrderWithFullUser,
+    walletBalance: Double,
+    onEftPayment: () -> Unit,
+    onDebitPayment: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Insufficient Balance",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = AppIcons.Filled.Error,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Your wallet balance (R${walletBalance}) is insufficient to pay R${order.amount}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Please choose an alternative payment method:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            Column {
+                Button(
+                    onClick = onEftPayment,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = AppIcons.Filled.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Pay with EFT")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedButton(
+                    onClick = onDebitPayment,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = AppIcons.Filled.Receipt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Pay with Debit Card")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 /**
