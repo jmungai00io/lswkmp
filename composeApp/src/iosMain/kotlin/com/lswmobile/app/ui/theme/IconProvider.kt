@@ -677,6 +677,125 @@ internal actual object IconProvider {
                     }
                 }
                 
+                "KeyboardArrowUp" -> {
+                    // Upward chevron arrow
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(7f, 14f)
+                        lineTo(12f, 9f)
+                        lineTo(17f, 14f)
+                        lineTo(15.59f, 15.41f)
+                        lineTo(12f, 11.83f)
+                        lineTo(8.41f, 15.41f)
+                        close()
+                    }
+                }
+                
+                "Favorite" -> {
+                    // Heart shape
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(12f, 21.35f)
+                        lineTo(10.55f, 20.03f)
+                        curveTo(5.4f, 15.36f, 2f, 12.27f, 2f, 8.5f)
+                        curveTo(2f, 5.41f, 4.42f, 3f, 7.5f, 3f)
+                        curveTo(9.24f, 3f, 10.91f, 3.81f, 12f, 5.08f)
+                        curveTo(13.09f, 3.81f, 14.76f, 3f, 16.5f, 3f)
+                        curveTo(19.58f, 3f, 22f, 5.41f, 22f, 8.5f)
+                        curveTo(22f, 12.27f, 18.6f, 15.36f, 13.45f, 20.03f)
+                        close()
+                    }
+                }
+                
+                "FavoriteBorder" -> {
+                    // Heart outline
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        fillAlpha = 1f,
+                        stroke = SolidColor(Color.Black),
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(12f, 21.35f)
+                        lineTo(10.55f, 20.03f)
+                        curveTo(5.4f, 15.36f, 2f, 12.27f, 2f, 8.5f)
+                        curveTo(2f, 5.41f, 4.42f, 3f, 7.5f, 3f)
+                        curveTo(9.24f, 3f, 10.91f, 3.81f, 12f, 5.08f)
+                        curveTo(13.09f, 3.81f, 14.76f, 3f, 16.5f, 3f)
+                        curveTo(19.58f, 3f, 22f, 5.41f, 22f, 8.5f)
+                        curveTo(22f, 12.27f, 18.6f, 15.36f, 13.45f, 20.03f)
+                        close()
+                    }
+                }
+                
+                "ChevronLeft" -> {
+                    // Left chevron
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(15.41f, 7.41f)
+                        lineTo(14f, 6f)
+                        lineTo(8f, 12f)
+                        lineTo(14f, 18f)
+                        lineTo(15.41f, 16.59f)
+                        lineTo(10.83f, 12f)
+                        close()
+                    }
+                }
+                
+                "ChevronRight" -> {
+                    // Right chevron
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(8.59f, 16.59f)
+                        lineTo(10f, 18f)
+                        lineTo(16f, 12f)
+                        lineTo(10f, 6f)
+                        lineTo(8.59f, 7.41f)
+                        lineTo(13.17f, 12f)
+                        close()
+                    }
+                }
+                
                 else -> {
                     // Default square shape for other icons like Add, FilterList, etc.
                     path(
@@ -733,6 +852,11 @@ internal actual object IconProvider {
         override val Refresh: ImageVector = createPlaceholderIcon("Refresh")
         override val Back: ImageVector = createPlaceholderIcon("Back")
         override val KeyboardArrowDown: ImageVector = createPlaceholderIcon("KeyboardArrowDown")
+        override val KeyboardArrowUp: ImageVector = createPlaceholderIcon("KeyboardArrowUp")
+        override val Favorite: ImageVector = createPlaceholderIcon("Favorite")
+        override val Close: ImageVector = createPlaceholderIcon("Close")
+        override val ChevronLeft: ImageVector = createPlaceholderIcon("ChevronLeft")
+        override val ChevronRight: ImageVector = createPlaceholderIcon("ChevronRight")
     }
     
     /**
@@ -745,5 +869,6 @@ internal actual object IconProvider {
         override val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle.Outlined")
         override val List: ImageVector = createPlaceholderIcon("List.Outlined")
         override val Newspaper: ImageVector = createPlaceholderIcon("Newspaper.Outlined")
+        override val FavoriteBorder: ImageVector = createPlaceholderIcon("FavoriteBorder")
     }
 }

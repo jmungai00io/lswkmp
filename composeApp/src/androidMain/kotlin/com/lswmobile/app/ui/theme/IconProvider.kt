@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Newspaper
@@ -27,12 +28,17 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Wallet
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -74,6 +80,11 @@ internal actual object IconProvider {
         override val Back: ImageVector = Icons.Filled.ArrowBackIosNew
         override val Refresh: ImageVector = Icons.Filled.Refresh
         override val KeyboardArrowDown: ImageVector = Icons.Filled.KeyboardArrowDown
+        override val KeyboardArrowUp: ImageVector = Icons.Filled.KeyboardArrowUp
+        override val Favorite: ImageVector = Icons.Filled.Favorite
+        override val Close: ImageVector = Icons.Filled.Close
+        override val ChevronLeft: ImageVector = Icons.Filled.ChevronLeft
+        override val ChevronRight: ImageVector = Icons.Filled.ChevronRight
     }
     
     /**
@@ -86,5 +97,6 @@ internal actual object IconProvider {
         override val AccountCircle: ImageVector = Icons.Outlined.AccountCircle
         override val List: ImageVector = Icons.Outlined.List
         override val Newspaper: ImageVector = Icons.Outlined.Newspaper
+        override val FavoriteBorder: ImageVector = Icons.Outlined.FavoriteBorder
     }
 }

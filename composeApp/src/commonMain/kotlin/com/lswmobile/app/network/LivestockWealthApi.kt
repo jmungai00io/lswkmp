@@ -617,28 +617,19 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Get news feed
      */
-    suspend fun getNewsFeed(limit: Int = 20, offset: Int = 0): NewsFeedResponse {
+    suspend fun getNewsFeed(page: Int = 1, limit: Int = 10): NewsFeedResponse {
         return client.client.get {
             url("/news")
             parameter("limit", limit)
-            parameter("offset", offset)
+            parameter("page", page)
         }.body()
     }
     
     /**
-     * Like news item
+     * Toggle like on news item
      */
-    suspend fun likeNewsItem(newsId: String): JsonObject {
+    suspend fun toggleNewsLike(newsId: String): JsonObject {
         return client.client.post {
-            url("/news/$newsId/like")
-        }.body()
-    }
-    
-    /**
-     * Unlike news item
-     */
-    suspend fun unlikeNewsItem(newsId: String): JsonObject {
-        return client.client.delete {
             url("/news/$newsId/like")
         }.body()
     }

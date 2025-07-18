@@ -46,6 +46,11 @@ object AppIcons {
         val Back: ImageVector
 
         val KeyboardArrowDown: ImageVector
+        val KeyboardArrowUp: ImageVector
+        val Favorite: ImageVector
+        val Close: ImageVector
+        val ChevronLeft: ImageVector
+        val ChevronRight: ImageVector
     }
     
     interface OutlinedIcons {
@@ -55,6 +60,7 @@ object AppIcons {
         val AccountCircle: ImageVector
         val List: ImageVector
         val Newspaper: ImageVector
+        val FavoriteBorder: ImageVector
     }
 
     // Provides the default implementation based on platform
