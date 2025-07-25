@@ -15,8 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import platform.AVFoundation.*
 import platform.CoreGraphics.CGRect
+import platform.Foundation.NSData
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
@@ -117,6 +120,49 @@ actual fun CameraView(
 
     val cameraPreviewLayer = remember { AVCaptureVideoPreviewLayer(session = session) }
 
+    // Function to capture photo
+    fun capturePhoto() {
+        val videoConnection = output.connectionWithMediaType(AVMediaTypeVideo)
+        if (videoConnection != null) {
+            output.captureStillImageAsynchronouslyFromConnection(
+                videoConnection
+            ) { sampleBuffer, error ->
+                if (error != null) {
+                    onError("Failed to capture photo: ${error.toString()}")
+                    return@captureStillImageAsynchronouslyFromConnection
+                }
+                
+                if (sampleBuffer != null) {
+                    try {
+                        // Convert CMSampleBuffer to JPEG data
+                        val imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(sampleBuffer)
+                        if (imageData != null) {
+                            // Convert NSData to ByteArray
+                            val length = imageData.length.toInt()
+                            val byteArray = ByteArray(length)
+                            
+                            byteArray.usePinned { pinned ->
+                                imageData.bytes?.let { bytes ->
+                                    platform.posix.memcpy(pinned.addressOf(0), bytes, length.toULong())
+                                }
+                            }
+                            
+                            onPhotoTaken(byteArray)
+                        } else {
+                            onError("Failed to convert image to JPEG data")
+                        }
+                    } catch (e: Exception) {
+                        onError("Error processing captured image: ${e.message}")
+                    }
+                } else {
+                    onError("No image data received from camera")
+                }
+            }
+        } else {
+            onError("No video connection available")
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         UIKitView(
             modifier = Modifier.fillMaxSize(),
@@ -140,10 +186,7 @@ actual fun CameraView(
         // Capture Button
         FloatingActionButton(
             onClick = {
-                // For now, we'll simulate photo capture
-                // In a real implementation, you'd use AVCaptureStillImageOutput
-                val dummyImageData = ByteArray(1024) { 0x42.toByte() }
-                onPhotoTaken(dummyImageData)
+                capturePhoto()
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -152,4 +195,4 @@ actual fun CameraView(
             Text("📷")
         }
     }
-} 
+}
