@@ -654,6 +654,28 @@ internal actual object IconProvider {
                         close()
                     }
                 }
+                "KeyboardArrowDown" -> {
+                    // Downward chevron arrow
+                    path(
+                        fill = SolidColor(Color.Black),
+                        fillAlpha = 1f,
+                        stroke = null,
+                        strokeAlpha = 1f,
+                        strokeLineWidth = 1.0f,
+                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
+                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
+                        strokeLineMiter = 1f,
+                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                    ) {
+                        moveTo(7f, 10f)
+                        lineTo(12f, 15f)
+                        lineTo(17f, 10f)
+                        lineTo(15.59f, 8.59f)
+                        lineTo(12f, 12.17f)
+                        lineTo(8.41f, 8.59f)
+                        close()
+                    }
+                }
                 
                 else -> {
                     // Default square shape for other icons like Add, FilterList, etc.
@@ -710,6 +732,7 @@ internal actual object IconProvider {
         override val CheckCircle: ImageVector = createPlaceholderIcon("CheckCircle")
         override val Refresh: ImageVector = createPlaceholderIcon("Refresh")
         override val Back: ImageVector = createPlaceholderIcon("Back")
+        override val KeyboardArrowDown: ImageVector = createPlaceholderIcon("KeyboardArrowDown")
     }
     
     /**

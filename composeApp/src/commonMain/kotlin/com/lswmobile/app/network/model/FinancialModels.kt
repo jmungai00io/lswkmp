@@ -30,23 +30,31 @@ data class EftDetailsType(
 /**
  * Bank type
  */
-@Serializable
-data class BankType(
-    val name: String,
-    val code: String
-) {
-    override fun toString(): String = name
-}
+//@Serializable
+//data class BankType(
+//    val name: String,
+//    val code: String
+//) {
+//    override fun toString(): String = name
+//}
 
 /**
  * Debit order request
  */
-@Serializable
-data class DebitOrderBody(
-    val amount: Double,
-    val bankAccountId: String,
-    val orderId: String
-)
+//@Serializable
+//class DebitOrderBody (
+//    var accountName: String,
+//    var accountNumber: String,
+//    var debitOrderDate: String,
+//    var orderNumber: String,
+//    var amount: String,
+//    var branchCode: String,
+//    var address: String,
+//    var phoneNumber: String,
+//    var signature: String,
+//    var accountType: String,
+//    var paymentType: String,
+//    )
 
 /**
  * Payment body

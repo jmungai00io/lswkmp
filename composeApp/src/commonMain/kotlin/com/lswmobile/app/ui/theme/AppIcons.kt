@@ -45,6 +45,7 @@ object AppIcons {
         val Refresh: ImageVector
         val Back: ImageVector
 
+        val KeyboardArrowDown: ImageVector
     }
     
     interface OutlinedIcons {

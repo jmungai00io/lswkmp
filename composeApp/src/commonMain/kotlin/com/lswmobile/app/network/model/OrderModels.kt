@@ -208,3 +208,38 @@ data class PaymentBody(
     val paymentMethod: String,
     val paymentType: String
 )
+
+/**
+ * Bank type model
+ */
+@Serializable
+data class BankType(
+    val name: String,
+    val code: String
+)
+/**
+ * Debit order body for API requests
+ */
+@Serializable
+data class DebitOrderBody(
+    val accountName: String,
+    val accountNumber: String,
+    val debitOrderDate: String,
+    val orderNumber: String,
+    val amount: String,
+    val branchCode: String,
+    val address: String,
+    val phoneNumber: String,
+    val signature: String,
+    val accountType: String,
+    val paymentType: String
+)
+
+/**
+ * Banks response
+ */
+@Serializable
+data class BanksResponse(
+    val success: Boolean,
+    val banks: List<BankType>
+)
