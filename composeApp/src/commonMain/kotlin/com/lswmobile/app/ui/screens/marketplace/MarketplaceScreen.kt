@@ -1,5 +1,6 @@
 package com.lswmobile.app.ui.screens.marketplace
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -62,10 +64,10 @@ import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.network.model.Farmland
 import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.ui.components.PullToRefreshContainer
+import com.lswmobile.app.ui.resources.ResourceHelper
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.DefaultCornerRadius
-import com.lswmobile.app.ui.theme.NetworkImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -468,6 +470,9 @@ private fun ProductFarmlandCard(
         shape = RoundedCornerShape(DefaultCornerRadius),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column {
@@ -475,13 +480,13 @@ private fun ProductFarmlandCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.5f)
+                    .aspectRatio(1.8f)
+                    .padding(AppTheme.spacing.medium.dp)
             ) {
-                // Use our cross-platform NetworkImage component with null safety
-                NetworkImage(
-                    url = product.images?.firstOrNull() ?: "",
+                Image(
+                    painter = ResourceHelper.loadProductImage(product.productType),
                     contentDescription = product.name ?: product.productName ?: "",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -667,6 +672,9 @@ private fun FarmlandCard(
         shape = RoundedCornerShape(DefaultCornerRadius),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column {
@@ -674,13 +682,13 @@ private fun FarmlandCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.5f)
+                    .aspectRatio(1.8f)
+                    .padding(AppTheme.spacing.medium.dp)
             ) {
-                // Use our cross-platform NetworkImage component
-                NetworkImage(
-                    url = product.images?.firstOrNull() ?: "",
+                Image(
+                    painter = ResourceHelper.loadProductImage(product.productType),
                     contentDescription = product.name ?: "",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
 
