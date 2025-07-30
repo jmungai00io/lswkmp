@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -109,6 +111,10 @@ fun MarketplaceScreen(
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
 
+    // Create LazyGridState for each tab to track scroll position
+    val farmlandGridState = rememberLazyGridState()
+    val productsGridState = rememberLazyGridState()
+
     // Check token and load data
     LaunchedEffect(Unit) {
         val token = AppInitializer.getTokenProvider().getAccessToken()
@@ -191,6 +197,11 @@ fun MarketplaceScreen(
             ) { page ->
                 PullToRefreshContainer(
                     isRefreshing = isRefreshing,
+                    lazyGridState = when (page) {
+                        0 -> farmlandGridState
+                        1 -> productsGridState
+                        else -> null
+                    },
                     onRefresh = {
                         isRefreshing = true
                         coroutineScope.launch {
@@ -213,7 +224,8 @@ fun MarketplaceScreen(
                                 viewModel.addFarmlandToCart(productId, 1)
 
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            lazyGridState = farmlandGridState
                         )
 
                         // Regular Products Tab
@@ -224,7 +236,8 @@ fun MarketplaceScreen(
                             onAddToCart = { productId ->
                                 viewModel.addProductToCart(productId, 1)
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            lazyGridState = productsGridState
                         )
                     }
                 }
@@ -349,7 +362,8 @@ private fun FarmlandProductsGrid(
     isLoading: Boolean,
     onProductClick: (String) -> Unit,
     onAddToCart: (String) -> Unit,
-    viewModel: MarketplaceViewModel
+    viewModel: MarketplaceViewModel,
+    lazyGridState: LazyGridState
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -373,7 +387,8 @@ private fun FarmlandProductsGrid(
                         bottom = 80.dp // Extra padding for FAB
                     ),
                     horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    state = lazyGridState
                 ) {
                     items(products) { product ->
                         FarmlandCard(
@@ -406,7 +421,8 @@ private fun RegularProductsGrid(
     isLoading: Boolean,
     onProductClick: (String) -> Unit,
     onAddToCart: (String) -> Unit,
-    viewModel: MarketplaceViewModel
+    viewModel: MarketplaceViewModel,
+    lazyGridState: LazyGridState
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -430,7 +446,8 @@ private fun RegularProductsGrid(
                         bottom = 80.dp // Extra padding for FAB
                     ),
                     horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    state = lazyGridState
                 ) {
                     items(products) { product ->
                         ProductFarmlandCard(
