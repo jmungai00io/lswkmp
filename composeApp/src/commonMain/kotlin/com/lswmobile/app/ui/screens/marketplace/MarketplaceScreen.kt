@@ -324,7 +324,7 @@ private fun MarketplaceTopBar(
         actions = {
             IconButton(onClick = onNewsClick) {
                 Icon(
-                    imageVector = AppIcons.Filled.Newspaper,
+                    imageVector = AppIcons.Outlined.Newspaper,
                     contentDescription = "News Feed"
                 )
             }

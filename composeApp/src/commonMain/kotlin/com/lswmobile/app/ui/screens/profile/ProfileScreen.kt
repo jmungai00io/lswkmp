@@ -158,7 +158,7 @@ private fun UserProfileHeader(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = AppIcons.Filled.AccountCircle,
+                        imageVector = AppIcons.Outlined.AccountCircle,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -248,7 +248,7 @@ private fun AccountManagementSection(
             
             // Update Profile
             ProfileMenuItem(
-                icon = AppIcons.Filled.AccountCircle,
+                icon = AppIcons.Outlined.AccountCircle,
                 title = "Update Profile",
                 subtitle = "Edit personal information",
                 onClick = onNavigateToUpdateProfile
@@ -317,7 +317,7 @@ private fun SettingsSection(
             
             // Upload Avatar
             ProfileMenuItem(
-                icon = AppIcons.Filled.AccountCircle,
+                icon = AppIcons.Outlined.AccountCircle,
                 title = "Profile Picture",
                 subtitle = "Change your profile picture",
                 onClick = onNavigateToUploadAvatar
