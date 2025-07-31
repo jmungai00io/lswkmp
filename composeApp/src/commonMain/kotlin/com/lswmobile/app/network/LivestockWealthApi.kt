@@ -20,7 +20,6 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Login user
      */
     suspend fun loginUser(loginBody: LoginBody, mode: String): JsonObject {
-        print("LivestockWealthApi loginUser mode: $mode")
         return client.client.post {
             url("/auth/request-otp/$mode")
             setBody(loginBody)
@@ -131,14 +130,26 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Upload avatar
      */
     suspend fun uploadAvatar(fileBytes: ByteArray, fileName: String): ByteArray {
+
+        // Determine MIME type based on file extension
+        val mimeType = when {
+            fileName.lowercase().endsWith(".jpg") || fileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+            fileName.lowercase().endsWith(".png") -> "image/png"
+            fileName.lowercase().endsWith(".webp") -> "image/webp"
+            else -> "image/jpeg" // Default to JPEG
+        }
+        
+
         val response = client.client.submitFormWithBinaryData(
-            url = "/users/me/avatar",
+            url = "/users/upload-avatar",
             formData = formData {
                 append("file", fileBytes, Headers.build {
                     append(HttpHeaders.ContentDisposition, "filename=$fileName")
+                    append(HttpHeaders.ContentType, mimeType)
                 })
             }
         )
+        
         return response.readBytes()
     }
     

@@ -8,6 +8,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -407,6 +408,22 @@ fun MainAppContainer() {
                             // Fallback if no withdrawal ID is provided
                             ScreenUnderConstruction(currentScreen.titleRes)
                         }
+                    }
+                    
+                    Screen.UploadAvatar -> {
+                        val userRepository = koinInject<com.lswmobile.app.network.repository.UserRepository>()
+                        val coroutineScope = rememberCoroutineScope()
+                        val uploadAvatarViewModel = remember {
+                            com.lswmobile.app.viewmodel.UploadAvatarViewModel(
+                                userRepository = userRepository,
+                                coroutineScope = coroutineScope
+                            )
+                        }
+                        
+                        com.lswmobile.app.ui.screens.profile.UploadAvatarScreen(
+                            viewModel = uploadAvatarViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) }
+                        )
                     }
                     
                     // Other screens would be implemented in a real app

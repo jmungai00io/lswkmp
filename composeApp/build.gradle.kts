@@ -66,6 +66,9 @@ kotlin {
             implementation("androidx.camera:camera-lifecycle:1.3.1")
             implementation("androidx.camera:camera-view:1.3.1")
             implementation("androidx.camera:camera-extensions:1.3.1")
+            
+            // Permissions
+            implementation("com.google.accompanist:accompanist-permissions:0.32.0")
         }
         
         iosMain.dependencies {
@@ -125,7 +128,7 @@ android {
     productFlavors {
         create("development") {
             dimension = "type"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
+            buildConfigField("String", "BASE_URL", "\"https://bee5107e1718.ngrok-free.app\"")
             buildConfigField("String", "WEB_BASE_URL", "\"https://staging.livestockwealth.com\"")
             buildConfigField("String", "ONESIGNAL_APP_ID", secretsProperties["ONESIGNAL_APP_ID_DEVELOPMENT"].toString())
             applicationIdSuffix = ".dev"
