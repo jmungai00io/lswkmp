@@ -128,10 +128,7 @@ data class PreorderResponse(
 /**
  * Error response
  */
-@Serializable
-data class ErrorResponse(
-    val message: String
-)
+
 
 /**
  * Marketplace order item model for API request

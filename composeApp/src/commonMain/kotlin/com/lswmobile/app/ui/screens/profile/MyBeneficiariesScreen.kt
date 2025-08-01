@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.network.model.Beneficiary
+import com.lswmobile.app.ui.components.ErrorToast
+import com.lswmobile.app.ui.components.SuccessToast
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.utils.formatIdType
 import com.lswmobile.app.ui.utils.formatName
@@ -35,20 +37,6 @@ fun MyBeneficiariesScreen(
     // Fetch beneficiaries on first load
     LaunchedEffect(Unit) {
         beneficiaryViewModel?.fetchBeneficiaries()
-    }
-    
-    // Handle success message
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            beneficiaryViewModel?.clearSuccessMessage()
-        }
-    }
-    
-    // Handle error message
-    LaunchedEffect(error) {
-        if (error != null) {
-            beneficiaryViewModel?.clearError()
-        }
     }
     
     Scaffold(
@@ -85,154 +73,129 @@ fun MyBeneficiariesScreen(
             }
         }
     ) { innerPadding ->
-        if (isLoading && beneficiaries.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                // Error message
-                error?.let { errorMsg ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            text = errorMsg,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (isLoading && beneficiaries.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                
-                // Success message
-                successMessage?.let { successMsg ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    ) {
-                        Text(
-                            text = successMsg,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-                
-                if (beneficiaries.isEmpty() && !isLoading) {
-                    // Empty state
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Filled.AccountCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = "No Beneficiaries Yet",
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = "Add beneficiaries to ensure your investments benefit your loved ones",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Button(
-                            onClick = onNavigateToAddBeneficiary
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    if (beneficiaries.isEmpty() && !isLoading) {
+                        // Empty state
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = AppIcons.Filled.Add,
+                                imageVector = AppIcons.Filled.AccountCircle,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Add Your First Beneficiary")
-                        }
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            // Header card
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Text(
+                                text = "No Beneficiaries Yet",
+                                style = MaterialTheme.typography.headlineSmall,
+                                textAlign = TextAlign.Center
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = "Add beneficiaries to ensure your investments benefit your loved ones",
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Button(
+                                onClick = onNavigateToAddBeneficiary
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = "Your Beneficiaries",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    
-                                    Text(
-                                        text = "${beneficiaries.size} beneficiary${if (beneficiaries.size != 1) "s" else ""}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
+                                Icon(
+                                    imageVector = AppIcons.Filled.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Add Your First Beneficiary")
                             }
                         }
-                        
-                        items(beneficiaries) { beneficiary ->
-                            BeneficiaryCard(
-                                beneficiary = beneficiary,
-                                onEdit = { onEditBeneficiary(beneficiary._id) },
-                                onDelete = { 
-                                    // Show confirmation dialog
-                                    onDeleteBeneficiary(beneficiary._id)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            item {
+                                // Header card
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Your Beneficiaries",
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        
+                                        Text(
+                                            text = "${beneficiaries.size} beneficiary${if (beneficiaries.size != 1) "s" else ""}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
                                 }
-                            )
+                            }
+                            
+                            items(beneficiaries) { beneficiary ->
+                                BeneficiaryCard(
+                                    beneficiary = beneficiary,
+                                    onEdit = { onEditBeneficiary(beneficiary._id) },
+                                    onDelete = { 
+                                        // Show confirmation dialog
+                                        onDeleteBeneficiary(beneficiary._id)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
+            
+            // Error and Success Toasts (overlay)
+            ErrorToast(
+                errorMessage = error,
+                onDismiss = { beneficiaryViewModel?.clearError() }
+            )
+            
+            SuccessToast(
+                successMessage = successMessage,
+                onDismiss = { beneficiaryViewModel?.clearSuccessMessage() }
+            )
         }
     }
 }
