@@ -38,13 +38,41 @@ fun EftPaymentScreen(
     
     val selectedOrder by orderViewModel.selectedOrder.collectAsState()
     
-    // Default to full payment type for now
-    val paymentType = PaymentType.FULL_PAYMENT
+    // Payment type selection
+    var selectedPaymentType by remember { mutableStateOf<PaymentType?>(null) }
     
-    // Calculate payment amount
-    val paymentAmount = remember(selectedOrder, walletBalance, paymentType) {
+    // Calculate available payment types based on wallet balance
+    val availablePaymentTypes = remember(selectedOrder, walletBalance) {
         selectedOrder?.let { order ->
-            viewModel.calculatePaymentAmount(order.amount, walletBalance, paymentType)
+            val orderAmount = order.amount
+            val balance = walletBalance
+            
+            if (balance >= orderAmount) {
+                // Can pay full amount with wallet, but still offer both options
+                listOf(PaymentType.FULL_PAYMENT, PaymentType.PARTIAL_TOPUP)
+            } else if (balance > 0) {
+                // Can pay partially with wallet
+                listOf(PaymentType.PARTIAL_TOPUP, PaymentType.FULL_PAYMENT)
+            } else {
+                // No wallet balance, only full payment
+                listOf(PaymentType.FULL_PAYMENT)
+            }
+        } ?: listOf(PaymentType.FULL_PAYMENT)
+    }
+    
+    // Set default payment type
+    LaunchedEffect(availablePaymentTypes) {
+        if (selectedPaymentType == null && availablePaymentTypes.isNotEmpty()) {
+            selectedPaymentType = availablePaymentTypes.first()
+        }
+    }
+    
+    // Calculate payment amount based on selected type
+    val paymentAmount = remember(selectedOrder, walletBalance, selectedPaymentType) {
+        selectedOrder?.let { order ->
+            selectedPaymentType?.let { paymentType ->
+                viewModel.calculatePaymentAmount(order.amount, walletBalance, paymentType)
+            }
         } ?: 0.0
     }
     
@@ -65,16 +93,16 @@ fun EftPaymentScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    if (!isConfirming) {
-                        viewModel.confirmEftPayment(orderNumber, paymentType, onPaymentSuccess)
+                    if (!isConfirming && selectedPaymentType != null) {
+                        viewModel.confirmEftPayment(orderNumber, selectedPaymentType!!, onPaymentSuccess)
                     }
                 },
-                containerColor = if (isConfirming) {
+                containerColor = if (isConfirming || selectedPaymentType == null) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     MaterialTheme.colorScheme.primary
                 },
-                contentColor = if (isConfirming) {
+                contentColor = if (isConfirming || selectedPaymentType == null) {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 } else {
                     MaterialTheme.colorScheme.onPrimary
@@ -142,6 +170,105 @@ fun EftPaymentScreen(
                 Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
             }
             
+            // Payment Type Selection Card
+            if (availablePaymentTypes.size > 1) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(DefaultCornerRadius),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AppTheme.spacing.medium.dp)
+                    ) {
+                        Text(
+                            text = "Payment Type",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        
+                        Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                        
+                        availablePaymentTypes.forEach { paymentType ->
+                            val isSelected = selectedPaymentType == paymentType
+                            val description = when (paymentType) {
+                                PaymentType.FULL_PAYMENT -> "Pay the full order amount (R${selectedOrder?.amount ?: 0.0})"
+                                PaymentType.PARTIAL_TOPUP -> "Pay remaining amount after wallet (R${paymentAmount})"
+                                PaymentType.TOPUP_ONLY -> "Top up wallet only"
+                            }
+                            
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(AppTheme.spacing.medium.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = isSelected,
+                                        onClick = { selectedPaymentType = paymentType },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = if (isSelected) {
+                                                MaterialTheme.colorScheme.onPrimary
+                                            } else {
+                                                MaterialTheme.colorScheme.primary
+                                            }
+                                        )
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.width(AppTheme.spacing.small.dp))
+                                    
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = when (paymentType) {
+                                                PaymentType.FULL_PAYMENT -> "Complete Order Payment"
+                                                PaymentType.PARTIAL_TOPUP -> "Partial Order Payment"
+                                                PaymentType.TOPUP_ONLY -> "Top Up Only"
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isSelected) {
+                                                MaterialTheme.colorScheme.onPrimary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            }
+                                        )
+                                        
+                                        Text(
+                                            text = description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (isSelected) {
+                                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            }
+            
             // Payment Summary Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,6 +301,10 @@ fun EftPaymentScreen(
                     DetailRow("Order Amount", "R ${selectedOrder?.amount ?: 0.0}")
                     DetailRow("Payment Method", "EFT Transfer")
                     
+                    if (selectedPaymentType == PaymentType.PARTIAL_TOPUP && walletBalance > 0) {
+                        DetailRow("Wallet Contribution", "R ${walletBalance}")
+                    }
+                    
                     Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
                     
                     Divider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
@@ -204,63 +335,40 @@ fun EftPaymentScreen(
             Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
             
             // Bank Details Card
-            Text(
-                text = "LSW Bank Details",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(DefaultCornerRadius),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AppTheme.spacing.medium.dp)
+            eftDetails?.let { details ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(DefaultCornerRadius)
                 ) {
-                    eftDetails?.let { details ->
-                        DetailRow("Account Holder", details.accountHolder)
-                        DetailRow("Account Number", details.accountNumber)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AppTheme.spacing.medium.dp)
+                    ) {
+                        Text(
+                            text = "Bank Details",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                        
+                        Divider()
+                        
+                        Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                        
                         DetailRow("Bank Name", details.bank)
+                        DetailRow("Account Number", details.accountNumber)
                         DetailRow("Branch Code", details.branchCode)
                         DetailRow("Account Type", details.accountType)
-                        DetailRow("Bank Address", details.bankAddress)
-                        DetailRow("Swift Code", details.swiftCode)
-                        selectedOrder?.reference?.let { DetailRow("Reference", it) }
-                    } ?: run {
-                        if (isLoading) {
-                            Text(
-                                text = "Loading bank details...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            Text(
-                                text = "Bank details not available",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
+                        DetailRow("Reference", "Order #$orderNumber")
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(AppTheme.spacing.large.dp))
         }
     }
 }
 
-/**
- * Helper function to display a detail row with label and value
- */
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
@@ -272,12 +380,13 @@ private fun DetailRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
         )
     }
 } 
