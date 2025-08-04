@@ -4,6 +4,7 @@ import com.lswmobile.app.network.model.OrderWithFullUser
 import com.lswmobile.app.network.model.OrderWithUserId
 import com.lswmobile.app.network.repository.OrderRepository
 import com.lswmobile.app.network.repository.WalletService
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,7 +73,7 @@ class OrderViewModel(
                     }
                     is OrderRepository.OrdersState.Error -> {
                         _isLoadingOrders.value = false
-                        _errorMessage.value = state.message
+                        _errorMessage.value = ErrorUtils.extractErrorMessage(Exception(state.message), "Failed to load orders")
                     }
                     else -> {
                         // Idle state, do nothing
@@ -94,7 +95,7 @@ class OrderViewModel(
                     }
                     is OrderRepository.OrderDetailState.Error -> {
                         _isLoadingOrderDetail.value = false
-                        _orderDetailErrorMessage.value = state.message
+                        _orderDetailErrorMessage.value = ErrorUtils.extractErrorMessage(Exception(state.message), "Failed to load order details")
                     }
                     else -> {
                         // Idle state, do nothing
@@ -112,7 +113,7 @@ class OrderViewModel(
             try {
                 repository.getMyOrders()
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Failed to load orders"
+                _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load orders")
             }
         }
     }
@@ -125,7 +126,7 @@ class OrderViewModel(
             try {
                 repository.getOrderDetails(orderNumber)
             } catch (e: Exception) {
-                _orderDetailErrorMessage.value = e.message ?: "Failed to load order details"
+                _orderDetailErrorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load order details")
             }
         }
     }
@@ -166,7 +167,7 @@ class OrderViewModel(
                 val balance = walletService.getWalletBalance()
                 _walletBalance.value = balance
             } catch (e: Exception) {
-                println("OrderViewModel: Error loading wallet balance: ${e.message}")
+                println("OrderViewModel: Error loading wallet balance: ${ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")}")
             }
         }
     }
@@ -193,7 +194,7 @@ class OrderViewModel(
                     loadWalletBalance()
                 }
             } catch (e: Exception) {
-                println("OrderViewModel: Error processing wallet payment: ${e.message}")
+                println("OrderViewModel: Error processing wallet payment: ${ErrorUtils.extractErrorMessage(e, "Failed to process wallet payment")}")
             } finally {
                 _isProcessingWalletPayment.value = false
             }

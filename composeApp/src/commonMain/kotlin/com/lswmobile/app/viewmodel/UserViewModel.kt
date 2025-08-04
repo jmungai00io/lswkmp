@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.model.UserResponse
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,12 +63,13 @@ class UserViewModel(
                     },
                     onFailure = { exception ->
                         println("UserViewModel: Error fetching user: ${exception.message}")
-                        _error.value = exception.message ?: "Failed to fetch user data"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to fetch user data")
                     }
                 )
             } catch (e: Exception) {
                 println("UserViewModel: Unexpected error: ${e.message}")
-                _error.value = e.message ?: "An unexpected error occurred"
+                _error.value = ErrorUtils.extractErrorMessage(e, "An unexpected error occurred")
             } finally {
                 _isLoading.value = false
             }
@@ -84,7 +86,7 @@ class UserViewModel(
                 _user.value = user
                 _isKYCVerified.value = user.kycVerification?.status=="VERIFIED"
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to update user data"
+                _error.value = ErrorUtils.extractErrorMessage(e, "Failed to update user data")
             }
         }
     }
@@ -100,7 +102,7 @@ class UserViewModel(
                 _isKYCVerified.value = false
                 _error.value = null
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to clear user data"
+                _error.value = ErrorUtils.extractErrorMessage(e, "Failed to clear user data")
             }
         }
     }

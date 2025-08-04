@@ -7,6 +7,7 @@ import com.lswmobile.app.network.model.PaymentBody
 import com.lswmobile.app.network.model.PaymentCompletionType
 import com.lswmobile.app.network.repository.OrderRepository
 import com.lswmobile.app.network.repository.WalletService
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,8 +66,7 @@ class EftPaymentViewModel(
                 walletBalanceJob.join()
                 
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Failed to load EFT payment data"
-                println("EftPaymentViewModel: Error loading data: ${e.message}")
+                _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load EFT payment data")
             } finally {
                 _isLoading.value = false
             }
@@ -86,7 +86,7 @@ class EftPaymentViewModel(
                 _errorMessage.value = "Failed to load bank details"
             }
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading bank details: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load bank details")
             println("EftPaymentViewModel: Error fetching bank details: ${e.message}")
         }
     }
@@ -99,7 +99,7 @@ class EftPaymentViewModel(
             orderRepository.getOrderDetails(orderNumber)
             // The order will be available through the repository's state
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading order details: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load order details")
             println("EftPaymentViewModel: Error loading order details: ${e.message}")
         }
     }
@@ -113,7 +113,7 @@ class EftPaymentViewModel(
             _walletBalance.value = balance
             println("EftPaymentViewModel: Wallet balance loaded: $balance")
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading wallet balance: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")
             println("EftPaymentViewModel: Error loading wallet balance: ${e.message}")
         }
     }
@@ -170,7 +170,7 @@ class EftPaymentViewModel(
                 onSuccess()
                 
             } catch (e: Exception) {
-                _errorMessage.value = "Payment failed: ${e.message}"
+                _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
                 println("EftPaymentViewModel: Error confirming EFT payment: ${e.message}")
                 e.printStackTrace()
             } finally {

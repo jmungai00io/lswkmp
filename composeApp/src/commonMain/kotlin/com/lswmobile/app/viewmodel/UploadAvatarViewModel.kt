@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.lswmobile.app.network.repository.UserRepository
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -66,15 +67,17 @@ class UploadAvatarViewModel(
                     onFailure = { exception ->
                         println("UploadAvatarViewModel: Avatar upload failed: ${exception.message}")
                         exception.printStackTrace()
-                        uploadError = exception.message ?: "Failed to upload avatar"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        uploadError = ErrorUtils.extractErrorMessage(errorException, "Failed to upload avatar")
                         isUploading = false
                         uploadSuccess = false
                     }
                 )
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 println("UploadAvatarViewModel: Unexpected error during avatar upload: ${e.message}")
                 e.printStackTrace()
-                uploadError = e.message ?: "An unexpected error occurred"
+                val errorException = if (e is Exception) e else Exception(e.message, e.cause)
+                uploadError = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
                 isUploading = false
                 uploadSuccess = false
             }

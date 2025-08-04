@@ -1,12 +1,12 @@
 package com.lswmobile.app.viewmodel
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.lswmobile.app.network.model.NewsFeedItem
 import com.lswmobile.app.network.model.NewsFeedResponse
 import com.lswmobile.app.network.repository.NewsFeedRepository
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +68,8 @@ class NewsFeedViewModel(
                         _hasMorePages.value = response.totalPages > 1
                     },
                     onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to load news feed"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to load news feed")
                     }
                 )
             }
@@ -97,7 +98,8 @@ class NewsFeedViewModel(
                         _hasMorePages.value = nextPage < response.totalPages
                     },
                     onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to load more news"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to load more news")
                     }
                 )
             }
@@ -123,7 +125,8 @@ class NewsFeedViewModel(
                         _error.value = null
                     },
                     onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to refresh news feed"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to refresh news feed")
                     }
                 )
             }
@@ -152,7 +155,8 @@ class NewsFeedViewModel(
                         _newsItems.value = updatedItems
                     },
                     onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to update like"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to update like")
                     }
                 )
             }

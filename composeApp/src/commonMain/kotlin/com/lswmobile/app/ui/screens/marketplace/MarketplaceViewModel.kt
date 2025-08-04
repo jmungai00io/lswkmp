@@ -11,6 +11,7 @@ import com.lswmobile.app.network.repository.MarketplaceRepository
 import com.lswmobile.app.network.repository.OrderState
 import com.lswmobile.app.network.repository.PreorderState
 import com.lswmobile.app.network.repository.ProductsState
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

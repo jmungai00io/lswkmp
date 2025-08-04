@@ -17,7 +17,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.ui.screens.CameraScreen
 import com.lswmobile.app.ui.components.CameraPermissionHandler
+import com.lswmobile.app.ui.components.ErrorToast
 import com.lswmobile.app.ui.components.ImagePreview
+import com.lswmobile.app.ui.components.SuccessToast
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.ui.theme.AppTheme
@@ -92,101 +94,94 @@ fun KycDocumentUploadScreen(
                 )
             }
         ) { paddingValues ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // KYC Status Check
-                item {
-                    KycStatusCard(
-                        user = user,
-                        canProceed = canProceed,
-                        onProceed = { /* Will be handled by the UI flow */ }
-                    )
-                }
-                
-                // Only show upload section if user can proceed
-                if (canProceed) {
-                    // Information Section
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // KYC Status Check
                     item {
-                        KycInformationCard()
-                    }
-                
-                    // Document Upload Sections
-                    item {
-                        DocumentUploadSection(
-                            title = "Government ID",
-                            description = "Upload a clear photo of your government-issued ID (passport, driver's license, national ID)",
-                            imageBytes = governmentIdBytes,
-                            fileName = governmentIdFileName,
-                            onUpload = {
-                                currentDocumentType = "Government ID"
-                                showCamera = true
-                            },
-                            onRemove = { kycViewModel.removeGovernmentId() }
+                        KycStatusCard(
+                            user = user,
+                            canProceed = canProceed,
+                            onProceed = { /* Will be handled by the UI flow */ }
                         )
                     }
                     
-                    item {
-                        DocumentUploadSection(
-                            title = "Proof of Address",
-                            description = "Upload a recent utility bill, bank statement, or lease agreement",
-                            imageBytes = proofOfAddressBytes,
-                            fileName = proofOfAddressFileName,
-                            onUpload = {
-                                currentDocumentType = "Proof of Address"
-                                showCamera = true
-                            },
-                            onRemove = { kycViewModel.removeProofOfAddress() }
-                        )
-                    }
-                    
-                    item {
-                        DocumentUploadSection(
-                            title = "Selfie with ID",
-                            description = "Take a selfie while holding your government ID",
-                            imageBytes = selfieBytes,
-                            fileName = selfieFileName,
-                            onUpload = {
-                                currentDocumentType = "Selfie with ID"
-                                showCamera = true
-                            },
-                            onRemove = { kycViewModel.removeSelfie() }
-                        )
-                    }
-                    
-                    // Submit Button
-                    item {
-                        SubmitButton(
-                            isSubmitting = isSubmitting,
-                            canSubmit = kycViewModel.areDocumentsReady(),
-                            onSubmit = { kycViewModel.submitDocuments() }
-                        )
-                    }
-                    
-                    // Error Message
-                    if (error != null) {
+                    // Only show upload section if user can proceed
+                    if (canProceed) {
+                        // Information Section
                         item {
-                            ErrorCard(
-                                message = error!!,
-                                onDismiss = { kycViewModel.clearError() }
+                            KycInformationCard()
+                        }
+                    
+                        // Document Upload Sections
+                        item {
+                            DocumentUploadSection(
+                                title = "Government ID",
+                                description = "Upload a clear photo of your government-issued ID (passport, driver's license, national ID)",
+                                imageBytes = governmentIdBytes,
+                                fileName = governmentIdFileName,
+                                onUpload = {
+                                    currentDocumentType = "Government ID"
+                                    showCamera = true
+                                },
+                                onRemove = { kycViewModel.removeGovernmentId() }
                             )
                         }
-                    }
-                    
-                    // Upload Message
-                    if (uploadMessage != null) {
+                        
                         item {
-                            UploadMessageCard(
-                                message = uploadMessage!!,
-                                isSuccess = uploadSuccess
+                            DocumentUploadSection(
+                                title = "Proof of Address",
+                                description = "Upload a recent utility bill, bank statement, or lease agreement",
+                                imageBytes = proofOfAddressBytes,
+                                fileName = proofOfAddressFileName,
+                                onUpload = {
+                                    currentDocumentType = "Proof of Address"
+                                    showCamera = true
+                                },
+                                onRemove = { kycViewModel.removeProofOfAddress() }
+                            )
+                        }
+                        
+                        item {
+                            DocumentUploadSection(
+                                title = "Selfie with ID",
+                                description = "Take a selfie while holding your government ID",
+                                imageBytes = selfieBytes,
+                                fileName = selfieFileName,
+                                onUpload = {
+                                    currentDocumentType = "Selfie with ID"
+                                    showCamera = true
+                                },
+                                onRemove = { kycViewModel.removeSelfie() }
+                            )
+                        }
+                        
+                        // Submit Button
+                        item {
+                            SubmitButton(
+                                isSubmitting = isSubmitting,
+                                canSubmit = kycViewModel.areDocumentsReady(),
+                                onSubmit = { kycViewModel.submitDocuments() }
                             )
                         }
                     }
                 }
+                
+                // Error and Success Toasts (overlay)
+                ErrorToast(
+                    errorMessage = error,
+                    onDismiss = { kycViewModel.clearError() }
+                )
+                
+                SuccessToast(
+                    successMessage = uploadMessage?.takeIf { uploadSuccess },
+                    onDismiss = { kycViewModel.clearUploadMessage() }
+                )
             }
             
             // Camera overlay
@@ -408,75 +403,6 @@ private fun SubmitButton(
             Text("Submitting...")
         } else {
             Text("Submit Documents")
-        }
-    }
-}
-
-@Composable
-private fun ErrorCard(
-    message: String,
-    onDismiss: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("❌", color = MaterialTheme.colorScheme.error)
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
-            
-            TextButton(onClick = onDismiss) {
-                Text("Dismiss")
-            }
-        }
-    }
-}
-
-@Composable
-private fun UploadMessageCard(
-    message: String,
-    isSuccess: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSuccess) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (isSuccess) "✅" else "ℹ️",
-                color = if (isSuccess) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }

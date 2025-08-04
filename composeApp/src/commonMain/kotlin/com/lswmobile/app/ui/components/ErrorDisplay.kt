@@ -56,14 +56,10 @@ fun ErrorDisplay(
 ) {
     val isVisible = !message.isNullOrBlank()
     
-    println("ErrorDisplay: Called with message='$message', isVisible=$isVisible, isError=$isError, isModal=$isModal, position=$position")
-    
     // Auto-hide for toast mode
     LaunchedEffect(message) {
         if (isVisible && !isModal && autoHideDuration > 0) {
-            println("ErrorDisplay: Starting auto-hide timer for ${autoHideDuration}ms")
             delay(autoHideDuration)
-            println("ErrorDisplay: Auto-hide timer completed, calling onDismiss")
             onDismiss()
         }
     }
@@ -160,8 +156,6 @@ private fun ErrorCard(
     // Use simple text symbols instead of icons for testing
     val iconText = if (isError) "⚠️" else "✅"
     
-    println("ErrorCard: Rendering with message='$message', isError=$isError")
-    
     Card(
         modifier = Modifier
             .fillMaxWidth(if (isModal) 0.9f else 0.95f)
@@ -220,7 +214,6 @@ fun ErrorToast(
     position: ToastPosition = ToastPosition.BOTTOM,
     onDismiss: () -> Unit
 ) {
-    println("ErrorToast: Called with errorMessage='$errorMessage', position=$position")
     ErrorDisplay(
         message = errorMessage,
         isError = true,

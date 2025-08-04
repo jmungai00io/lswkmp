@@ -9,6 +9,7 @@ import com.lswmobile.app.network.model.BankType
 import com.lswmobile.app.network.repository.WithdrawalState
 import com.lswmobile.app.network.repository.FeesAndBanksState
 import com.lswmobile.app.network.repository.ValidationResult
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -132,10 +133,13 @@ class WithdrawalViewModel(
                         updateFee()
                     }
                 } else {
-                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to load fees and banks"
+                    val exception = result.exceptionOrNull()
+                    val errorException = if (exception is Exception) exception else Exception(exception?.message, exception)
+                    errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to load fees and banks")
                 }
-            } catch (e: Exception) {
-                errorMessage = e.message ?: "An unexpected error occurred"
+            } catch (e: Throwable) {
+                val errorException = if (e is Exception) e else Exception(e.message, e)
+                errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {
                 isLoading = false
             }
@@ -155,10 +159,13 @@ class WithdrawalViewModel(
                 if (result.isSuccess) {
                     withdrawals = result.getOrNull() ?: emptyList()
                 } else {
-                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to load withdrawals"
+                    val exception = result.exceptionOrNull()
+                    val errorException = if (exception is Exception) exception else Exception(exception?.message, exception)
+                    errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to load withdrawals")
                 }
-            } catch (e: Exception) {
-                errorMessage = e.message ?: "An unexpected error occurred"
+            } catch (e: Throwable) {
+                val errorException = if (e is Exception) e else Exception(e.message, e)
+                errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {
                 isLoading = false
             }
@@ -178,10 +185,13 @@ class WithdrawalViewModel(
                 if (result.isSuccess) {
                     selectedWithdrawal = result.getOrNull()
                 } else {
-                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to load withdrawal details"
+                    val exception = result.exceptionOrNull()
+                    val errorException = if (exception is Exception) exception else Exception(exception?.message, exception)
+                    errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to load withdrawal details")
                 }
-            } catch (e: Exception) {
-                errorMessage = e.message ?: "An unexpected error occurred"
+            } catch (e: Throwable) {
+                val errorException = if (e is Exception) e else Exception(e.message, e)
+                errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {
                 isLoading = false
             }
@@ -434,10 +444,13 @@ class WithdrawalViewModel(
                     successMessage = "Withdrawal request submitted successfully. Withdrawal number: ${response?.withdrawalNumber ?: "N/A"}"
                     onSuccess()
                 } else {
-                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to submit withdrawal"
+                    val exception = result.exceptionOrNull()
+                    val errorException = if (exception is Exception) exception else Exception(exception?.message, exception)
+                    errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to submit withdrawal")
                 }
-            } catch (e: Exception) {
-                errorMessage = e.message ?: "An unexpected error occurred"
+            } catch (e: Throwable) {
+                val errorException = if (e is Exception) e else Exception(e.message, e)
+                errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {
                 isLoading = false
             }
