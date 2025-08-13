@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Wallet
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.MoneyOff
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -98,5 +99,6 @@ internal actual object IconProvider {
         override val List: ImageVector = Icons.Outlined.List
         override val Newspaper: ImageVector = Icons.Outlined.Newspaper
         override val FavoriteBorder: ImageVector = Icons.Outlined.FavoriteBorder
+        override val Portfolio: ImageVector = Icons.Outlined.MoneyOff
     }
 }

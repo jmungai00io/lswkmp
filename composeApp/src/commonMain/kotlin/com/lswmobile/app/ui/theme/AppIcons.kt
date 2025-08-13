@@ -54,6 +54,7 @@ object AppIcons {
     }
     
     interface OutlinedIcons {
+        val Portfolio: ImageVector
         val Home: ImageVector
         val ShoppingCart: ImageVector
         val Wallet: ImageVector

@@ -623,6 +623,16 @@ class LivestockWealthApi(private val client: KtorClient) {
         }.body()
     }
     
+    /**
+     * Get my assets
+     */
+    suspend fun getMyAssets(allocated: Boolean? = null): GetAssetsResponse {
+        return client.client.get {
+            url("/transactions/orders/my-items")
+            allocated?.let { parameter("allocated", it) }
+        }.body()
+    }
+    
     // =============== NEWS ENDPOINTS ===============
     
     /**

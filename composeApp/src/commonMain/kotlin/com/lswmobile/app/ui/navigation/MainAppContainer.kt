@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
@@ -42,6 +43,7 @@ import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
 import com.lswmobile.app.viewmodel.WithdrawalViewModel
+import com.lswmobile.app.viewmodel.WalletViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -59,6 +61,7 @@ fun MainAppContainer() {
     val withdrawalViewModel = koinInject<WithdrawalViewModel>()
     val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
     val debitPaymentViewModel = koinInject<DebitPaymentViewModel>()
+    val walletViewModel = koinInject<WalletViewModel>()
     
 //    val financeRepo = remember { SampleFinanceRepository.getInstance() }
     
@@ -161,7 +164,7 @@ fun MainAppContainer() {
                     
                     Screen.Wallet -> {
                         WalletScreen(
-//                            repository = financeRepo,
+                            viewModel = walletViewModel,
                             onNavigateToPortfolio = { onScreenSelected(Screen.MyPortfolio) },
                             onNavigateToAssets = { onScreenSelected(Screen.MyAssets) },
                             onNavigateToStatement = { onScreenSelected(Screen.MyStatement) },

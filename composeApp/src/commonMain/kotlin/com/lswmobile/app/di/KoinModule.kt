@@ -25,6 +25,7 @@ import com.lswmobile.app.viewmodel.NewsFeedViewModel
 import com.lswmobile.app.viewmodel.UpdateProfileViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.WithdrawalViewModel
+import com.lswmobile.app.viewmodel.WalletViewModel
 import com.lswmobile.app.di.OrderModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +100,7 @@ object KoinModule {
         factory { BeneficiaryViewModel(get(), get()) }
         factory { UpdateProfileViewModel(get<NetworkUserRepository>(), get()) }
         factory { WithdrawalViewModel(get(), get()) }
+        factory { WalletViewModel(get()) }
     }
     
     /**
