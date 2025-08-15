@@ -55,6 +55,7 @@ import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.DefaultCornerRadius
 import com.lswmobile.app.viewmodel.WalletViewModel
+import com.lswmobile.app.util.NumberFormatUtils
 
 /**
  * Wallet screen showing financial overview and assets
@@ -293,7 +294,7 @@ private fun BalanceCard(
                 )
             } else {
                 Text(
-                    text = "R${String.format("%.2f", walletOverview?.balance ?: 0.0)}",
+                    text = NumberFormatUtils.formatCurrencyR(walletOverview?.balance ?: 0.0),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -317,7 +318,7 @@ private fun BalanceCard(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "R${String.format("%.2f", walletOverview.availableBalance)}",
+                            text = NumberFormatUtils.formatCurrencyR(walletOverview.availableBalance),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -334,7 +335,7 @@ private fun BalanceCard(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "R${String.format("%.2f", walletOverview.totalPriceOfAssetsInWaitingList)}",
+                                text = NumberFormatUtils.formatCurrencyR(walletOverview.totalPriceOfAssetsInWaitingList),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -521,7 +522,7 @@ private fun AssetItem(asset: MyAsset) {
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "R${String.format("%.2f", asset.valueToday)}",
+                        text = NumberFormatUtils.formatCurrencyR(asset.valueToday),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -552,7 +553,7 @@ private fun AssetItem(asset: MyAsset) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "R${String.format("%.2f", asset.priceOfAsset)}",
+                                text = NumberFormatUtils.formatCurrencyR(asset.priceOfAsset),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
@@ -569,7 +570,7 @@ private fun AssetItem(asset: MyAsset) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "R${String.format("%.2f", asset.dividendAmount)}",
+                                text = NumberFormatUtils.formatCurrencyR(asset.dividendAmount),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.tertiary

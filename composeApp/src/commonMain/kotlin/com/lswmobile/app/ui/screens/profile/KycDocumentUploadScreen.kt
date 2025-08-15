@@ -22,6 +22,7 @@ import com.lswmobile.app.ui.components.ImagePreview
 import com.lswmobile.app.ui.components.SuccessToast
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
+import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 
 import com.lswmobile.app.viewmodel.KycViewModel
@@ -88,8 +89,12 @@ fun KycDocumentUploadScreen(
                     title = { Text("KYC Verification") },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Text("← Back")
+                            Icon(
+                                imageVector = AppIcons.Filled.Back,
+                                contentDescription = "Back"
+                            )
                         }
+
                     }
                 )
             }

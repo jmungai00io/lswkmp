@@ -81,6 +81,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
@@ -128,7 +129,7 @@ android {
     productFlavors {
         create("development") {
             dimension = "type"
-            buildConfigField("String", "BASE_URL", "\"https://921e73f12a97.ngrok-free.app\"")
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
             buildConfigField("String", "WEB_BASE_URL", "\"https://staging.livestockwealth.com\"")
             buildConfigField("String", "ONESIGNAL_APP_ID", secretsProperties["ONESIGNAL_APP_ID_DEVELOPMENT"].toString())
             applicationIdSuffix = ".dev"

@@ -27,7 +27,7 @@ object KycDocumentTypes {
 @Serializable
 data class KycUploadResponse(
     val success: Boolean,
-    val message: String,
+    val message: String?="",
     val data: KycUploadData? = null
 )
 
