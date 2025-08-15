@@ -39,9 +39,10 @@ sealed class Screen(
     object DebitPayment : Screen("debit_payment/{orderNumber}", "Debit Payment", hasBottomBar = false)
     
     // Profile graph
+    object AccountVerification : Screen("account_verification", "Account Verification", hasBottomBar = false)
     object KycProcess : Screen("kyc_process", "KYC Process", hasBottomBar = false)
     object KycInformation : Screen("kyc_information", "KYC Information", hasBottomBar = false)
-    object UpdateUser : Screen("update_user", "Update Profile", hasBottomBar = false)
+    object UpdateProfile : Screen("update_profile", "Update Profile", hasBottomBar = false)
     object UploadAvatar : Screen("upload_avatar", "Upload Profile Picture", hasBottomBar = false)
     
     // Global screens
@@ -99,9 +100,10 @@ object NavigationGraphs {
     
     val profileGraph = listOf(
         Screen.Profile,
+        Screen.AccountVerification,
         Screen.KycProcess,
         Screen.KycInformation,
-        Screen.UpdateUser,
+        Screen.UpdateProfile,
         Screen.UploadAvatar
     )
     

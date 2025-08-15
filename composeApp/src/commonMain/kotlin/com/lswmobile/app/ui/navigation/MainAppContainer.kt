@@ -29,8 +29,17 @@ import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
 import com.lswmobile.app.ui.screens.cart.CartScreen
 import com.lswmobile.app.ui.screens.profile.KycProcessScreen
 import com.lswmobile.app.ui.screens.profile.KycDocumentUploadScreen
+import com.lswmobile.app.ui.screens.profile.AccountVerificationScreen
+import com.lswmobile.app.ui.screens.profile.UpdateProfileScreen
+import com.lswmobile.app.ui.screens.profile.AddBeneficiaryScreen
+import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
+import com.lswmobile.app.ui.screens.wallet.RequestWithdrawalScreen
+import com.lswmobile.app.ui.screens.wallet.MyWithdrawalsScreen
+import com.lswmobile.app.ui.screens.wallet.ViewWithdrawalScreen
+import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
+import com.lswmobile.app.viewmodel.WithdrawalViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -44,6 +53,8 @@ fun MainAppContainer() {
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     val orderViewModel = koinInject<OrderViewModel>()
     val userViewModel = koinInject<UserViewModel>()
+    val beneficiaryViewModel = koinInject<BeneficiaryViewModel>()
+    val withdrawalViewModel = koinInject<WithdrawalViewModel>()
     val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
     val debitPaymentViewModel = koinInject<DebitPaymentViewModel>()
     
@@ -58,11 +69,15 @@ fun MainAppContainer() {
     // Payment order number for payment screens
     var paymentOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     
+    // Selected withdrawal ID for detail view
+    var selectedWithdrawalId by rememberSaveable { mutableStateOf<String?>(null) }
+    
     // Convert the route string to a Screen object
     val currentScreen = remember(currentRoute) {
         when {
             currentRoute.startsWith("eft_payment/") -> Screen.EftPayment
             currentRoute.startsWith("debit_payment/") -> Screen.DebitPayment
+            currentRoute.startsWith("view_withdrawal/") -> Screen.ViewWithdrawal
             currentRoute == Screen.MarketPlace.route -> Screen.MarketPlace
             currentRoute == Screen.MyOrders.route -> Screen.MyOrders
             currentRoute == Screen.Wallet.route -> Screen.Wallet
@@ -76,8 +91,11 @@ fun MainAppContainer() {
             currentRoute == Screen.RequestWithdrawal.route -> Screen.RequestWithdrawal
             currentRoute == Screen.MyWithdrawals.route -> Screen.MyWithdrawals
             currentRoute == Screen.ViewWithdrawal.route -> Screen.ViewWithdrawal
+            currentRoute == Screen.AccountVerification.route -> Screen.AccountVerification
             currentRoute == Screen.KycProcess.route -> Screen.KycProcess
-            currentRoute == Screen.UpdateUser.route -> Screen.UpdateUser
+            currentRoute == Screen.UpdateProfile.route -> Screen.UpdateProfile
+            currentRoute == Screen.AddBeneficiary.route -> Screen.AddBeneficiary
+            currentRoute == Screen.MyBeneficiaries.route -> Screen.MyBeneficiaries
             currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
             else -> Screen.MarketPlace // Default fallback
         }
@@ -155,8 +173,10 @@ fun MainAppContainer() {
                             isLoading = isLoading,
                             error = error,
                             isKYCVerified = isKYCVerified,
-                            onNavigateToKycProcess = { onScreenSelected(Screen.KycProcess) },
-                            onNavigateToUpdateUser = { onScreenSelected(Screen.UpdateUser) },
+                            onNavigateToAccountVerification = { onScreenSelected(Screen.AccountVerification) },
+                            onNavigateToUpdateProfile = { onScreenSelected(Screen.UpdateProfile) },
+                            onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
+                            onNavigateToMyBeneficiaries = { onScreenSelected(Screen.MyBeneficiaries) },
                             onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) },
                             onRefreshUser = { userViewModel.fetchUser() }
                         )
@@ -293,6 +313,18 @@ fun MainAppContainer() {
                         }
                     }
 
+                    Screen.AccountVerification -> {
+                        val user by userViewModel.user.collectAsState()
+                        val kycViewModel = koinInject<KycViewModel>()
+                        AccountVerificationScreen(
+                            user = user,
+                            kycViewModel = kycViewModel,
+                            userViewModel = userViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateToKycProcess = { onScreenSelected(Screen.KycProcess) }
+                        )
+                    }
+                    
                     Screen.KycProcess -> {
                         val user by userViewModel.user.collectAsState()
                         val kycViewModel = koinInject<KycViewModel>()
@@ -300,9 +332,74 @@ fun MainAppContainer() {
                             user = user,
                             kycViewModel = kycViewModel,
                             userViewModel = userViewModel,
-                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateBack = { onScreenSelected(Screen.AccountVerification) },
                             onNavigateToKycInfo = { onScreenSelected(Screen.KycProcess) }
                         )
+                    }
+                    
+                    Screen.UpdateProfile -> {
+                        val user by userViewModel.user.collectAsState()
+                        UpdateProfileScreen(
+                            user = user,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) }
+                        )
+                    }
+                    
+                    Screen.AddBeneficiary -> {
+                        AddBeneficiaryScreen(
+                            beneficiaryViewModel = beneficiaryViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onSuccess = { onScreenSelected(Screen.Profile) }
+                        )
+                    }
+                    
+                    Screen.MyBeneficiaries -> {
+                        MyBeneficiariesScreen(
+                            beneficiaryViewModel = beneficiaryViewModel,
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
+                            onEditBeneficiary = { beneficiaryId ->
+                                // TODO: Implement edit beneficiary logic
+                                println("Edit beneficiary: $beneficiaryId")
+                            },
+                            onDeleteBeneficiary = { beneficiaryId ->
+                                // Show confirmation dialog and delete
+                                beneficiaryViewModel.deleteBeneficiary(beneficiaryId)
+                            }
+                        )
+                    }
+                    
+                    Screen.RequestWithdrawal -> {
+                        RequestWithdrawalScreen(
+                            onNavigateBack = { onScreenSelected(Screen.Wallet) }
+                        )
+                    }
+                    
+                    Screen.MyWithdrawals -> {
+                        MyWithdrawalsScreen(
+                            onNavigateBack = { onScreenSelected(Screen.Wallet) },
+                            onNavigateToRequestWithdrawal = { onScreenSelected(Screen.RequestWithdrawal) },
+                            onNavigateToWithdrawalDetail = { withdrawalId ->
+                                selectedWithdrawalId = withdrawalId
+                                currentRoute = "view_withdrawal/$withdrawalId"
+                            }
+                        )
+                    }
+                    
+                    Screen.ViewWithdrawal -> {
+                        // Only show withdrawal detail if we have a valid withdrawal ID
+                        selectedWithdrawalId?.let { withdrawalId ->
+                            ViewWithdrawalScreen(
+                                withdrawalId = withdrawalId,
+                                onNavigateBack = {
+                                    // Go back to withdrawal list
+                                    onScreenSelected(Screen.MyWithdrawals)
+                                }
+                            )
+                        } ?: run {
+                            // Fallback if no withdrawal ID is provided
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
                     }
                     
                     // Other screens would be implemented in a real app

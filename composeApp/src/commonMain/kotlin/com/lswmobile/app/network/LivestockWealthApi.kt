@@ -486,18 +486,20 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Get beneficiaries
      */
-    suspend fun getBeneficiaries(): MyBeneficiariesResponse {
+    suspend fun getBeneficiaries(page: Int = 1, limit: Int = 10): MyBeneficiariesResponse {
         return client.client.get {
-            url("/beneficiaries")
+            url("/users/beneficiaries")
+            parameter("page", page)
+            parameter("limit", limit)
         }.body()
     }
     
     /**
      * Add beneficiary
      */
-    suspend fun addBeneficiary(beneficiary: Beneficiary): MyBeneficiariesResponse {
+    suspend fun addBeneficiary(beneficiary: Beneficiary): AddBeneficiaryResponse {
         return client.client.post {
-            url("/beneficiaries")
+            url("/users/add-beneficiary")
             setBody(beneficiary)
         }.body()
     }
@@ -507,7 +509,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun updateBeneficiary(beneficiaryId: String, beneficiary: Beneficiary): MyBeneficiariesResponse {
         return client.client.patch {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/beneficiaries/$beneficiaryId")
             setBody(beneficiary)
         }.body()
     }
@@ -517,7 +519,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun deleteBeneficiary(beneficiaryId: String): JsonObject {
         return client.client.delete {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/delete-beneficiary/$beneficiaryId")
         }.body()
     }
     
@@ -528,17 +530,35 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWithdrawals(): MyWithdrawalsResponse {
         return client.client.get {
-            url("/transactions/withdrawals")
+            url("/transactions/withdrawals/my-withdrawals")
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal by ID
+     */
+    suspend fun getWithdrawal(withdrawalId: String): GetWithdrawalResponse {
+        return client.client.get {
+            url("/transactions/withdrawals/$withdrawalId")
         }.body()
     }
     
     /**
      * Request withdrawal
      */
-    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): GetWithdrawalResponse {
+    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): CreateWithdrawalResponse {
         return client.client.post {
             url("/transactions/withdrawals")
             setBody(withdrawal)
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal fees and local banks
+     */
+    suspend fun getWithdrawalFeesAndBanks(): LocalBanksResponse {
+        return client.client.get {
+            url("/transactions/withdrawal-fees-and-banks")
         }.body()
     }
     
