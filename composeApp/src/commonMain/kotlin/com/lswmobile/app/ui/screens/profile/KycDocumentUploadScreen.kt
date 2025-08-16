@@ -170,7 +170,9 @@ fun KycDocumentUploadScreen(
                         item {
                             SubmitButton(
                                 isSubmitting = isSubmitting,
-                                canSubmit = kycViewModel.areDocumentsReady(),
+                                canSubmit = governmentIdBytes != null &&
+                                    proofOfAddressBytes != null &&
+                                    selfieBytes != null,
                                 onSubmit = { kycViewModel.submitDocuments() }
                             )
                         }
