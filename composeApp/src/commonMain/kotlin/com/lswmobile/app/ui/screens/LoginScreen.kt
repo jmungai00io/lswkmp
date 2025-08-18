@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.rounded.Star
 import com.lswmobile.app.ui.components.LivestockButton
+import com.lswmobile.app.ui.components.ErrorToast
 import com.lswmobile.app.ui.components.LivestockPasswordField
 import com.lswmobile.app.ui.components.LivestockTextField
 import com.lswmobile.app.ui.resources.ResourceHelper
@@ -49,6 +50,7 @@ fun LoginScreen(
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    var uiErrorMessage by remember { mutableStateOf<String?>(null) }
     
     val focusManager = LocalFocusManager.current
     
@@ -76,13 +78,12 @@ fun LoginScreen(
                 is AuthUiState.Success -> {
                     isLoading = false
                     // Log but don't navigate for other success types
-                    println("Received unexpected success type: ${state.message} in login screen")
                 }
                 
                 is AuthUiState.Error -> {
                     isLoading = false
-                    // Handle error (could show a snackbar or dialog)
-                    passwordError = state.message
+                    // Show backend error using reusable ErrorToast overlay
+                    uiErrorMessage = state.message
                 }
                 
                 is AuthUiState.Idle -> isLoading = false
@@ -189,7 +190,6 @@ fun LoginScreen(
                 onDone = {
                     focusManager.clearFocus()
                     if (isFormValid()) {
-                        println("Submitting login from keyboard: $email")
                         authViewModel.login(email, password, "sms")
                     }
                 }
@@ -216,11 +216,10 @@ fun LoginScreen(
         LivestockButton(
             text = "Login",
             onClick = {
-                println("Login button clicked with email: $email and password: $password")
                 if (isFormValid()) {
                     authViewModel.login(email, password, "sms")
                 } else {
-//                    focusManager.clearFocus()
+                    focusManager.clearFocus()
                 }
             },
             isLoading = isLoading,
@@ -250,6 +249,12 @@ fun LoginScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
     }
+
+    // Overlay error toast for backend/login errors
+    ErrorToast(
+        errorMessage = uiErrorMessage,
+        onDismiss = { uiErrorMessage = null }
+    )
 }
 
 // Validation functions

@@ -60,6 +60,8 @@ class AuthRepository(
             println("AuthRepository.login: Error during login: ${e.message}")
             e.printStackTrace()
             _loginState.value = LoginState.Error(e.message ?: "Unknown error")
+            // Rethrow so upper layers (AuthViewModel) can handle with ErrorUtils and update UI state
+            throw e
         }
     }
     
