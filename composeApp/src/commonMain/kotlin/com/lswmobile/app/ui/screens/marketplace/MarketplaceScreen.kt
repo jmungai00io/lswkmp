@@ -117,8 +117,6 @@ fun MarketplaceScreen(
 
     // Check token and load data
     LaunchedEffect(Unit) {
-        val token = AppInitializer.getTokenProvider().getAccessToken()
-        println("MarketplaceScreen: Current access token: ${token?.take(10)}...")
         viewModel.loadProducts()
         viewModel.loadFarmlands()
     }
@@ -474,7 +472,6 @@ private fun RegularProductsGrid(
 /**
  * Card component for displaying a ProductFarmland
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductFarmlandCard(
     product: ProductClassic,

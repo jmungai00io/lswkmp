@@ -35,9 +35,6 @@ object AppInitializer {
         if (isInitialized) return
         
         try {
-            println("Initializing app components")
-            
-            // Get platform-specific configuration
             val appConfig = AppConfigFactory.get()
             
             // Create dependencies
@@ -50,8 +47,6 @@ object AppInitializer {
                 enableLogging = appConfig.isDevelopment // Enable logging based on environment
             )
             
-            println("Using API baseUrl: ${appConfig.baseUrl}, environment: ${appConfig.environmentName}")
-            
             api = LivestockWealthApi(ktorClient!!)
             authRepository = AuthRepository(api!!, tokenProvider!!)
             authViewModel = AuthViewModel(authRepository!!)
@@ -59,9 +54,7 @@ object AppInitializer {
             userViewModel = UserViewModel(userRepository!!)
             
             isInitialized = true
-            println("App initialization complete")
         } catch (e: Exception) {
-            println("Error during initialization: ${e.message}")
             throw e
         }
     }
@@ -74,9 +67,6 @@ object AppInitializer {
         ensureInitialized()
         
         try {
-            println("Reinitializing network clients to pick up authentication changes")
-            
-            // Get platform-specific configuration
             val appConfig = AppConfigFactory.get()
             
             // Recreate the KtorClient with the current tokenProvider
@@ -95,9 +85,7 @@ object AppInitializer {
             userRepository = InMemoryUserRepository(api!!)
             userViewModel = UserViewModel(userRepository!!)
             
-            println("Network clients reinitialized successfully")
         } catch (e: Exception) {
-            println("Error during network client reinitialization: ${e.message}")
             throw e
         }
     }

@@ -127,7 +127,6 @@ class DebitPaymentViewModel(
                         user.phoneNumber
                     }
                     _phoneNumber.value = phone
-                    println("DebitPaymentViewModel: Pre-populated phone number: $phone")
                 }
             } catch (e: Exception) {
                 // Silent error for phone pre-population
@@ -169,24 +168,16 @@ class DebitPaymentViewModel(
      */
     private suspend fun fetchBanks() {
         try {
-            println("DebitPaymentViewModel: Starting to fetch banks...")
             val response = api.getLocalBanks()
-            println("DebitPaymentViewModel: API response received: $response")
-            println("DebitPaymentViewModel: Response success: ${response.success}")
-            println("DebitPaymentViewModel: Banks count: ${response.banks.size}")
-            println("DebitPaymentViewModel: Banks data: ${response.banks}")
+
             
             if (response.success) {
                 _banks.value = response.banks
-                println("DebitPaymentViewModel: Banks loaded successfully: ${response.banks.size} banks")
-                println("DebitPaymentViewModel: Updated _banks StateFlow value: ${_banks.value}")
             } else {
                 _errorMessage.value = "Failed to load banks"
-                println("DebitPaymentViewModel: API returned success=false")
             }
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Error loading banks")
-            println("DebitPaymentViewModel: Error fetching banks: ${e.message}")
             e.printStackTrace()
         }
     }
@@ -200,7 +191,6 @@ class DebitPaymentViewModel(
             // The order will be available through the repository's state
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load order details")
-            println("DebitPaymentViewModel: Error loading order details: ${e.message}")
         }
     }
     
@@ -211,10 +201,8 @@ class DebitPaymentViewModel(
         try {
             val balance = walletService.getWalletBalance()
             _walletBalance.value = balance
-            println("DebitPaymentViewModel: Wallet balance loaded: $balance")
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")
-            println("DebitPaymentViewModel: Error loading wallet balance: ${e.message}")
         }
     }
     
@@ -319,9 +307,6 @@ class DebitPaymentViewModel(
                 _isConfirming.value = true
                 _errorMessage.value = null
                 
-                println("DebitPaymentViewModel: Confirming debit payment for order #$orderNumber")
-                println("DebitPaymentViewModel: Payment type: $paymentType")
-                
                 // Create payment body with correct payment type string
                 val paymentTypeString = when (paymentType) {
                     PaymentType.TOPUP_ONLY -> PaymentCompletionType.TOPUP_ONLY
@@ -346,15 +331,10 @@ class DebitPaymentViewModel(
                 // Make the actual API call
                 val response = api.setupDebitOrder(debitOrderBody)
                 
-                println("DebitPaymentViewModel: Debit payment confirmed successfully")
-                println("DebitPaymentViewModel: Response: $response")
-                
-                // Success - trigger callback
                 onSuccess()
                 
             } catch (e: Exception) {
                 _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
-                println("DebitPaymentViewModel: Error confirming debit payment: ${e.message}")
                 e.printStackTrace()
             } finally {
                 _isConfirming.value = false

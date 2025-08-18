@@ -100,24 +100,18 @@ class MarketplaceViewModel(
                     is ProductsState.Loading -> {
                         _isLoadingProducts.value = true
                         _productError.value = null
-                        println("MarketplaceViewModel: Products loading state activated")
                     }
                     is ProductsState.Success -> {
                         _isLoadingProducts.value = false
                         _products.value = state.products
                         _productError.value = null
-                        println("MarketplaceViewModel: Products loaded successfully. Count: ${state.products.size}")
-                        state.products.forEach { product ->
-                            println("MarketplaceViewModel: Product: ${product._id}, ${product.productName ?: product.name ?: "Unnamed"}")
-                        }
+
                     }
                     is ProductsState.Error -> {
                         _isLoadingProducts.value = false
                         _productError.value = state.message
-                        println("MarketplaceViewModel: Products loading error: ${state.message}")
                     }
                     else -> {
-                        println("MarketplaceViewModel: Products idle state")
                     }
                 }
             }
@@ -257,7 +251,6 @@ class MarketplaceViewModel(
      * Add farmland to cart
      */
     fun addFarmlandToCart(farmlandId: String, quantity: Int) {
-        println("Adding farmland to cart: $farmlandId")
         viewModelScope.launch {
             val farmland = _farmlands.value.find { it._id == farmlandId }
             farmland?.let {

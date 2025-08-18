@@ -65,12 +65,7 @@ fun DebitPaymentScreen(
     val debitMandateSign by viewModel.debitMandateSign.collectAsState()
     val selectedBank by viewModel.selectedBank.collectAsState()
     val banks by viewModel.banks.collectAsState()
-    
-    // Debug logging for banks
-    LaunchedEffect(banks) {
-        println("DebitPaymentScreen: Banks StateFlow updated: ${banks.size} banks")
-        println("DebitPaymentScreen: Banks data: $banks")
-    }
+
     
     // Validation errors
     val fullNameError by viewModel.fullNameError.collectAsState()
@@ -102,8 +97,6 @@ fun DebitPaymentScreen(
                 listOf(PaymentType.FULL_PAYMENT)
             }
             
-            println("DebitPaymentScreen: Order amount: $orderAmount, Wallet balance: $balance")
-            println("DebitPaymentScreen: Available payment types: $types")
             types
         } ?: listOf(PaymentType.FULL_PAYMENT)
     }
@@ -177,8 +170,6 @@ fun DebitPaymentScreen(
             
             // Payment Type Selection Card (only on step 1)
             LaunchedEffect(currentStep, availablePaymentTypes.size) {
-                println("DebitPaymentScreen: Current step: $currentStep, Available payment types: ${availablePaymentTypes.size}")
-                println("DebitPaymentScreen: Should show payment type card: ${currentStep == 1 && availablePaymentTypes.size > 1}")
             }
             
             if (currentStep == 1 && availablePaymentTypes.size > 1) {
@@ -265,21 +256,17 @@ fun DebitPaymentScreen(
             
             // Debug logging for form validation
             LaunchedEffect(step1Valid, step2Valid) {
-                println("DebitPaymentScreen: Step 1 valid: $step1Valid, Step 2 valid: $step2Valid")
             }
             
             BottomActionButtons(
                 currentStep = currentStep,
                 onPrevious = { 
-                    println("DebitPaymentScreen: Going back to step 1")
-                    currentStep = 1 
+                    currentStep = 1
                 },
                 onNext = { 
-                    println("DebitPaymentScreen: Going to step 2")
-                    currentStep = 2 
+                    currentStep = 2
                 },
                 onConfirm = {
-                    println("DebitPaymentScreen: Submitting debit payment")
                     selectedPaymentType?.let { paymentType ->
                         viewModel.confirmDebitPayment(orderNumber, paymentType, onPaymentSuccess)
                     }
@@ -833,16 +820,7 @@ private fun BankDropdown(
     onBankChange: (BankType) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
-    // Debug logging for BankDropdown
-    LaunchedEffect(banks) {
-        println("BankDropdown: Received banks: ${banks.size} banks")
-        println("BankDropdown: Banks data: $banks")
-    }
-    
-    LaunchedEffect(expanded) {
-        println("BankDropdown: Dropdown expanded state: $expanded")
-    }
+
     
     Column {
         OutlinedTextField(
@@ -855,8 +833,7 @@ private fun BankDropdown(
                     imageVector = AppIcons.Filled.KeyboardArrowDown,
                     contentDescription = "Dropdown",
                     modifier = Modifier.clickable { 
-                        println("BankDropdown: Icon clicked, expanding dropdown")
-                        expanded = true 
+                        expanded = true
                     }
                 )
             },
@@ -868,18 +845,14 @@ private fun BankDropdown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { 
-                println("BankDropdown: Dropdown dismissed")
-                expanded = false 
+                expanded = false
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            println("BankDropdown: Rendering dropdown menu with ${banks.size} banks, expanded=$expanded")
             banks.forEach { bank ->
-                println("BankDropdown: Rendering bank item: ${bank.name}")
                 DropdownMenuItem(
                     text = { Text(bank.name) },
                     onClick = {
-                        println("BankDropdown: Bank selected: ${bank.name}")
                         onBankChange(bank)
                         expanded = false
                     }
@@ -910,8 +883,7 @@ private fun AccountTypeDropdown(
                     imageVector = AppIcons.Filled.KeyboardArrowDown,
                     contentDescription = "Dropdown",
                     modifier = Modifier.clickable { 
-                        println("AccountTypeDropdown: Icon clicked, expanding dropdown")
-                        expanded = true 
+                        expanded = true
                     }
                 )
             },
@@ -932,18 +904,14 @@ private fun AccountTypeDropdown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { 
-                println("AccountTypeDropdown: Dropdown dismissed")
-                expanded = false 
+                expanded = false
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            println("AccountTypeDropdown: Rendering dropdown menu with ${accountTypes.size} types, expanded=$expanded")
             accountTypes.forEach { type ->
-                println("AccountTypeDropdown: Rendering account type item: $type")
                 DropdownMenuItem(
                     text = { Text(type) },
                     onClick = {
-                        println("AccountTypeDropdown: Account type selected: $type")
                         onAccountTypeChange(type)
                         expanded = false
                     }

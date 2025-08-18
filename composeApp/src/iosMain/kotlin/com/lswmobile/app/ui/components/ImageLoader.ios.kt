@@ -51,7 +51,6 @@ actual fun rememberImageBitmapFromBytes(bytes: ByteArray?): ImageBitmap? {
                     null
                 }
             } catch (e: Exception) {
-                println("Error loading image on iOS: ${e.message}")
                 null
             }
         }

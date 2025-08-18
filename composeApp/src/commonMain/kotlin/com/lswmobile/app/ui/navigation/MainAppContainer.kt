@@ -113,7 +113,6 @@ fun MainAppContainer() {
     
     // Fetch user data when the container is first loaded
     LaunchedEffect(Unit) {
-        println("MainAppContainer: Fetching user data after authentication")
         userViewModel.fetchUser()
     }
     
@@ -230,7 +229,6 @@ fun MainAppContainer() {
                                 }
                                 
                                 if (!hasProducts && !hasFarmlands) {
-                                    println("Checkout pressed but cart is empty")
                                 }
                             },
                             isOrdering = isOrdering,
@@ -268,10 +266,6 @@ fun MainAppContainer() {
                                     currentRoute = "debit_payment/$orderNum"
                                 },
                                 onNavigateToWalletPayment = { orderNum ->
-                                    // Handle wallet payment - this could be a direct API call
-                                    // For now, we'll navigate to a wallet payment screen or handle it directly
-                                    println("Wallet payment for order #$orderNum")
-                                    // You could implement direct wallet payment here
                                 }
                             )
                         } ?: run {
@@ -371,7 +365,6 @@ fun MainAppContainer() {
                             onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
                             onEditBeneficiary = { beneficiaryId ->
                                 // TODO: Implement edit beneficiary logic
-                                println("Edit beneficiary: $beneficiaryId")
                             },
                             onDeleteBeneficiary = { beneficiaryId ->
                                 // Show confirmation dialog and delete
