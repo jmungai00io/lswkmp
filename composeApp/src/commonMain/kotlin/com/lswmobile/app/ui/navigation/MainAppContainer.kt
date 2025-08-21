@@ -67,7 +67,8 @@ fun MainAppContainer() {
 //    val financeRepo = remember { SampleFinanceRepository.getInstance() }
     
     // Save only the route name string instead of the Screen object
-    var currentRoute by rememberSaveable { mutableStateOf(Screen.MarketPlace.route) }
+    // Default start destination: News Feed
+    var currentRoute by rememberSaveable { mutableStateOf(Screen.NewsFeed.route) }
     
     // Selected order number for detail view
     var selectedOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -107,7 +108,7 @@ fun MainAppContainer() {
             currentRoute == Screen.MyBeneficiaries.route -> Screen.MyBeneficiaries
             currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
             currentRoute == Screen.WebView.route -> Screen.WebView
-            else -> Screen.MarketPlace // Default fallback
+            else -> Screen.NewsFeed // Default fallback
         }
     }
     
