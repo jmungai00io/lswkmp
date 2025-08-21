@@ -878,14 +878,8 @@ fun ProductTextButton(onClick: () -> Unit) {
             .padding(bottom = AppTheme.spacing.medium.dp),
         horizontalArrangement = Arrangement.Center
     ){
-
         TextButton(onClick = onClick) {
             Text("READ MORE ...")
-
-            Icon(
-                imageVector = AppIcons.Filled.ArrowForward,
-                contentDescription = null,
-            )
         }
     }
 }

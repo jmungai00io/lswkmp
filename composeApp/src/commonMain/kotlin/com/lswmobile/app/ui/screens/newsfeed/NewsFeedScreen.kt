@@ -173,7 +173,8 @@ fun NewsFeedScreen(
                 else -> {
                     PullToRefreshContainer(
                         isRefreshing = isRefreshing,
-                        onRefresh = { viewModel.refreshNewsFeed() }
+                        onRefresh = { viewModel.refreshNewsFeed() },
+                        lazyListState = listState
                     ) {
                         LazyColumn(
                             state = listState,
