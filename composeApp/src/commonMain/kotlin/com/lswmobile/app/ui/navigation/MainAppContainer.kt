@@ -39,6 +39,7 @@ import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
 import com.lswmobile.app.ui.screens.wallet.RequestWithdrawalScreen
 import com.lswmobile.app.ui.screens.wallet.MyWithdrawalsScreen
 import com.lswmobile.app.ui.screens.wallet.ViewWithdrawalScreen
+import com.lswmobile.app.ui.screens.web.WebViewScreen
 import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
@@ -77,6 +78,9 @@ fun MainAppContainer() {
     // Selected withdrawal ID for detail view
     var selectedWithdrawalId by rememberSaveable { mutableStateOf<String?>(null) }
     
+    // Selected web URL for WebView screen
+    var selectedWebUrl by rememberSaveable { mutableStateOf<String?>(null) }
+    
     // Convert the route string to a Screen object
     val currentScreen = remember(currentRoute) {
         when {
@@ -102,6 +106,7 @@ fun MainAppContainer() {
             currentRoute == Screen.AddBeneficiary.route -> Screen.AddBeneficiary
             currentRoute == Screen.MyBeneficiaries.route -> Screen.MyBeneficiaries
             currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
+            currentRoute == Screen.WebView.route -> Screen.WebView
             else -> Screen.MarketPlace // Default fallback
         }
     }
@@ -141,7 +146,11 @@ fun MainAppContainer() {
                         MarketplaceScreen(
                             viewModel = marketplaceViewModel,
                             onNavigateToNewsScreen = { onScreenSelected(Screen.NewsFeed) },
-                            onNavigateToCheckout = { onScreenSelected(Screen.Checkout) }
+                            onNavigateToCheckout = { onScreenSelected(Screen.Checkout) },
+                            onOpenWebUrl = { url ->
+                                selectedWebUrl = url
+                                onScreenSelected(Screen.WebView)
+                            }
                         )
                     }
                     
@@ -402,6 +411,20 @@ fun MainAppContainer() {
                             )
                         } ?: run {
                             // Fallback if no withdrawal ID is provided
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
+                    }
+                    
+                    Screen.WebView -> {
+                        selectedWebUrl?.let { url ->
+                            WebViewScreen(
+                                url = url,
+                                onNavigateBack = {
+                                    // Return to marketplace by default
+                                    onScreenSelected(Screen.MarketPlace)
+                                }
+                            )
+                        } ?: run {
                             ScreenUnderConstruction(currentScreen.titleRes)
                         }
                     }
