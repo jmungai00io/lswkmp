@@ -9,17 +9,60 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.interop.UIKitView
+import androidx.compose.ui.interop.UIKitViewController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.AVFoundation.*
-import platform.CoreGraphics.CGRect
-import platform.QuartzCore.CATransaction
-import platform.QuartzCore.kCATransactionDisableActions
-import platform.UIKit.UIView
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import platform.Foundation.NSData
+import platform.UIKit.*
+import platform.darwin.NSObject
+
+@OptIn(ExperimentalForeignApi::class)
+class CameraDelegate(
+    private val onPhotoTaken: (ByteArray) -> Unit,
+    private val onError: (String) -> Unit,
+    private val onDismiss: () -> Unit
+) : NSObject(), UIImagePickerControllerDelegateProtocol, UINavigationControllerDelegateProtocol {
+    
+    override fun imagePickerController(
+        picker: UIImagePickerController,
+        didFinishPickingMediaWithInfo: Map<Any?, *>
+    ) {
+        val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
+        
+        if (image != null) {
+            // Convert UIImage to JPEG data
+            val imageData = UIImageJPEGRepresentation(image, 0.8) // 80% quality
+            if (imageData != null) {
+                val length = imageData.length.toInt()
+                val byteArray = ByteArray(length)
+                
+                byteArray.usePinned { pinned ->
+                    imageData.bytes?.let { bytes ->
+                        platform.posix.memcpy(pinned.addressOf(0), bytes, length.toULong())
+                    }
+                }
+                
+                onPhotoTaken(byteArray)
+            } else {
+                onError("Failed to convert image to JPEG")
+            }
+        } else {
+            onError("No image selected")
+        }
+        
+        picker.dismissViewControllerAnimated(true, null)
+        onDismiss()
+    }
+    
+    override fun imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        picker.dismissViewControllerAnimated(true, null)
+        onDismiss()
+    }
+}
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -27,12 +70,15 @@ actual fun CameraView(
     onPhotoTaken: (ByteArray) -> Unit,
     onError: (String) -> Unit
 ) {
-    val device = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo).firstOrNull { device ->
-        (device as AVCaptureDevice).position == AVCaptureDevicePositionBack
-    } as? AVCaptureDevice
-
-    if (device == null) {
-        // Show simulator camera mock when camera is not available
+    var showImagePicker by remember { mutableStateOf(false) }
+    
+    // Check if camera is available
+    val isCameraAvailable = remember {
+        UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera)
+    }
+    
+    if (!isCameraAvailable) {
+        // Show simulator mock or no camera available message
         Box(
             modifier = Modifier.fillMaxSize().background(Color.Black),
             contentAlignment = Alignment.Center
@@ -55,31 +101,31 @@ actual fun CameraView(
                 }
                 Spacer(modifier = Modifier.size(16.dp))
                 Text(
-                    text = "Camera Preview",
+                    text = "Camera Not Available",
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Running in iOS Simulator",
+                    text = "This device doesn't have a camera",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Use a real device to test camera functionality",
+                    text = "or you're running on a simulator",
                     color = Color.Gray,
                     fontSize = 12.sp
                 )
                 
                 Spacer(modifier = Modifier.size(32.dp))
                 
-                // Mock capture button for simulator
+                // Mock capture button for simulator/no camera
                 FloatingActionButton(
                     onClick = {
                         // Simulate photo capture with dummy data
-                        val dummyImageData = ByteArray(1024) { 0x42.toByte() }
+                        val dummyImageData = ByteArray(2048) { (it % 256).toByte() }
                         onPhotoTaken(dummyImageData)
                     },
                     modifier = Modifier.size(64.dp)
@@ -91,65 +137,78 @@ actual fun CameraView(
         return
     }
 
-    val input = AVCaptureDeviceInput.deviceInputWithDevice(device, null) as? AVCaptureDeviceInput
-
-    if (input == null) {
-        // Show error message if camera input cannot be created
+    // Real camera implementation using UIImagePickerController
+    if (showImagePicker) {
+        val delegate = remember {
+            CameraDelegate(
+                onPhotoTaken = onPhotoTaken,
+                onError = onError,
+                onDismiss = { showImagePicker = false }
+            )
+        }
+        
+        UIKitViewController(
+            factory = {
+                val picker = UIImagePickerController()
+                picker.sourceType =
+                    UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+                picker.cameraCaptureMode =
+                    UIImagePickerControllerCameraCaptureMode.UIImagePickerControllerCameraCaptureModePhoto
+                picker.cameraDevice =
+                    UIImagePickerControllerCameraDevice.UIImagePickerControllerCameraDeviceRear
+                picker.delegate = delegate
+                picker
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+    } else {
+        // Show camera preview placeholder with capture button
         Box(
             modifier = Modifier.fillMaxSize().background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Cannot access camera",
-                color = Color.White
-            )
-        }
-        return
-    }
-
-    val output = AVCaptureStillImageOutput()
-    output.outputSettings = mapOf(AVVideoCodecKey to AVVideoCodecJPEG)
-
-    val session = AVCaptureSession()
-    session.sessionPreset = AVCaptureSessionPresetPhoto
-    session.addInput(input)
-    session.addOutput(output)
-
-    val cameraPreviewLayer = remember { AVCaptureVideoPreviewLayer(session = session) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        UIKitView(
-            modifier = Modifier.fillMaxSize(),
-            background = Color.Black,
-            factory = {
-                val container = UIView()
-                container.layer.addSublayer(cameraPreviewLayer)
-                cameraPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
-                session.startRunning()
-                container
-            },
-            onResize = { container: UIView, rect: CValue<CGRect> ->
-                CATransaction.begin()
-                CATransaction.setValue(true, kCATransactionDisableActions)
-                container.layer.setFrame(rect)
-                cameraPreviewLayer.setFrame(rect)
-                CATransaction.commit()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .background(Color.DarkGray, CircleShape)
+                        .border(3.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "📷",
+                        fontSize = 60.sp,
+                        color = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.size(24.dp))
+                Text(
+                    text = "Ready to Capture",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Tap the button below to take a photo",
+                    color = Color.Gray,
+                    fontSize = 16.sp
+                )
+                
+                Spacer(modifier = Modifier.size(48.dp))
+                
+                // Launch camera button
+                FloatingActionButton(
+                    onClick = {
+                        showImagePicker = true
+                    },
+                    modifier = Modifier.size(80.dp)
+                ) {
+                    Text("📷", fontSize = 32.sp)
+                }
             }
-        )
-        
-        // Capture Button
-        FloatingActionButton(
-            onClick = {
-                // For now, we'll simulate photo capture
-                // In a real implementation, you'd use AVCaptureStillImageOutput
-                val dummyImageData = ByteArray(1024) { 0x42.toByte() }
-                onPhotoTaken(dummyImageData)
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-        ) {
-            Text("📷")
         }
     }
-} 
+}

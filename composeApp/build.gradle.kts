@@ -57,6 +57,9 @@ kotlin {
             implementation("androidx.compose.material:material-icons-core:1.5.4")
             implementation("androidx.compose.material:material-icons-extended:1.5.4")
             
+            // Coil for image loading
+            implementation("io.coil-kt:coil-compose:2.5.0")
+            
             // CameraX dependencies
             implementation("androidx.camera:camera-core:1.3.1")
             implementation("androidx.camera:camera-camera2:1.3.1")

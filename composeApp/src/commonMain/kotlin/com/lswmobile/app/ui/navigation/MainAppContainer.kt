@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.ui.components.AdaptiveScaffold
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
+import com.lswmobile.app.ui.screens.newsfeed.NewsFeedScreen
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
 import com.lswmobile.app.ui.screens.orders.OrderDetailScreen
 import com.lswmobile.app.ui.screens.orders.OrderViewModel
@@ -138,6 +139,12 @@ fun MainAppContainer() {
                             viewModel = marketplaceViewModel,
                             onNavigateToNewsScreen = { onScreenSelected(Screen.NewsFeed) },
                             onNavigateToCheckout = { onScreenSelected(Screen.Checkout) }
+                        )
+                    }
+                    
+                    Screen.NewsFeed -> {
+                        NewsFeedScreen(
+                            onNavigateBack = { onScreenSelected(Screen.MarketPlace) }
                         )
                     }
                     

@@ -9,7 +9,7 @@ class IosAppConfig : AppConfig {
     
     override val baseUrl: String
         get() = when (currentEnv) {
-            "development" -> "http://localhost:4000"
+            "development" -> "https://3b700b8bb80b.ngrok-free.app"
             "staging" -> "https://staging.api.livestockwealth.com"
             "production" -> "https://api.livestockwealth.com"
             else -> "https://api.livestockwealth.com"

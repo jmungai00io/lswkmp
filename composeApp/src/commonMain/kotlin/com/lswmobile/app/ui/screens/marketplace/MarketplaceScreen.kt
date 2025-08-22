@@ -1,5 +1,6 @@
 package com.lswmobile.app.ui.screens.marketplace
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -62,10 +66,10 @@ import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.network.model.Farmland
 import com.lswmobile.app.network.model.ProductClassic
 import com.lswmobile.app.ui.components.PullToRefreshContainer
+import com.lswmobile.app.ui.resources.ResourceHelper
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.DefaultCornerRadius
-import com.lswmobile.app.ui.theme.NetworkImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -106,6 +110,10 @@ fun MarketplaceScreen(
     val tabs = listOf("Farmland", "Products")
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
+
+    // Create LazyGridState for each tab to track scroll position
+    val farmlandGridState = rememberLazyGridState()
+    val productsGridState = rememberLazyGridState()
 
     // Check token and load data
     LaunchedEffect(Unit) {
@@ -189,6 +197,11 @@ fun MarketplaceScreen(
             ) { page ->
                 PullToRefreshContainer(
                     isRefreshing = isRefreshing,
+                    lazyGridState = when (page) {
+                        0 -> farmlandGridState
+                        1 -> productsGridState
+                        else -> null
+                    },
                     onRefresh = {
                         isRefreshing = true
                         coroutineScope.launch {
@@ -211,7 +224,8 @@ fun MarketplaceScreen(
                                 viewModel.addFarmlandToCart(productId, 1)
 
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            lazyGridState = farmlandGridState
                         )
 
                         // Regular Products Tab
@@ -222,7 +236,8 @@ fun MarketplaceScreen(
                             onAddToCart = { productId ->
                                 viewModel.addProductToCart(productId, 1)
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            lazyGridState = productsGridState
                         )
                     }
                 }
@@ -309,7 +324,7 @@ private fun MarketplaceTopBar(
         actions = {
             IconButton(onClick = onNewsClick) {
                 Icon(
-                    imageVector = AppIcons.Filled.Newspaper,
+                    imageVector = AppIcons.Outlined.Newspaper,
                     contentDescription = "News Feed"
                 )
             }
@@ -347,7 +362,8 @@ private fun FarmlandProductsGrid(
     isLoading: Boolean,
     onProductClick: (String) -> Unit,
     onAddToCart: (String) -> Unit,
-    viewModel: MarketplaceViewModel
+    viewModel: MarketplaceViewModel,
+    lazyGridState: LazyGridState
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -371,7 +387,8 @@ private fun FarmlandProductsGrid(
                         bottom = 80.dp // Extra padding for FAB
                     ),
                     horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    state = lazyGridState
                 ) {
                     items(products) { product ->
                         FarmlandCard(
@@ -404,7 +421,8 @@ private fun RegularProductsGrid(
     isLoading: Boolean,
     onProductClick: (String) -> Unit,
     onAddToCart: (String) -> Unit,
-    viewModel: MarketplaceViewModel
+    viewModel: MarketplaceViewModel,
+    lazyGridState: LazyGridState
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -428,7 +446,8 @@ private fun RegularProductsGrid(
                         bottom = 80.dp // Extra padding for FAB
                     ),
                     horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp),
+                    state = lazyGridState
                 ) {
                     items(products) { product ->
                         ProductFarmlandCard(
@@ -468,6 +487,9 @@ private fun ProductFarmlandCard(
         shape = RoundedCornerShape(DefaultCornerRadius),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column {
@@ -475,13 +497,13 @@ private fun ProductFarmlandCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.5f)
+                    .aspectRatio(1.8f)
+                    .padding(AppTheme.spacing.medium.dp)
             ) {
-                // Use our cross-platform NetworkImage component with null safety
-                NetworkImage(
-                    url = product.images?.firstOrNull() ?: "",
+                Image(
+                    painter = ResourceHelper.loadProductImage(product.productType),
                     contentDescription = product.name ?: product.productName ?: "",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -667,6 +689,9 @@ private fun FarmlandCard(
         shape = RoundedCornerShape(DefaultCornerRadius),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column {
@@ -674,13 +699,13 @@ private fun FarmlandCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.5f)
+                    .aspectRatio(1.8f)
+                    .padding(AppTheme.spacing.medium.dp)
             ) {
-                // Use our cross-platform NetworkImage component
-                NetworkImage(
-                    url = product.images?.firstOrNull() ?: "",
+                Image(
+                    painter = ResourceHelper.loadProductImage(product.productType),
                     contentDescription = product.name ?: "",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
 

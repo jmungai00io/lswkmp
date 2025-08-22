@@ -1,11 +1,15 @@
 package com.lswmobile.app.ui.theme
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import com.lswmobile.app.App
 import com.lswmobile.app.ui.theme.AppIcons.Filled
 import com.lswmobile.app.ui.theme.AppIcons.Outlined
 import kotlin.math.cos
@@ -125,110 +129,149 @@ internal actual object IconProvider {
                         lineTo(18f, 16f)
                     }
                 }
-                
+
                 "AccountCircle", "AccountCircle.Outlined" -> {
-                    val isFilled = !name.contains("Outlined")
-                    
-                    // Circle
+                    val isOutlined = name.contains("Outlined")
+
+                    // Outer circle
                     path(
-                        fill = if (isFilled) iconFill else SolidColor(Color.Transparent),
-                        stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        fill = if (!isOutlined) SolidColor(AppColors.AppPrimary) else SolidColor(Color.Transparent),
+                        stroke = if (isOutlined) iconFill else null,
+                        strokeLineWidth = if (isOutlined) 1.5f else 0f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        // Simple circle approximation with lines
-                        val cx = 12f
-                        val cy = 12f
-                        val radius = 9f
-                        val segments = 20  // Number of segments to approximate the circle
-                        
-                        // Draw circle using lines
-                        val angleIncrement = 2.0 * PI / segments
-                        moveTo(cx + radius, cy)  // Start at right side of circle
-                        
-                        for (i in 1..segments) {
-                            val angle = i * angleIncrement
-                            val x = cx + radius * cos(angle).toFloat()
-                            val y = cy + radius * sin(angle).toFloat()
-                            lineTo(x, y)
-                        }
-                        close()
+                        // Draw a full circle by chaining two arcs
+                        moveTo(22f, 12f)
+                        arcTo(
+                            horizontalEllipseRadius = 10f,
+                            verticalEllipseRadius = 10f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = true,
+                            x1 = 2f,
+                            y1 = 12f
+                        )
+                        arcTo(
+                            horizontalEllipseRadius = 10f,
+                            verticalEllipseRadius = 10f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = true,
+                            x1 = 22f,
+                            y1 = 12f
+                        )
+                        close() // Required to actually fill the shape!
                     }
-                    
+
                     // Head
                     path(
-                        fill = SolidColor(Color.Transparent),
+                        fill = if (!isOutlined) SolidColor(Color.White) else SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        strokeLineWidth = if (!isOutlined) 2f else 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        val headRadius = 3f
-                        val cx = 12f
-                        val cy = 10f
-                        
-                        // Simple circle for head
-                        val segments = 12
-                        val angleIncrement = 2.0 * PI / segments
-                        moveTo(cx + headRadius, cy)
-                        
-                        for (i in 1..segments) {
-                            val angle = i * angleIncrement
-                            val x = cx + headRadius * cos(angle).toFloat()
-                            val y = cy + headRadius * sin(angle).toFloat()
-                            lineTo(x, y)
-                        }
-                        close()
+                        moveTo(15f, 9f)
+                        arcTo(
+                            horizontalEllipseRadius = 3f,
+                            verticalEllipseRadius = 3f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = true,
+                            x1 = 9f,
+                            y1 = 9f
+                        )
+                        arcTo(
+                            horizontalEllipseRadius = 3f,
+                            verticalEllipseRadius = 3f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = true,
+                            x1 = 15f,
+                            y1 = 9f
+                        )
+                        close() // So white head fill works
                     }
-                    
-                    // Body
+
+                    // Shoulders/body
                     path(
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        strokeLineWidth = if (!isOutlined) 2f else 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        moveTo(12f, 13f) // Top of body
-                        lineTo(12f, 17f) // Bottom of body
-                        moveTo(9f, 15f)  // Left arm
-                        lineTo(15f, 15f) // Right arm
+                        moveTo(6f, 18f)
+                        quadTo(12f, 14f, 18f, 18f)
                     }
                 }
                 
                 "Newspaper", "Newspaper.Outlined" -> {
                     val isFilled = !name.contains("Outlined")
                     
-                    // Main paper rectangle
+                    // Newspaper with proper folds and sections
                     path(
                         fill = if (isFilled) iconFill else SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
+                        // Main paper rectangle
                         moveTo(4f, 4f)
                         lineTo(20f, 4f)
                         lineTo(20f, 20f)
                         lineTo(4f, 20f)
                         close()
+                        
+                        // Fold lines
+                        moveTo(4f, 8f)
+                        lineTo(20f, 8f)
+                        moveTo(4f, 12f)
+                        lineTo(20f, 12f)
+                        moveTo(4f, 16f)
+                        lineTo(20f, 16f)
+                        
+                        // Vertical fold
+                        moveTo(12f, 4f)
+                        lineTo(12f, 20f)
                     }
                     
-                    // Header line
+                    // Newspaper text lines
                     path(
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 1.5f
+                        strokeLineWidth = 1f,
+                        strokeLineCap = StrokeCap.Round
                     ) {
-                        moveTo(6f, 8f)
-                        lineTo(18f, 8f)
-                    }
-                    
-                    // Content lines
-                    path(
-                        fill = SolidColor(Color.Transparent),
-                        stroke = iconFill,
-                        strokeLineWidth = 1f
-                    ) {
-                        moveTo(6f, 11f)
-                        lineTo(18f, 11f)
+                        // Header section
+                        moveTo(6f, 6f)
+                        lineTo(10f, 6f)
+                        
+                        // Article titles
+                        moveTo(6f, 10f)
+                        lineTo(14f, 10f)
+                        moveTo(6f, 11.5f)
+                        lineTo(12f, 11.5f)
+                        
+                        // Body text lines
                         moveTo(6f, 14f)
                         lineTo(18f, 14f)
+                        moveTo(6f, 15.5f)
+                        lineTo(16f, 15.5f)
                         moveTo(6f, 17f)
-                        lineTo(14f, 17f)
+                        lineTo(15f, 17f)
+                        moveTo(6f, 18.5f)
+                        lineTo(13f, 18.5f)
+                        
+                        // Right column
+                        moveTo(13f, 10f)
+                        lineTo(18f, 10f)
+                        moveTo(13f, 11.5f)
+                        lineTo(18f, 11.5f)
+                        moveTo(13f, 14f)
+                        lineTo(18f, 14f)
                     }
                 }
                 
@@ -239,7 +282,7 @@ internal actual object IconProvider {
                         fill = if (isFilled) iconFill else SolidColor(Color.Transparent),
                         stroke = iconFill,
                         strokeLineWidth = 1.5f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round
+                        strokeLineCap = StrokeCap.Round
                     ) {
                         // Cart body
                         moveTo(7f, 8f)      // Top-left of cart
@@ -307,8 +350,8 @@ internal actual object IconProvider {
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
                         strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
                         moveTo(6f, 12f)
                         lineTo(10f, 16f)
@@ -322,8 +365,8 @@ internal actual object IconProvider {
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
                         strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
                         moveTo(6f, 6f)
                         lineTo(18f, 18f)
@@ -473,227 +516,418 @@ internal actual object IconProvider {
                 }
                 
                 "ArrowUpward" -> {
+                    val isFilled = !name.contains("Outlined")
                     // Up arrow
                     path(
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        // Arrow shaft
                         moveTo(12f, 20f)
-                        lineTo(12f, 8f)
-                        
-                        // Arrow head
-                        moveTo(7f, 12f)
-                        lineTo(12f, 7f)
-                        lineTo(17f, 12f)
+                        lineTo(12f, 4f)
+                        lineTo(6f, 10f)
+                        moveTo(12f, 4f)
+                        lineTo(18f, 10f)
                     }
                 }
                 
                 "ArrowDownward" -> {
+                    val isFilled = !name.contains("Outlined")
                     // Down arrow
                     path(
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
-                        strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        // Arrow shaft
                         moveTo(12f, 4f)
-                        lineTo(12f, 16f)
-                        
-                        // Arrow head
-                        moveTo(7f, 12f)
-                        lineTo(12f, 17f)
-                        lineTo(17f, 12f)
+                        lineTo(12f, 20f)
+                        lineTo(6f, 14f)
+                        moveTo(12f, 20f)
+                        lineTo(18f, 14f)
                     }
                 }
                 
                 "ArrowForward" -> {
-                    // Forward arrow (right)
-                    path(
-                        fill = SolidColor(Color.Transparent),
-                        stroke = iconFill,
-                        strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round
-                    ) {
-                        // Arrow shaft
-                        moveTo(4f, 12f)
-                        lineTo(16f, 12f)
-                        
-                        // Arrow head
-                        moveTo(12f, 7f)
-                        lineTo(17f, 12f)
-                        lineTo(12f, 17f)
-                    }
-                }
-                
-                "Add" -> {
-                    // Plus sign icon
-                    path(
-                        fill = SolidColor(Color.Transparent),
-                        stroke = iconFill,
-                        strokeLineWidth = 2f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round
-                    ) {
-                        // Horizontal line of plus sign
-                        moveTo(6f, 12f)
-                        lineTo(18f, 12f)
-                        
-                        // Vertical line of plus sign
-                        moveTo(12f, 6f)
-                        lineTo(12f, 18f)
-                    }
-                }
-                
-                "FilterList" -> {
-                    // Filter icon
+                    val isFilled = !name.contains("Outlined")
+                    // Right arrow
                     path(
                         fill = SolidColor(Color.Transparent),
                         stroke = iconFill,
                         strokeLineWidth = 1.5f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        // First (longest) line
-                        moveTo(4f, 6f)
-                        lineTo(20f, 6f)
-                        
-                        // Second (medium) line
-                        moveTo(6f, 12f)
-                        lineTo(18f, 12f)
-                        
-                        // Third (shortest) line
-                        moveTo(8f, 18f)
-                        lineTo(16f, 18f)
+                        moveTo(4f, 12f)
+                        lineTo(20f, 12f)
+                        lineTo(14f, 6f)
+                        moveTo(20f, 12f)
+                        lineTo(14f, 18f)
                     }
                 }
                 
-                "Close" -> {
-                    // X/close symbol
+                "Add" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Plus sign
                     path(
-                        fill = SolidColor(Color.Black),
-                        fillAlpha = 1f,
-                        stroke = null,
-                        strokeAlpha = 1f,
-                        strokeLineWidth = 1.0f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
-                        strokeLineMiter = 1f,
-                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round
                     ) {
-                        moveTo(19f, 6.41f)
-                        lineTo(17.59f, 5f)
-                        lineTo(12f, 10.59f)
-                        lineTo(6.41f, 5f)
-                        lineTo(5f, 6.41f)
-                        lineTo(10.59f, 12f)
-                        lineTo(5f, 17.59f)
-                        lineTo(6.41f, 19f)
-                        lineTo(12f, 13.41f)
-                        lineTo(17.59f, 19f)
-                        lineTo(19f, 17.59f)
-                        lineTo(13.41f, 12f)
+                        moveTo(12f, 5f)
+                        lineTo(12f, 19f)
+                        moveTo(5f, 12f)
+                        lineTo(19f, 12f)
+                    }
+                }
+                
+                "FilterList" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Filter icon (funnel shape)
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f
+                    ) {
+                        moveTo(4f, 6f)
+                        lineTo(20f, 6f)
+                        lineTo(16f, 12f)
+                        lineTo(16f, 18f)
+                        lineTo(8f, 18f)
+                        lineTo(8f, 12f)
                         close()
+                    }
+                }
+                
+                "LocationOn" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Location pin
+                    path(
+                        fill = if (isFilled) iconFill else SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f
+                    ) {
+                        // Pin shape (teardrop)
+                        moveTo(12f, 2f)
+                        lineTo(8f, 8f)
+                        lineTo(12f, 22f)
+                        lineTo(16f, 8f)
+                        close()
+                        
+                        // Inner circle
+                        moveTo(12f, 8f)
+                        arcTo(2f, 2f, 0f, false, true, 12f, 12f)
+                    }
+                }
+                
+                "Alarm" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Alarm clock
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f
+                    ) {
+                        // Clock circle
+                        val cx = 12f
+                        val cy = 12f
+                        val radius = 8f
+                        val segments = 16
+                        
+                        val angleIncrement = 2.0 * PI / segments
+                        moveTo(cx + radius, cy)
+                        
+                        for (i in 1..segments) {
+                            val angle = i * angleIncrement
+                            val x = cx + radius * cos(angle).toFloat()
+                            val y = cy + radius * sin(angle).toFloat()
+                            lineTo(x, y)
+                        }
+                        close()
+                        
+                        // Hour hand
+                        moveTo(12f, 12f)
+                        lineTo(12f, 8f)
+                        
+                        // Minute hand
+                        moveTo(12f, 12f)
+                        lineTo(16f, 12f)
+                        
+                        // Top bell
+                        moveTo(8f, 4f)
+                        lineTo(16f, 4f)
+                        
+                        // Bottom bell
+                        moveTo(8f, 20f)
+                        lineTo(16f, 20f)
+                    }
+                }
+                
+                "CheckCircle" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Checkmark in circle
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f
+                    ) {
+                        // Circle
+                        val cx = 12f
+                        val cy = 12f
+                        val radius = 8f
+                        val segments = 16
+                        
+                        val angleIncrement = 2.0 * PI / segments
+                        moveTo(cx + radius, cy)
+                        
+                        for (i in 1..segments) {
+                            val angle = i * angleIncrement
+                            val x = cx + radius * cos(angle).toFloat()
+                            val y = cy + radius * sin(angle).toFloat()
+                            lineTo(x, y)
+                        }
+                        close()
+                    }
+                    
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(9f, 12f)
+                        lineTo(11f, 14f)
+                        lineTo(15f, 10f)
                     }
                 }
                 
                 "Refresh" -> {
-                    // Refresh/reload circular arrow
+                    val isFilled = !name.contains("Outlined")
+                    // Refresh icon (circular arrow)
                     path(
-                        fill = SolidColor(Color.Black),
-                        fillAlpha = 1f,
-                        stroke = null,
-                        strokeAlpha = 1f,
-                        strokeLineWidth = 1.0f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
-                        strokeLineMiter = 1f,
-                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        moveTo(17.65f, 6.35f)
-                        curveTo(16.2f, 4.9f, 14.21f, 4f, 12f, 4f)
-                        curveTo(7.58f, 4f, 4f, 7.58f, 4f, 12f)
-                        curveTo(4f, 16.42f, 7.58f, 20f, 12f, 20f)
-                        curveTo(15.73f, 20f, 18.84f, 17.45f, 19.73f, 14f)
-                        horizontalLineTo(17.65f)
-                        curveTo(16.83f, 16.33f, 14.61f, 18f, 12f, 18f)
-                        curveTo(8.69f, 18f, 6f, 15.31f, 6f, 12f)
-                        curveTo(6f, 8.69f, 8.69f, 6f, 12f, 6f)
-                        curveTo(13.66f, 6f, 15.14f, 6.69f, 16.22f, 7.78f)
-                        lineTo(13f, 11f)
-                        horizontalLineTo(20f)
-                        verticalLineTo(4f)
-                        lineTo(17.65f, 6.35f)
-                        close()
+                        // Circular arrow
+                        val cx = 12f
+                        val cy = 12f
+                        val radius = 8f
+                        val segments = 12
+                        
+                        val angleIncrement = 2.0 * PI / segments
+                        moveTo(cx + radius, cy)
+                        
+                        for (i in 1..(segments * 3/4)) {
+                            val angle = i * angleIncrement
+                            val x = cx + radius * cos(angle).toFloat()
+                            val y = cy + radius * sin(angle).toFloat()
+                            lineTo(x, y)
+                        }
+                        
+                        // Arrow head
+                        moveTo(15f, 7f)
+                        lineTo(17f, 5f)
+                        lineTo(19f, 7f)
                     }
                 }
                 
                 "Back" -> {
-                    // Back arrow (iOS style)
+                    val isFilled = !name.contains("Outlined")
+                    // Back arrow (left arrow)
                     path(
-                        fill = SolidColor(Color.Black),
-                        fillAlpha = 1f,
-                        stroke = null,
-                        strokeAlpha = 1f,
-                        strokeLineWidth = 1.0f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
-                        strokeLineMiter = 1f,
-                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
-                        moveTo(17.77f, 3.77f)
-                        lineTo(16f, 2f)
-                        lineTo(6f, 12f)
-                        lineTo(16f, 22f)
-                        lineTo(17.77f, 20.23f)
-                        lineTo(9.54f, 12f)
-                        close()
+                        moveTo(20f, 12f)
+                        lineTo(4f, 12f)
+                        lineTo(10f, 6f)
+                        moveTo(4f, 12f)
+                        lineTo(10f, 18f)
                     }
                 }
+                
                 "KeyboardArrowDown" -> {
-                    // Downward chevron arrow
+                    val isFilled = !name.contains("Outlined")
+                    // Down arrow
                     path(
-                        fill = SolidColor(Color.Black),
-                        fillAlpha = 1f,
-                        stroke = null,
-                        strokeAlpha = 1f,
-                        strokeLineWidth = 1.0f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
-                        strokeLineMiter = 1f,
-                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
                     ) {
                         moveTo(7f, 10f)
                         lineTo(12f, 15f)
                         lineTo(17f, 10f)
-                        lineTo(15.59f, 8.59f)
-                        lineTo(12f, 12.17f)
-                        lineTo(8.41f, 8.59f)
+                    }
+                }
+                
+                "KeyboardArrowUp" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Up arrow
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(7f, 14f)
+                        lineTo(12f, 9f)
+                        lineTo(17f, 14f)
+                    }
+                }
+
+                "Favorite" -> {
+                    val isOutlined = name.contains("Outlined")
+
+                    path(
+                        fill = if (!isOutlined) iconFill else SolidColor(Color.Transparent),
+                        stroke = if (isOutlined) iconFill else null,
+                        strokeLineWidth = if (isOutlined) 1.5f else 0f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        // Start at the bottom tip of the heart
+                        moveTo(12f, 21f)
+
+                        // Left bottom curve up to the left lobe
+                        quadTo(6f, 16f, 6f, 10f)
+
+                        // Left arc (lobe)
+                        arcTo(
+                            horizontalEllipseRadius = 3f,
+                            verticalEllipseRadius = 3f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = false,
+                            x1 = 12f,
+                            y1 = 8f
+                        )
+
+                        // Right arc (lobe)
+                        arcTo(
+                            horizontalEllipseRadius = 3f,
+                            verticalEllipseRadius = 3f,
+                            theta = 0f,
+                            isMoreThanHalf = true,
+                            isPositiveArc = false,
+                            x1 = 18f,
+                            y1 = 10f
+                        )
+
+                        // Right bottom curve down to the bottom tip
+                        quadTo(18f, 16f, 12f, 21f)
+
+                        close()
+                    }
+                }
+                
+                "Close" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Close X
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(6f, 6f)
+                        lineTo(18f, 18f)
+                        moveTo(18f, 6f)
+                        lineTo(6f, 18f)
+                    }
+                }
+                
+                "ChevronLeft" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Left chevron
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(15f, 6f)
+                        lineTo(9f, 12f)
+                        lineTo(15f, 18f)
+                    }
+                }
+                
+                "ChevronRight" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Right chevron
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(9f, 6f)
+                        lineTo(15f, 12f)
+                        lineTo(9f, 18f)
+                    }
+                }
+                
+                "FavoriteBorder" -> {
+                    val isFilled = !name.contains("Outlined")
+                    // Heart outline
+                    path(
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f,
+                        strokeLineCap = StrokeCap.Round,
+                        strokeLineJoin = StrokeJoin.Round
+                    ) {
+                        moveTo(12f, 21f)
+                        lineTo(10.55f, 19.7f)
+                        lineTo(5f, 14.51f)
+                        lineTo(5f, 9f)
+                        lineTo(7f, 7f)
+                        lineTo(12f, 11.95f)
+                        lineTo(17f, 7f)
+                        lineTo(19f, 9f)
+                        lineTo(19f, 14.51f)
+                        lineTo(13.45f, 19.7f)
                         close()
                     }
                 }
                 
                 else -> {
-                    // Default square shape for other icons like Add, FilterList, etc.
+                    // Default placeholder - simple circle
                     path(
-                        fill = SolidColor(Color.Black),
-                        fillAlpha = 1f,
-                        stroke = null,
-                        strokeAlpha = 1f,
-                        strokeLineWidth = 1.0f,
-                        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Butt,
-                        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Miter,
-                        strokeLineMiter = 1f,
-                        pathFillType = androidx.compose.ui.graphics.PathFillType.NonZero
+                        fill = SolidColor(Color.Transparent),
+                        stroke = iconFill,
+                        strokeLineWidth = 1.5f
                     ) {
-                        moveTo(3f, 3f)
-                        horizontalLineToRelative(18f)
-                        verticalLineToRelative(18f)
-                        horizontalLineToRelative(-18f)
+                        val cx = 12f
+                        val cy = 12f
+                        val radius = 8f
+                        val segments = 16
+                        
+                        val angleIncrement = 2.0 * PI / segments
+                        moveTo(cx + radius, cy)
+                        
+                        for (i in 1..segments) {
+                            val angle = i * angleIncrement
+                            val x = cx + radius * cos(angle).toFloat()
+                            val y = cy + radius * sin(angle).toFloat()
+                            lineTo(x, y)
+                        }
                         close()
                     }
                 }
@@ -733,6 +967,11 @@ internal actual object IconProvider {
         override val Refresh: ImageVector = createPlaceholderIcon("Refresh")
         override val Back: ImageVector = createPlaceholderIcon("Back")
         override val KeyboardArrowDown: ImageVector = createPlaceholderIcon("KeyboardArrowDown")
+        override val KeyboardArrowUp: ImageVector = createPlaceholderIcon("KeyboardArrowUp")
+        override val Favorite: ImageVector = createPlaceholderIcon("Favorite")
+        override val Close: ImageVector = createPlaceholderIcon("Close")
+        override val ChevronLeft: ImageVector = createPlaceholderIcon("ChevronLeft")
+        override val ChevronRight: ImageVector = createPlaceholderIcon("ChevronRight")
     }
     
     /**
@@ -745,5 +984,6 @@ internal actual object IconProvider {
         override val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle.Outlined")
         override val List: ImageVector = createPlaceholderIcon("List.Outlined")
         override val Newspaper: ImageVector = createPlaceholderIcon("Newspaper.Outlined")
+        override val FavoriteBorder: ImageVector = createPlaceholderIcon("FavoriteBorder")
     }
 }

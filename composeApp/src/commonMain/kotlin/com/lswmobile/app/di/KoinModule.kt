@@ -14,12 +14,14 @@ import com.lswmobile.app.network.SimpleTokenProvider
 import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.MarketplaceRepository
+import com.lswmobile.app.network.repository.NewsFeedRepository
 import com.lswmobile.app.network.repository.UserRepository as NetworkUserRepository
 import com.lswmobile.app.network.repository.WithdrawalRepository
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel
 import com.lswmobile.app.viewmodel.AuthViewModel
 import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
+import com.lswmobile.app.viewmodel.NewsFeedViewModel
 import com.lswmobile.app.viewmodel.UpdateProfileViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.WithdrawalViewModel
@@ -79,6 +81,7 @@ object KoinModule {
     val repositoryModule = module {
         single { AuthRepository(get(), get()) }
         single { MarketplaceRepository(get()) }
+        single { NewsFeedRepository(get()) }
         single { KycRepository(get()) }
         single { NetworkUserRepository(get()) }
         single { WithdrawalRepository(get()) }
@@ -90,6 +93,7 @@ object KoinModule {
     val viewModelModule = module {
         factory { AuthViewModel(get(), get()) }
         factory { MarketplaceViewModel(get(), get()) }
+        factory { NewsFeedViewModel(get(), get()) }
         factory { UserViewModel(get()) }
         factory { KycViewModel(get(), get()) }
         factory { BeneficiaryViewModel(get(), get()) }

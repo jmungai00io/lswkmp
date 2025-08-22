@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,10 +28,12 @@ import kotlinx.coroutines.launch
 
 /**
  * A container that provides pull-to-refresh functionality with iOS-like physics
+ * Only triggers refresh when at the top of the scrollable content
  * 
  * @param isRefreshing Whether the content is currently refreshing
  * @param onRefresh Callback to be invoked when a refresh is triggered
  * @param modifier Modifier to be applied to the container
+ * @param lazyGridState Optional LazyGridState to check scroll position
  * @param content The content to be displayed inside the container
  */
 @Composable
@@ -37,11 +41,21 @@ fun PullToRefreshContainer(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    lazyGridState: LazyGridState? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     val refreshTriggerDistance = with(LocalDensity.current) { 80.dp.toPx() }
     var refreshing by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(0f) }
+    
+    // Check if we're at the top of the scrollable content
+    val isAtTop by remember {
+        derivedStateOf {
+            lazyGridState?.let { state ->
+                state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0
+            } ?: true // If no state provided, assume we can refresh (backward compatibility)
+        }
+    }
     
     // Update refreshing state based on isRefreshing parameter
     LaunchedEffect(isRefreshing) {
@@ -68,8 +82,9 @@ fun PullToRefreshContainer(
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
-                // If refreshing or scrolling down, let the scroll happen normally
-                if (refreshing || available.y < 0) return androidx.compose.ui.geometry.Offset.Zero
+                // Only allow pull-to-refresh when at the top of the content
+                // If refreshing, scrolling down, or not at top, let the scroll happen normally
+                if (refreshing || available.y < 0 || !isAtTop) return androidx.compose.ui.geometry.Offset.Zero
                 
                 // Calculate new progress value
                 val newProgress = (progress + available.y / refreshTriggerDistance).coerceIn(0f, 1.3f)
@@ -80,8 +95,8 @@ fun PullToRefreshContainer(
             }
             
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                // If progress crosses the threshold, trigger refresh
-                if (progress > 1f && !refreshing) {
+                // If progress crosses the threshold and we're at the top, trigger refresh
+                if (progress > 1f && !refreshing && isAtTop) {
                     refreshing = true
                 }
                 
