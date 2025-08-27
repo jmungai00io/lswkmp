@@ -241,6 +241,6 @@ class KycViewModel(
      * Check if user can proceed with KYC upload
      */
     fun canProceedWithKyc(currentStatus: String?): Boolean {
-        return currentStatus == KycStatuses.UNVERIFIED || currentStatus.isNullOrEmpty()
+        return currentStatus == KycStatuses.UNVERIFIED || currentStatus == KycStatuses.REJECTED || currentStatus.isNullOrEmpty()
     }
 } 
