@@ -265,16 +265,7 @@ private fun KycStatusCard(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
-            
-            if (canProceed) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onProceed,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Start KYC Process")
-                }
-            }
+
         }
     }
 }
