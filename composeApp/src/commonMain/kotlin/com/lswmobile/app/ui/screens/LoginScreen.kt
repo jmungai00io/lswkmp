@@ -119,39 +119,6 @@ fun LoginScreen(
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface
         )
-
-        // Demo Material Icons (for cross-platform test)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Home,
-                contentDescription = "Home",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Icon(
-                imageVector = Icons.Outlined.FavoriteBorder,
-                contentDescription = "Favorite",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Icon(
-                imageVector = Icons.Rounded.Star,
-                contentDescription = "Star",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-        
-        // Email field
         LivestockTextField(
             value = email,
             onValueChange = { 
