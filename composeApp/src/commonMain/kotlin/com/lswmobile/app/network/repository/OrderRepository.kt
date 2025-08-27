@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class OrderRepository(private val api: LivestockWealthApi) {
     
-    // State definitions for orders list
     sealed class OrdersState {
         object Idle : OrdersState()
         object Loading : OrdersState()
@@ -21,7 +20,6 @@ class OrderRepository(private val api: LivestockWealthApi) {
         data class Error(val message: String) : OrdersState()
     }
     
-    // State definitions for order detail
     sealed class OrderDetailState {
         object Idle : OrderDetailState()
         object Loading : OrderDetailState()
@@ -52,22 +50,17 @@ class OrderRepository(private val api: LivestockWealthApi) {
         try {
             _ordersState.value = OrdersState.Loading
             
-            println("OrderRepository: Fetching my orders")
             val response = api.getMyOrders()
             
             if (response.success) {
                 val ordersList = response.data
                 _orders.value = ordersList
                 _ordersState.value = OrdersState.Success(ordersList)
-                println("OrderRepository: Successfully fetched ${ordersList.size} orders")
             } else {
                 _ordersState.value = OrdersState.Error("Failed to fetch orders")
-                println("OrderRepository: Failed to fetch orders - API returned success=false")
             }
         } catch (e: Exception) {
             _ordersState.value = OrdersState.Error(e.message ?: "Unknown error occurred while fetching orders")
-            println("OrderRepository: Error fetching orders: ${e.message}")
-            e.printStackTrace()
         }
     }
     
@@ -78,27 +71,18 @@ class OrderRepository(private val api: LivestockWealthApi) {
         try {
             _orderDetailState.value = OrderDetailState.Loading
             
-            println("OrderRepository: Fetching order details for order #$orderNumber")
             val response = api.getOrderByNumber(orderNumber)
             
             if (response.success) {
                 val orderDetail = response.data
-                println("OrderRepository: Order details success. Items count: ${orderDetail.items.size}")
-                orderDetail.items.forEachIndexed { index, item ->
-                    println("OrderRepository: Item $index - ID: ${item._id}, Type: ${item.productType}, Price: ${item.priceOfAsset}")
-                }
-                
+
                 _selectedOrder.value = orderDetail
                 _orderDetailState.value = OrderDetailState.Success(orderDetail)
-                println("OrderRepository: Successfully fetched order details for #$orderNumber")
             } else {
                 _orderDetailState.value = OrderDetailState.Error("Failed to fetch order details")
-                println("OrderRepository: Failed to fetch order details - API returned success=false")
             }
         } catch (e: Exception) {
             _orderDetailState.value = OrderDetailState.Error(e.message ?: "Unknown error occurred while fetching order details")
-            println("OrderRepository: Error fetching order details: ${e.message}")
-            e.printStackTrace()
         }
     }
     

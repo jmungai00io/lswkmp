@@ -227,15 +227,10 @@ class LivestockWealthApi(private val client: KtorClient) {
                 parameter("offset", offset)
             }
             
-            // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw products response: $responseText")
-            
-            // Use the response.body() method to decode instead of manual decoding
+
             return response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error parsing products response: ${e.message}")
-            // Return empty response to avoid crashing
             return ProductsResponse(success = false)
         }
     }
@@ -262,13 +257,9 @@ class LivestockWealthApi(private val client: KtorClient) {
             
             // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw farmlands response: $responseText")
-            
-            // Use response.body() for decoding
+
             return response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error parsing farmlands response: ${e.message}")
-            // Return empty response to avoid crashing
             return FarmlandsResponse(success = false, data = emptyList())
         }
     }
@@ -287,11 +278,9 @@ class LivestockWealthApi(private val client: KtorClient) {
             
             // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw preorder response: $responseText")
-            
+
             return response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error during preorder: ${e.message}")
             return PreorderResponse(
                 success = false,
                 error = e.message ?: "Unknown error occurred during preorder"
@@ -363,12 +352,9 @@ class LivestockWealthApi(private val client: KtorClient) {
             
             // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw order creation response: $responseText")
-            
+
             return response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error during order creation: ${e.message}")
-            e.printStackTrace()
             return MarketplaceOrderResponse(
                 success = false,
                 error = e.message ?: "Unknown error occurred during order creation"
@@ -418,12 +404,9 @@ class LivestockWealthApi(private val client: KtorClient) {
             
             // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw my orders response: $responseText")
-            
+
             return response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error fetching my orders: ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }
@@ -438,34 +421,16 @@ class LivestockWealthApi(private val client: KtorClient) {
                 url("/transactions/orders/$orderNumber")
             }
             
-            // Log the raw response for debugging
             val responseText = response.bodyAsText()
-            println("LivestockWealthApi: Raw order details response: $responseText")
-            
-            // Parse the response
+
             val parsedResponse = response.body<OrderWithFullUserResponse>()
             
-            // Log the parsed object
-            println("LivestockWealthApi: Order details parsed. Success=${parsedResponse.success}")
             if (parsedResponse.success) {
                 val orderData = parsedResponse.data
-                println("LivestockWealthApi: Order #$orderNumber - Item count: ${orderData.items.size}")
-                println("LivestockWealthApi: Order amount: ${orderData.amount}, status: ${orderData.status}")
-                
-                // Examine items more closely
-                orderData.items.forEachIndexed { index, item ->
-                    println("LivestockWealthApi: Item $index details:")
-                    println("  ID: ${item._id}")
-                    println("  Product Type: ${item.productType}")
-                    println("  Price: ${item.priceOfAsset}")
-                    println("  Is Unallocated: ${item.isUnallocated}")
-                }
             }
             
             return parsedResponse
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error fetching order details: ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }
@@ -475,19 +440,14 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun updatePaymentMethod(orderId: String, paymentBody: PaymentBody): JsonObject {
         return try {
-            println("LivestockWealthApi: Updating payment method for order #$orderId")
-            println("LivestockWealthApi: Payment method: ${paymentBody.paymentMethod}, Payment type: ${paymentBody.paymentType}")
-            
+
             val response = client.client.put {
                 url("/transactions/orders/$orderId/payment-method")
                 setBody(paymentBody)
             }
             
-            println("LivestockWealthApi: Payment method update successful")
             response.body()
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error updating payment method: ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }
@@ -599,17 +559,12 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getLocalBanks(): BanksResponse {
         return try {
-            println("LivestockWealthApi: Starting getLocalBanks request")
             val response = client.client.get {
                 url("/transactions/local-banks")
             }
-            println("LivestockWealthApi: getLocalBanks response status: ${response.status}")
             val body = response.body<BanksResponse>()
-            println("LivestockWealthApi: getLocalBanks response body: $body")
             body
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error in getLocalBanks: ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }
@@ -669,12 +624,7 @@ class LivestockWealthApi(private val client: KtorClient) {
         selfieFileName: String
     ): KycUploadResponse {
         return try {
-            println("LivestockWealthApi: Starting KYC document upload")
-            println("LivestockWealthApi: Government ID size: ${governmentIdBytes.size} bytes, filename: $governmentIdFileName")
-            println("LivestockWealthApi: Proof of Address size: ${proofOfAddressBytes.size} bytes, filename: $proofOfAddressFileName")
-            println("LivestockWealthApi: Selfie size: ${selfieBytes.size} bytes, filename: $selfieFileName")
-            
-            // Determine MIME types based on file extensions
+
             val govtIdMimeType = when {
                 governmentIdFileName.lowercase().endsWith(".jpg") || governmentIdFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
                 governmentIdFileName.lowercase().endsWith(".png") -> "image/png"
@@ -696,10 +646,7 @@ class LivestockWealthApi(private val client: KtorClient) {
                 else -> "image/jpeg" // Default to JPEG
             }
             
-            println("LivestockWealthApi: Government ID MIME type: $govtIdMimeType")
-            println("LivestockWealthApi: Proof of Address MIME type: $proofOfAddressMimeType")
-            println("LivestockWealthApi: Selfie MIME type: $selfieMimeType")
-            
+
             val response = client.client.submitFormWithBinaryData(
                 url = "/kyc/upload-documents",
                 formData = formData {
@@ -718,15 +665,9 @@ class LivestockWealthApi(private val client: KtorClient) {
                 }
             )
             
-            println("LivestockWealthApi: KYC document upload completed successfully")
-            println("LivestockWealthApi: Response status: ${response.status}")
-            println("LivestockWealthApi: Response headers: ${response.headers}")
-            val responseBody: KycUploadResponse = response.body()
-            println("LivestockWealthApi: Response body: $responseBody")
+           val responseBody: KycUploadResponse = response.body()
             responseBody
         } catch (e: Exception) {
-            println("LivestockWealthApi: Error uploading KYC documents: ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }

@@ -178,7 +178,6 @@ class DebitPaymentViewModel(
             }
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Error loading banks")
-            e.printStackTrace()
         }
     }
     
@@ -335,7 +334,6 @@ class DebitPaymentViewModel(
                 
             } catch (e: Exception) {
                 _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
-                e.printStackTrace()
             } finally {
                 _isConfirming.value = false
             }

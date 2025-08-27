@@ -202,7 +202,6 @@ class UpdateProfileViewModel(
                     errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to update profile")
                 }
             } catch (e: Throwable) {
-                println("UpdateProfileViewModel: Error updating profile: ${e.message}")
                 val errorException = if (e is Exception) e else Exception(e.message, e)
                 errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {

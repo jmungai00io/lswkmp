@@ -51,16 +51,10 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
     suspend fun getProducts(limit: Int = 20, offset: Int = 0) {
         try {
             _productsState.value = ProductsState.Loading
-            println("MarketplaceRepository: Fetching products...")
             val response = api.getProducts(null, limit, offset)
-            println("MarketplaceRepository: Products API response successful. Products count: ${response.products.size}")
-            response.products.forEach { product ->
-                println("MarketplaceRepository: Product: ${product._id}, ${product.productName ?: product.name ?: "Unnamed"}")
-            }
+
             _productsState.value = ProductsState.Success(response.products)
         } catch (e: Exception) {
-            println("MarketplaceRepository: Error fetching products: ${e.message}")
-            e.printStackTrace()
             _productsState.value = ProductsState.Error(e.message ?: "Unknown error fetching products")
         }
     }
@@ -109,25 +103,19 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
     suspend fun preorderProduct(productType: String) {
         try {
             _preorderState.value = PreorderState.Loading
-            println("MarketplaceRepository: Preordering product type: $productType...")
-            
             val response = api.preorderProduct(productType)
             
             if (response.success) {
                 val message = response.message ?: "Successfully added to waitlist"
-                println("MarketplaceRepository: Preorder successful. Message: $message")
                 _preorderState.value = PreorderState.Success(
                     message = message,
                     waitingListPosition = response.waitingListPosition
                 )
             } else {
                 val errorMessage = response.error ?: "Unknown error occurred during preorder"
-                println("MarketplaceRepository: Preorder failed. Error: $errorMessage")
                 _preorderState.value = PreorderState.Error(errorMessage)
             }
         } catch (e: Exception) {
-            println("MarketplaceRepository: Error preordering product: ${e.message}")
-            e.printStackTrace()
             _preorderState.value = PreorderState.Error(e.message ?: "Unknown error preordering product")
         }
     }
@@ -149,8 +137,6 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
         // Calculate the total for just these product items
         val productSubtotal = cartItems.sumOf { it.price * it.quantity }
         
-        println("MarketplaceRepository: Creating product order with ${cartItems.size} items, product subtotal: $productSubtotal")
-        
         try {
             // Map cart items to order items
             val orderItems = cartItems.map { cartItem ->
@@ -161,12 +147,10 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
                 )
             }
             
-            println("MarketplaceRepository: Mapped product order items: $orderItems")
-            
+
             // Call API to create order with product subtotal
             val response = api.createMarketplaceOrder(orderItems, productSubtotal)
-            println("MarketplaceRepository: Product order response: $response")
-            
+
             if (response.success) {
                 _orderState.value = OrderState.Success(
                     orderId = response.orderId ?: "",
@@ -178,8 +162,6 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
                 )
             }
         } catch (e: Exception) {
-            println("MarketplaceRepository: Error creating product order: ${e.message}")
-            e.printStackTrace()
             _orderState.value = OrderState.Error(
                 message = e.message ?: "Unknown error occurred while creating order"
             )
@@ -194,9 +176,6 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
         
         // Calculate the total for just these farmland items
         val farmlandSubtotal = cartItems.sumOf { it.price * it.quantity }
-        
-        println("MarketplaceRepository: Creating farmland order with ${cartItems.size} items, farmland subtotal: $farmlandSubtotal")
-        
         try {
             // Map cart items to order items
             val orderItems = cartItems.map { cartItem ->
@@ -207,12 +186,8 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
                 )
             }
             
-            println("MarketplaceRepository: Mapped farmland order items: $orderItems")
-            
-            // Call API to create order with farmland subtotal
             val response = api.createMarketplaceOrder(orderItems, farmlandSubtotal)
-            println("MarketplaceRepository: Farmland order response: $response")
-            
+
             if (response.success) {
                 _orderState.value = OrderState.Success(
                     orderId = response.orderId ?: "",
@@ -224,8 +199,6 @@ class MarketplaceRepository(private val api: LivestockWealthApi) {
                 )
             }
         } catch (e: Exception) {
-            println("MarketplaceRepository: Error creating farmland order: ${e.message}")
-            e.printStackTrace()
             _orderState.value = OrderState.Error(
                 message = e.message ?: "Unknown error occurred while creating order"
             )

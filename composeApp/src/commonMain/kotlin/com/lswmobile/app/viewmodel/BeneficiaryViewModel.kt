@@ -45,23 +45,18 @@ class BeneficiaryViewModel(
                 _isLoading = true
                 _error = null
                 
-                println("BeneficiaryViewModel: Fetching beneficiaries with page=$page, limit=$limit")
-                
+
                 val response = withContext(Dispatchers.IO) {
                     api.getBeneficiaries(page = page, limit = limit)
                 }
                 
-                println("BeneficiaryViewModel: Response success=${response.success}, data size=${response.data.size}")
-                
                 if (response.success) {
                     _beneficiaries = response.data
-                    println("BeneficiaryViewModel: Updated beneficiaries list with ${_beneficiaries.size} items")
                 } else {
                     _error = "Failed to fetch beneficiaries"
                 }
             } catch (e: Exception) {
                 _error = ErrorUtils.extractErrorMessage(e, "Failed to fetch beneficiaries")
-                e.printStackTrace()
             } finally {
                 _isLoading = false
             }

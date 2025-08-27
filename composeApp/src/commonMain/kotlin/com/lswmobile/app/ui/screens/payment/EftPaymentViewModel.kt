@@ -162,7 +162,6 @@ class EftPaymentViewModel(
                 
             } catch (e: Exception) {
                 _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
-                e.printStackTrace()
             } finally {
                 _isConfirming.value = false
             }

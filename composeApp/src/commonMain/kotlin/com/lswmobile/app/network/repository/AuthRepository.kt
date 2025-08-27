@@ -36,7 +36,6 @@ class AuthRepository(
      */
     suspend fun login(email: String, password: String, mode: String) {
         try {
-            println("AuthRepository.login: Starting login process with email: $email, mode: $mode")
             _loginState.value = LoginState.Loading
             
             // Store credentials for later use in OTP verification
@@ -44,23 +43,18 @@ class AuthRepository(
             tempPassword = password
             
             val response = api.loginUser(LoginBody(email, password), mode)
-            println("AuthRepository.login: Login successful, response received")
-            
+
             // Extract and store token from response
             if (response.containsKey("token")) {
                 tempToken = response["token"]?.jsonPrimitive?.content
 
-                println("Token extracted: ${tempToken?.take(10)}...")
             } else {
-                println("No token found in response")
+                null
             }
             
             _loginState.value = LoginState.Success(response)
         } catch (e: Exception) {
-            println("AuthRepository.login: Error during login: ${e.message}")
-            e.printStackTrace()
             _loginState.value = LoginState.Error(e.message ?: "Unknown error")
-            // Rethrow so upper layers (AuthViewModel) can handle with ErrorUtils and update UI state
             throw e
         }
     }
@@ -87,8 +81,6 @@ class AuthRepository(
                 PreRegisterBody(email, password, phoneNumber, firstName, lastName),
                 mode
             )
-            
-            // Extract and store token from response
             if (response.containsKey("token")) {
                 tempToken = response["token"]?.jsonPrimitive?.content
             }
@@ -123,13 +115,8 @@ class AuthRepository(
             // Clear temporary credentials after successful verification
             if (response.containsKey("token") && response["token"] != null) {
                 val finalToken = response["token"]?.jsonPrimitive?.content
-                println("AuthRepository.verifyOtp: Final token: $finalToken")
                 tokenProvider.saveTokens(finalToken ?: "", "")
-                
-                // Reinitialize network clients to pick up the new token
                 AppInitializer.reinitializeNetworkClients()
-                
-                // Clear temp storage
                 tempEmail = null
                 tempPassword = null
                 tempToken = null
