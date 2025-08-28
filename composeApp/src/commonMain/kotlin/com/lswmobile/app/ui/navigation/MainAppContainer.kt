@@ -433,6 +433,7 @@ fun MainAppContainer() {
                     Screen.UploadAvatar -> {
                         val userRepository = koinInject<com.lswmobile.app.network.repository.UserRepository>()
                         val coroutineScope = rememberCoroutineScope()
+                        val user by userViewModel.user.collectAsState()
                         val uploadAvatarViewModel = remember {
                             com.lswmobile.app.viewmodel.UploadAvatarViewModel(
                                 userRepository = userRepository,
@@ -442,7 +443,8 @@ fun MainAppContainer() {
                         
                         com.lswmobile.app.ui.screens.profile.UploadAvatarScreen(
                             viewModel = uploadAvatarViewModel,
-                            onNavigateBack = { onScreenSelected(Screen.Profile) }
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            avatarUrl = user?.avatarUrl
                         )
                     }
                     
