@@ -19,6 +19,7 @@ import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.UIKit.*
 import platform.darwin.NSObject
+import platform.AVFoundation.*
 
 @OptIn(ExperimentalForeignApi::class)
 class CameraDelegate(
@@ -64,6 +65,13 @@ class CameraDelegate(
     }
 }
 
+enum class CameraPermissionStatus {
+    NotDetermined,
+    Granted,
+    Denied,
+    Restricted
+}
+
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun CameraView(
@@ -71,6 +79,19 @@ actual fun CameraView(
     onError: (String) -> Unit
 ) {
     var showImagePicker by remember { mutableStateOf(false) }
+    var permissionStatus by remember { mutableStateOf(CameraPermissionStatus.NotDetermined) }
+    var isCheckingPermission by remember { mutableStateOf(false) }
+    
+    // Check camera permission status
+    LaunchedEffect(Unit) {
+        val authStatus = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
+        permissionStatus = when (authStatus) {
+            AVAuthorizationStatusAuthorized -> CameraPermissionStatus.Granted
+            AVAuthorizationStatusDenied -> CameraPermissionStatus.Denied
+            AVAuthorizationStatusRestricted -> CameraPermissionStatus.Restricted
+            else -> CameraPermissionStatus.NotDetermined
+        }
+    }
     
     // Check if camera is available
     val isCameraAvailable = remember {
@@ -137,76 +158,211 @@ actual fun CameraView(
         return
     }
 
-    // Real camera implementation using UIImagePickerController
-    if (showImagePicker) {
-        val delegate = remember {
-            CameraDelegate(
-                onPhotoTaken = onPhotoTaken,
-                onError = onError,
-                onDismiss = { showImagePicker = false }
-            )
+    // Handle camera permissions
+    when (permissionStatus) {
+        CameraPermissionStatus.NotDetermined -> {
+            // Show permission request UI
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .background(Color.DarkGray, CircleShape)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🔒",
+                            fontSize = 40.sp,
+                            color = Color.White
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Text(
+                        text = "Camera Permission Required",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "This app needs camera access to take photos",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.size(32.dp))
+                    
+                    Button(
+                        onClick = {
+                            if (!isCheckingPermission) {
+                                isCheckingPermission = true
+                                AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
+                                    isCheckingPermission = false
+                                    permissionStatus = if (granted) {
+                                        CameraPermissionStatus.Granted
+                                    } else {
+                                        CameraPermissionStatus.Denied
+                                    }
+                                }
+                            }
+                        },
+                        enabled = !isCheckingPermission
+                    ) {
+                        if (isCheckingPermission) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Requesting...")
+                        } else {
+                            Text("Grant Camera Permission")
+                        }
+                    }
+                }
+            }
         }
         
-        UIKitViewController(
-            factory = {
-                val picker = UIImagePickerController()
-                picker.sourceType =
-                    UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
-                picker.cameraCaptureMode =
-                    UIImagePickerControllerCameraCaptureMode.UIImagePickerControllerCameraCaptureModePhoto
-                picker.cameraDevice =
-                    UIImagePickerControllerCameraDevice.UIImagePickerControllerCameraDeviceRear
-                picker.delegate = delegate
-                picker
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-    } else {
-        // Show camera preview placeholder with capture button
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+        CameraPermissionStatus.Denied, CameraPermissionStatus.Restricted -> {
+            // Show permission denied UI
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .background(Color.DarkGray, CircleShape)
-                        .border(3.dp, Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .background(Color.DarkGray, CircleShape)
+                            .border(2.dp, Color.Red, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "❌",
+                            fontSize = 40.sp,
+                            color = Color.Red
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(16.dp))
                     Text(
-                        text = "📷",
-                        fontSize = 60.sp,
-                        color = Color.White
+                        text = "Camera Access Denied",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Please enable camera access in Settings",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(
+                        text = "Settings > Privacy & Security > Camera",
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.size(32.dp))
+                    
+                    Button(
+                        onClick = {
+                            // Re-check permission status
+                            val authStatus = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
+                            permissionStatus = when (authStatus) {
+                                AVAuthorizationStatusAuthorized -> CameraPermissionStatus.Granted
+                                AVAuthorizationStatusDenied -> CameraPermissionStatus.Denied
+                                AVAuthorizationStatusRestricted -> CameraPermissionStatus.Restricted
+                                else -> CameraPermissionStatus.NotDetermined
+                            }
+                        }
+                    ) {
+                        Text("Check Again")
+                    }
+                }
+            }
+        }
+        
+        CameraPermissionStatus.Granted -> {
+            // Permission granted, show camera
+            if (showImagePicker) {
+                val delegate = remember {
+                    CameraDelegate(
+                        onPhotoTaken = onPhotoTaken,
+                        onError = onError,
+                        onDismiss = { showImagePicker = false }
                     )
                 }
-                Spacer(modifier = Modifier.size(24.dp))
-                Text(
-                    text = "Ready to Capture",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = "Tap the button below to take a photo",
-                    color = Color.Gray,
-                    fontSize = 16.sp
-                )
                 
-                Spacer(modifier = Modifier.size(48.dp))
-                
-                // Launch camera button
-                FloatingActionButton(
-                    onClick = {
-                        showImagePicker = true
+                UIKitViewController(
+                    factory = {
+                        val picker = UIImagePickerController()
+                        picker.sourceType =
+                            UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+                        picker.cameraCaptureMode =
+                            UIImagePickerControllerCameraCaptureMode.UIImagePickerControllerCameraCaptureModePhoto
+                        picker.cameraDevice =
+                            UIImagePickerControllerCameraDevice.UIImagePickerControllerCameraDeviceRear
+                        picker.delegate = delegate
+                        picker
                     },
-                    modifier = Modifier.size(80.dp)
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // Show camera preview placeholder with capture button
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Color.Black),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("📷", fontSize = 32.sp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(200.dp)
+                                .background(Color.DarkGray, CircleShape)
+                                .border(3.dp, Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "📷",
+                                fontSize = 80.sp,
+                                color = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(24.dp))
+                        Text(
+                            text = "Ready to Capture",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Tap the button below to take a photo",
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+                        
+                        Spacer(modifier = Modifier.size(48.dp))
+                        
+                        FloatingActionButton(
+                            onClick = { showImagePicker = true },
+                            modifier = Modifier.size(80.dp),
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text("📷", fontSize = 32.sp)
+                        }
+                    }
                 }
             }
         }

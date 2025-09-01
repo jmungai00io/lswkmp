@@ -20,7 +20,6 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Login user
      */
     suspend fun loginUser(loginBody: LoginBody, mode: String): JsonObject {
-        print("LivestockWealthApi loginUser mode: $mode")
         return client.client.post {
             url("/auth/request-otp/$mode")
             setBody(loginBody)
@@ -131,14 +130,26 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Upload avatar
      */
     suspend fun uploadAvatar(fileBytes: ByteArray, fileName: String): ByteArray {
+
+        // Determine MIME type based on file extension
+        val mimeType = when {
+            fileName.lowercase().endsWith(".jpg") || fileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+            fileName.lowercase().endsWith(".png") -> "image/png"
+            fileName.lowercase().endsWith(".webp") -> "image/webp"
+            else -> "image/jpeg" // Default to JPEG
+        }
+        
+
         val response = client.client.submitFormWithBinaryData(
-            url = "/users/me/avatar",
+            url = "/users/upload-avatar",
             formData = formData {
                 append("file", fileBytes, Headers.build {
                     append(HttpHeaders.ContentDisposition, "filename=$fileName")
+                    append(HttpHeaders.ContentType, mimeType)
                 })
             }
         )
+        
         return response.readBytes()
     }
     
@@ -652,29 +663,50 @@ class LivestockWealthApi(private val client: KtorClient) {
             println("LivestockWealthApi: Government ID size: ${governmentIdBytes.size} bytes, filename: $governmentIdFileName")
             println("LivestockWealthApi: Proof of Address size: ${proofOfAddressBytes.size} bytes, filename: $proofOfAddressFileName")
             println("LivestockWealthApi: Selfie size: ${selfieBytes.size} bytes, filename: $selfieFileName")
-            println("LivestockWealthApi: Using MultiPartFormDataContent with explicit boundary")
             
-            val response = client.client.post("/kyc/upload-documents") {
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            append("govtId", governmentIdBytes, Headers.build {
-                                append(HttpHeaders.ContentType, "image/jpeg")
-                                append(HttpHeaders.ContentDisposition, "form-data; name=\"govtId\"; filename=\"$governmentIdFileName\"")
-                            })
-                            append("proofOfAddress", proofOfAddressBytes, Headers.build {
-                                append(HttpHeaders.ContentType, "image/jpeg")
-                                append(HttpHeaders.ContentDisposition, "form-data; name=\"proofOfAddress\"; filename=\"$proofOfAddressFileName\"")
-                            })
-                            append("selfie", selfieBytes, Headers.build {
-                                append(HttpHeaders.ContentType, "image/jpeg")
-                                append(HttpHeaders.ContentDisposition, "form-data; name=\"selfie\"; filename=\"$selfieFileName\"")
-                            })
-                        },
-                        boundary = "WebAppBoundary"
-                    )
-                )
+            // Determine MIME types based on file extensions
+            val govtIdMimeType = when {
+                governmentIdFileName.lowercase().endsWith(".jpg") || governmentIdFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                governmentIdFileName.lowercase().endsWith(".png") -> "image/png"
+                governmentIdFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
             }
+            
+            val proofOfAddressMimeType = when {
+                proofOfAddressFileName.lowercase().endsWith(".jpg") || proofOfAddressFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                proofOfAddressFileName.lowercase().endsWith(".png") -> "image/png"
+                proofOfAddressFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
+            }
+            
+            val selfieMimeType = when {
+                selfieFileName.lowercase().endsWith(".jpg") || selfieFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                selfieFileName.lowercase().endsWith(".png") -> "image/png"
+                selfieFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
+            }
+            
+            println("LivestockWealthApi: Government ID MIME type: $govtIdMimeType")
+            println("LivestockWealthApi: Proof of Address MIME type: $proofOfAddressMimeType")
+            println("LivestockWealthApi: Selfie MIME type: $selfieMimeType")
+            
+            val response = client.client.submitFormWithBinaryData(
+                url = "/kyc/upload-documents",
+                formData = formData {
+                    append("govtId", governmentIdBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$governmentIdFileName")
+                        append(HttpHeaders.ContentType, govtIdMimeType)
+                    })
+                    append("proofOfAddress", proofOfAddressBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$proofOfAddressFileName")
+                        append(HttpHeaders.ContentType, proofOfAddressMimeType)
+                    })
+                    append("selfie", selfieBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$selfieFileName")
+                        append(HttpHeaders.ContentType, selfieMimeType)
+                    })
+                }
+            )
             
             println("LivestockWealthApi: KYC document upload completed successfully")
             println("LivestockWealthApi: Response status: ${response.status}")
