@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.network.repository.UserRepository
 import com.lswmobile.app.ui.utils.isValidPhoneNumber
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -196,11 +197,14 @@ class UpdateProfileViewModel(
                     successMessage = "Profile updated successfully"
                     onSuccess()
                 } else {
-                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to update profile"
+                    val exception = result.exceptionOrNull()
+                    val errorException = if (exception is Exception) exception else Exception(exception?.message, exception)
+                    errorMessage = ErrorUtils.extractErrorMessage(errorException, "Failed to update profile")
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 println("UpdateProfileViewModel: Error updating profile: ${e.message}")
-                errorMessage = e.message ?: "An unexpected error occurred"
+                val errorException = if (e is Exception) e else Exception(e.message, e)
+                errorMessage = ErrorUtils.extractErrorMessage(errorException, "An unexpected error occurred")
             } finally {
                 isLoading = false
             }

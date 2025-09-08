@@ -8,6 +8,7 @@ import com.lswmobile.app.network.model.OrderWithFullUser
 import com.lswmobile.app.network.model.PaymentCompletionType
 import com.lswmobile.app.network.repository.OrderRepository
 import com.lswmobile.app.network.repository.WalletService
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,7 +130,7 @@ class DebitPaymentViewModel(
                     println("DebitPaymentViewModel: Pre-populated phone number: $phone")
                 }
             } catch (e: Exception) {
-                println("DebitPaymentViewModel: Error pre-populating phone number: ${e.message}")
+                // Silent error for phone pre-population
             }
         }
     }
@@ -156,8 +157,7 @@ class DebitPaymentViewModel(
                 prePopulatePhoneJob.join()
                 
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Failed to load debit payment data"
-                println("DebitPaymentViewModel: Error loading data: ${e.message}")
+                _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load debit payment data")
             } finally {
                 _isLoading.value = false
             }
@@ -185,7 +185,7 @@ class DebitPaymentViewModel(
                 println("DebitPaymentViewModel: API returned success=false")
             }
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading banks: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Error loading banks")
             println("DebitPaymentViewModel: Error fetching banks: ${e.message}")
             e.printStackTrace()
         }
@@ -199,7 +199,7 @@ class DebitPaymentViewModel(
             orderRepository.getOrderDetails(orderNumber)
             // The order will be available through the repository's state
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading order details: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load order details")
             println("DebitPaymentViewModel: Error loading order details: ${e.message}")
         }
     }
@@ -213,7 +213,7 @@ class DebitPaymentViewModel(
             _walletBalance.value = balance
             println("DebitPaymentViewModel: Wallet balance loaded: $balance")
         } catch (e: Exception) {
-            _errorMessage.value = "Error loading wallet balance: ${e.message}"
+            _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")
             println("DebitPaymentViewModel: Error loading wallet balance: ${e.message}")
         }
     }
@@ -353,7 +353,7 @@ class DebitPaymentViewModel(
                 onSuccess()
                 
             } catch (e: Exception) {
-                _errorMessage.value = "Payment failed: ${e.message}"
+                _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
                 println("DebitPaymentViewModel: Error confirming debit payment: ${e.message}")
                 e.printStackTrace()
             } finally {

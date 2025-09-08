@@ -128,7 +128,7 @@ android {
     productFlavors {
         create("development") {
             dimension = "type"
-            buildConfigField("String", "BASE_URL", "\"https://bee5107e1718.ngrok-free.app\"")
+            buildConfigField("String", "BASE_URL", "\"https://921e73f12a97.ngrok-free.app\"")
             buildConfigField("String", "WEB_BASE_URL", "\"https://staging.livestockwealth.com\"")
             buildConfigField("String", "ONESIGNAL_APP_ID", secretsProperties["ONESIGNAL_APP_ID_DEVELOPMENT"].toString())
             applicationIdSuffix = ".dev"

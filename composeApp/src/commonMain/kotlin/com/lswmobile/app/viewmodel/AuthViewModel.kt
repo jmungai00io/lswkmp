@@ -6,6 +6,7 @@ import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.LoginState
 import com.lswmobile.app.network.repository.RegistrationState
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +52,7 @@ class AuthViewModel(
             } catch (e: Exception) {
                 println("AuthViewModel.login: Exception caught: ${e.message}")
                 e.printStackTrace()
-                _uiState.value = AuthUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(e))
             }
         }
     }
@@ -72,7 +73,7 @@ class AuthViewModel(
                 authRepository.register(email, password, phoneNumber, firstName, lastName, "email")
                 _uiState.value = AuthUiState.Success.Registration("Registration successful")
             } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(e))
             }
         }
     }
@@ -90,7 +91,8 @@ class AuthViewModel(
                 }
                 .onFailure {
                     println("OTP verification failed: ${it.message}")
-                    _uiState.value = AuthUiState.Error(it.message ?: "Failed to verify OTP")
+                    val exception = if (it is Exception) it else Exception(it.message, it)
+                    _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
                 }
         }
     }
@@ -108,7 +110,8 @@ class AuthViewModel(
                     _uiState.value = AuthUiState.Success.Generic("Logged out successfully")
                 }
                 .onFailure {
-                    _uiState.value = AuthUiState.Error(it.message ?: "Failed to logout")
+                    val exception = if (it is Exception) it else Exception(it.message, it)
+                    _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
                 }
         }
     }
@@ -124,7 +127,8 @@ class AuthViewModel(
                     _uiState.value = AuthUiState.Success.Generic("Password reset email sent")
                 }
                 .onFailure {
-                    _uiState.value = AuthUiState.Error(it.message ?: "Failed to reset password")
+                    val exception = if (it is Exception) it else Exception(it.message, it)
+                    _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
                 }
         }
     }

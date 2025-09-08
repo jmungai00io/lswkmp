@@ -9,7 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.ui.components.ErrorToast
 import com.lswmobile.app.ui.components.LivestockTextField
+import com.lswmobile.app.ui.components.SuccessToast
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.utils.formatIdType
 import com.lswmobile.app.ui.utils.isValidEmail
@@ -67,15 +69,7 @@ fun AddBeneficiaryScreen(
     // Handle success message
     LaunchedEffect(successMessage) {
         if (successMessage != null) {
-            beneficiaryViewModel?.clearSuccessMessage()
             onSuccess()
-        }
-    }
-    
-    // Handle error message
-    LaunchedEffect(error) {
-        if (error != null) {
-            beneficiaryViewModel?.clearError()
         }
     }
     
@@ -95,281 +89,280 @@ fun AddBeneficiaryScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            // Header
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(
-                        imageVector = AppIcons.Filled.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "Add New Beneficiary",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = "Add someone who will benefit from your investments",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Error message
-            error?.let { errorMsg ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Text(
-                        text = errorMsg,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // Personal Information Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Personal Information",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // First Name
-                    LivestockTextField(
-                        value = firstName,
-                        onValueChange = { 
-                            firstName = it
-                            firstNameError = null
-                        },
-                        label = "First Name *",
+                    // Header
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        isError = firstNameError != null,
-                        errorMessage = firstNameError
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Last Name
-                    LivestockTextField(
-                        value = lastName,
-                        onValueChange = { 
-                            lastName = it
-                            lastNameError = null
-                        },
-                        label = "Last Name *",
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = lastNameError != null,
-                        errorMessage = lastNameError
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Email
-                    LivestockTextField(
-                        value = email,
-                        onValueChange = { 
-                            email = it
-                            emailError = null
-                        },
-                        label = "Email Address *",
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = emailError != null,
-                        errorMessage = emailError
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Phone Number
-                    LivestockTextField(
-                        value = phoneNumber,
-                        onValueChange = { 
-                            phoneNumber = it
-                            phoneNumberError = null
-                        },
-                        label = "Phone Number *",
-                        hint = "+1 234 567 8900",
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = phoneNumberError != null,
-                        errorMessage = phoneNumberError
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // ID Information Section
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Identification",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // ID Type Selection
-                    Text(
-                        text = "ID Type *",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    val idTypes = beneficiaryViewModel?.idTypes ?: listOf(IdType.PASSPORT, IdType.NATIONAL_ID)
-                    
-                    idTypes.forEach { type ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            RadioButton(
-                                selected = idType == type,
-                                onClick = { idType = type }
+                            Icon(
+                                imageVector = AppIcons.Filled.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
                             Text(
-                                text = formatIdType(type.name),
-                                style = MaterialTheme.typography.bodyMedium
+                                text = "Add New Beneficiary",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Text(
+                                text = "Add someone who will benefit from your investments",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Personal Information Section
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Personal Information",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            // First Name
+                            LivestockTextField(
+                                value = firstName,
+                                onValueChange = { 
+                                    firstName = it
+                                    firstNameError = null
+                                },
+                                label = "First Name *",
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = firstNameError != null,
+                                errorMessage = firstNameError
+                            )
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // Last Name
+                            LivestockTextField(
+                                value = lastName,
+                                onValueChange = { 
+                                    lastName = it
+                                    lastNameError = null
+                                },
+                                label = "Last Name *",
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = lastNameError != null,
+                                errorMessage = lastNameError
+                            )
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // Email
+                            LivestockTextField(
+                                value = email,
+                                onValueChange = { 
+                                    email = it
+                                    emailError = null
+                                },
+                                label = "Email Address *",
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = emailError != null,
+                                errorMessage = emailError
+                            )
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // Phone Number
+                            LivestockTextField(
+                                value = phoneNumber,
+                                onValueChange = { 
+                                    phoneNumber = it
+                                    phoneNumberError = null
+                                },
+                                label = "Phone Number *",
+                                hint = "+1 234 567 8900",
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = phoneNumberError != null,
+                                errorMessage = phoneNumberError
                             )
                         }
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // ID Value
-                    LivestockTextField(
-                        value = idValue,
-                        onValueChange = { 
-                            idValue = it
-                            idValueError = null
+                    // ID Information Section
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Identification",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            // ID Type Selection
+                            Text(
+                                text = "ID Type *",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            val idTypes = beneficiaryViewModel?.idTypes ?: listOf(IdType.PASSPORT, IdType.NATIONAL_ID)
+                            
+                            idTypes.forEach { type ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = idType == type,
+                                        onClick = { idType = type }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = formatIdType(type.name),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            // ID Value
+                            LivestockTextField(
+                                value = idValue,
+                                onValueChange = { 
+                                    idValue = it
+                                    idValueError = null
+                                },
+                                label = "ID Number *",
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = idValueError != null,
+                                errorMessage = idValueError
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Action Buttons
+                    Button(
+                        onClick = {
+                            // Validate form
+                            var isValid = true
+                            
+                            if (firstName.isBlank()) {
+                                firstNameError = "First name is required"
+                                isValid = false
+                            }
+                            
+                            if (lastName.isBlank()) {
+                                lastNameError = "Last name is required"
+                                isValid = false
+                            }
+                            
+                            if (email.isBlank()) {
+                                emailError = "Email is required"
+                                isValid = false
+                            } else if (!isValidEmail(email)) {
+                                emailError = "Please enter a valid email address"
+                                isValid = false
+                            }
+                            
+                            if (phoneNumber.isBlank()) {
+                                phoneNumberError = "Phone number is required"
+                                isValid = false
+                            } else if (!validateInternationalPhoneNumber(phoneNumber)) {
+                                phoneNumberError = "Please enter a valid international phone number (e.g., +1 234 567 8900)"
+                                isValid = false
+                            }
+                            
+                            if (idValue.isBlank()) {
+                                idValueError = "ID number is required"
+                                isValid = false
+                            }
+                            
+                            if (isValid) {
+                                beneficiaryViewModel?.addBeneficiary(
+                                    firstName = firstName,
+                                    lastName = lastName,
+                                    email = email,
+                                    phoneNumber = phoneNumber,
+                                    idType = idType,
+                                    idValue = idValue
+                                )
+                            }
                         },
-                        label = "ID Number *",
                         modifier = Modifier.fillMaxWidth(),
-                        isError = idValueError != null,
-                        errorMessage = idValueError
-                    )
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(if (isLoading) "Adding..." else "Add Beneficiary")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    OutlinedButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            // Error and Success Toasts (overlay)
+            ErrorToast(
+                errorMessage = error,
+                onDismiss = { beneficiaryViewModel?.clearError() }
+            )
             
-            // Action Buttons
-            Button(
-                onClick = {
-                    // Validate form
-                    var isValid = true
-                    
-                    if (firstName.isBlank()) {
-                        firstNameError = "First name is required"
-                        isValid = false
-                    }
-                    
-                    if (lastName.isBlank()) {
-                        lastNameError = "Last name is required"
-                        isValid = false
-                    }
-                    
-                    if (email.isBlank()) {
-                        emailError = "Email is required"
-                        isValid = false
-                    } else if (!isValidEmail(email)) {
-                        emailError = "Please enter a valid email address"
-                        isValid = false
-                    }
-                    
-                    if (phoneNumber.isBlank()) {
-                        phoneNumberError = "Phone number is required"
-                        isValid = false
-                    } else if (!validateInternationalPhoneNumber(phoneNumber)) {
-                        phoneNumberError = "Please enter a valid international phone number (e.g., +1 234 567 8900)"
-                        isValid = false
-                    }
-                    
-                    if (idValue.isBlank()) {
-                        idValueError = "ID number is required"
-                        isValid = false
-                    }
-                    
-                    if (isValid) {
-                        beneficiaryViewModel?.addBeneficiary(
-                            firstName = firstName,
-                            lastName = lastName,
-                            email = email,
-                            phoneNumber = phoneNumber,
-                            idType = idType,
-                            idValue = idValue
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(if (isLoading) "Adding..." else "Add Beneficiary")
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            OutlinedButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cancel")
-            }
+            SuccessToast(
+                successMessage = successMessage,
+                onDismiss = { beneficiaryViewModel?.clearSuccessMessage() }
+            )
         }
     }
-} 
+}

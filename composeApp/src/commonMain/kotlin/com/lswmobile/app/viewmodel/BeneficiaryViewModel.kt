@@ -8,6 +8,7 @@ import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.model.Beneficiary
 import com.lswmobile.app.network.model.IdClass
 import com.lswmobile.app.network.model.IdType
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -59,8 +60,7 @@ class BeneficiaryViewModel(
                     _error = "Failed to fetch beneficiaries"
                 }
             } catch (e: Exception) {
-                _error = e.message ?: "An error occurred while fetching beneficiaries"
-                println("BeneficiaryViewModel: Error fetching beneficiaries: ${e.message}")
+                _error = ErrorUtils.extractErrorMessage(e, "Failed to fetch beneficiaries")
                 e.printStackTrace()
             } finally {
                 _isLoading = false
@@ -108,8 +108,7 @@ class BeneficiaryViewModel(
                     _error = "Failed to add beneficiary"
                 }
             } catch (e: Exception) {
-                _error = e.message ?: "An error occurred while adding beneficiary"
-                println("BeneficiaryViewModel: Error adding beneficiary: ${e.message}")
+                _error = ErrorUtils.extractErrorMessage(e, "Failed to add beneficiary")
             } finally {
                 _isLoading = false
             }
@@ -157,8 +156,7 @@ class BeneficiaryViewModel(
                     _error = "Failed to update beneficiary"
                 }
             } catch (e: Exception) {
-                _error = e.message ?: "An error occurred while updating beneficiary"
-                println("BeneficiaryViewModel: Error updating beneficiary: ${e.message}")
+                _error = ErrorUtils.extractErrorMessage(e, "Failed to update beneficiary")
             } finally {
                 _isLoading = false
             }
@@ -183,8 +181,7 @@ class BeneficiaryViewModel(
                 // Refresh the list
                 fetchBeneficiaries()
             } catch (e: Exception) {
-                _error = e.message ?: "An error occurred while deleting beneficiary"
-                println("BeneficiaryViewModel: Error deleting beneficiary: ${e.message}")
+                _error = ErrorUtils.extractErrorMessage(e, "Failed to delete beneficiary")
             } finally {
                 _isLoading = false
             }

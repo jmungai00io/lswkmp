@@ -6,6 +6,7 @@ import com.lswmobile.app.data.repository.KycRepository
 import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.KycUploadResponse
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -159,19 +160,20 @@ class KycViewModel(
                         _uploadMessage.value = "Documents submitted successfully"
                         _uploadSuccess.value = true
                         
-                        // Refresh user data to get updated KYC status
+                        // Refresh user data
                         userRepository.fetchUser()
-                        
+                         
                         // Clear documents after successful upload
                         clearDocuments()
                     },
                     onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to upload documents"
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to upload documents")
                         _uploadSuccess.value = false
                     }
                 )
             } catch (e: Exception) {
-                _error.value = e.message ?: "An unexpected error occurred"
+                _error.value = ErrorUtils.extractErrorMessage(e, "An unexpected error occurred during upload")
                 _uploadSuccess.value = false
             } finally {
                 _isSubmitting.value = false
@@ -196,6 +198,21 @@ class KycViewModel(
      */
     fun clearError() {
         _error.value = null
+    }
+    
+    /**
+     * Clear upload message
+     */
+    fun clearUploadMessage() {
+        _uploadMessage.value = null
+    }
+    
+    /**
+     * Clear all messages
+     */
+    fun clearMessages() {
+        _error.value = null
+        _uploadMessage.value = null
     }
     
     /**
