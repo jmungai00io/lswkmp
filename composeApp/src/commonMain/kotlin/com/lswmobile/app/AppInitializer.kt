@@ -9,6 +9,8 @@ import com.lswmobile.app.network.SimpleTokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.viewmodel.AuthViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 
 /**
  * Centralizes initialization of app components to ensure they're only created once
@@ -23,6 +25,7 @@ object AppInitializer {
     private var authViewModel: AuthViewModel? = null
     private var userRepository: UserRepository? = null
     private var userViewModel: UserViewModel? = null
+    private var cookiesStorage: CookiesStorage? = null
     
     // Track initialization state
     private var isInitialized = false
@@ -39,12 +42,14 @@ object AppInitializer {
             
             // Create dependencies
             tokenProvider = SimpleTokenProvider()
+            cookiesStorage = AcceptAllCookiesStorage()
             
             // Configure client with platform-specific settings
             ktorClient = KtorClient(
                 tokenProvider = tokenProvider!!,
                 baseUrl = appConfig.baseUrl, // Use baseUrl from AppConfig
-                enableLogging = appConfig.isDevelopment // Enable logging based on environment
+                enableLogging = appConfig.isDevelopment, // Enable logging based on environment
+                cookiesStorage = cookiesStorage!!
             )
             
             api = LivestockWealthApi(ktorClient!!)
@@ -73,7 +78,8 @@ object AppInitializer {
             ktorClient = KtorClient(
                 tokenProvider = tokenProvider!!,
                 baseUrl = appConfig.baseUrl,
-                enableLogging = appConfig.isDevelopment
+                enableLogging = appConfig.isDevelopment,
+                cookiesStorage = cookiesStorage ?: AcceptAllCookiesStorage()
             )
             
             // Recreate API with new client
@@ -88,6 +94,14 @@ object AppInitializer {
         } catch (e: Exception) {
             throw e
         }
+    }
+    
+    /**
+     * Clear cookies (e.g., on logout) and keep using the same shared storage instance
+     */
+    fun clearCookies() {
+        // Replace with a new empty storage to drop all cookies
+        cookiesStorage = AcceptAllCookiesStorage()
     }
     
     // Accessor methods

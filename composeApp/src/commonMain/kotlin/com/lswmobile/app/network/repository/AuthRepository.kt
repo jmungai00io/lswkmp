@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
+import com.lswmobile.app.network.SimpleTokenProvider
 
 /**
  * Repository for authentication related operations
@@ -18,6 +19,37 @@ class AuthRepository(
     private val api: LivestockWealthApi,
     private val tokenProvider: TokenProvider
 ) {
+    private fun isLikelyJwt(token: String): Boolean {
+        // Basic sanity check: JWT typically has 3 dot-separated parts
+        return token.count { it == '.' } == 2 && token.length > 20
+    }
+
+    private fun sanitizeAccessToken(raw: String): String {
+        return raw.trim()
+            .removePrefix("Bearer ")
+            .removePrefix("bearer ")
+            .trim()
+    }
+
+    init {
+        // Wire refresh delegate if using SimpleTokenProvider so Ktor Auth can refresh using cookies
+        (tokenProvider as? SimpleTokenProvider)?.setRefreshDelegate { _ ->
+            // Call refresh endpoint: server sets new httpOnly cookie and returns { token }
+            val response = api.refreshToken()
+            val tokenElement = response["token"]
+            val parsed = tokenElement?.jsonPrimitive?.content
+            val newAccessToken = parsed?.let { sanitizeAccessToken(it) }
+            val dotCount = newAccessToken?.count { it == '.' } ?: -1
+            println("[AuthRepository] refreshToken response parsed='${parsed?.take(12)}...' sanitized='${newAccessToken?.take(12)}...' dots=${dotCount}")
+            if (newAccessToken != null && newAccessToken.isNotBlank() && newAccessToken != "false" && isLikelyJwt(newAccessToken)) {
+                // Return pair: accessToken and empty refresh token string (cookie carries refresh)
+                Pair(newAccessToken, tokenProvider.getRefreshToken() ?: "")
+            } else {
+                println("[AuthRepository] refreshToken invalid or missing token, treating as failed refresh")
+                null
+            }
+        }
+    }
     // StateFlow to observe login state
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: Flow<LoginState> = _loginState.asStateFlow()
@@ -131,12 +163,21 @@ class AuthRepository(
     /**
      * Refresh token
      */
-    suspend fun refreshToken(): Result<RefreshTokenPayload> {
+    suspend fun refreshToken(): Result<JsonObject> {
         return try {
             val response = api.refreshToken()
-            // Save the new tokens
-            tokenProvider.saveTokens(response.accessToken, response.refreshToken)
-            Result.success(response)
+            // Extract access token from body and save; refresh token is rotated in httpOnly cookie
+            val tokenElement = response["token"]
+            val parsed = tokenElement?.jsonPrimitive?.content
+            val accessToken = parsed?.let { sanitizeAccessToken(it) }
+            val dotCount = accessToken?.count { it == '.' } ?: -1
+            println("[AuthRepository] manual refreshToken parsed='${parsed?.take(12)}...' sanitized='${accessToken?.take(12)}...' dots=${dotCount}")
+            if (accessToken != null && accessToken.isNotBlank() && accessToken != "false" && isLikelyJwt(accessToken)) {
+                tokenProvider.saveTokens(accessToken, tokenProvider.getRefreshToken() ?: "")
+                Result.success(response)
+            } else {
+                Result.failure(IllegalStateException("Invalid access token from refresh"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -150,6 +191,8 @@ class AuthRepository(
             val response = api.logOutUser()
             // Clear tokens
             tokenProvider.clearTokens()
+            // Clear refresh cookies stored on client
+            AppInitializer.clearCookies()
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

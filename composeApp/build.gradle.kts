@@ -124,12 +124,13 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-    
+
     flavorDimensions += "type"
     productFlavors {
         create("development") {
             dimension = "type"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
+//            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
+            buildConfigField("String", "BASE_URL", "\"https://staging.api.livestockwealth.com\"")
             buildConfigField("String", "WEB_BASE_URL", "\"https://staging.livestockwealth.com\"")
             buildConfigField("String", "ONESIGNAL_APP_ID", secretsProperties["ONESIGNAL_APP_ID_DEVELOPMENT"].toString())
             applicationIdSuffix = ".dev"

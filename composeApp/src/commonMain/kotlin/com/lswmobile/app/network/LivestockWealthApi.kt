@@ -2,6 +2,7 @@ package com.lswmobile.app.network
 
 import com.lswmobile.app.network.model.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.cookies.cookies
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
@@ -20,11 +21,21 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Login user
      */
     suspend fun loginUser(loginBody: LoginBody, mode: String): JsonObject {
-        return client.client.post {
+        val response = client.client.post {
             url("/auth/request-otp/$mode")
             setBody(loginBody)
             parameter("mode", mode)
-        }.body()
+        }
+        // After login OTP request, server should set refreshToken cookie
+        runCatching {
+            val cookies = client.client.cookies(response.request.url)
+            val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+            val masked = rt?.value?.let { v ->
+                if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+            } ?: "<none>"
+            println("[LivestockWealthApi] loginUser Set-Cookie refreshToken=${masked}")
+        }
+        return response.body()
     }
     
     /**
@@ -52,10 +63,20 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Send OTP
      */
     suspend fun sendOtp(endpoint: String, otpBody: SendOTPBody): JsonObject {
-        return client.client.post {
+        val response = client.client.post {
             url(endpoint)
             setBody(otpBody)
-        }.body()
+        }
+        // OTP verify may also set/rotate refresh token cookie
+        runCatching {
+            val cookies = client.client.cookies(response.request.url)
+            val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+            val masked = rt?.value?.let { v ->
+                if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+            } ?: "<none>"
+            println("[LivestockWealthApi] sendOtp Set-Cookie refreshToken=${masked}")
+        }
+        return response.body()
     }
     
     /**
@@ -71,10 +92,21 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Refresh token
      */
-    suspend fun refreshToken(): RefreshTokenPayload {
-        return client.client.post {
+    suspend fun refreshToken(): JsonObject {
+        // Server sets new httpOnly cookie and returns { token: <accessToken> }
+        val response = client.client.get {
             url("/auth/refresh-token")
-        }.body()
+        }
+        // Inspect cookie storage to verify refreshToken presence (masked)
+        runCatching {
+            val cookies = client.client.cookies(response.request.url)
+            val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+            val masked = rt?.value?.let { v ->
+                if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+            } ?: "<none>"
+            println("[LivestockWealthApi] refresh-token Set-Cookie refreshToken=${masked}")
+        }
+        return response.body()
     }
     
     /**

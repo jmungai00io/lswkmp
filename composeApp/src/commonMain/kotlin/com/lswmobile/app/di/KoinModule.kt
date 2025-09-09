@@ -32,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 
 /**
  * Koin module definitions for dependency injection
@@ -49,12 +51,16 @@ object KoinModule {
         // AppConfig
         single<AppConfig> { AppConfigFactory.get() }
         
+        // Shared cookie storage across all clients (ensures refresh cookie persists)
+        single<CookiesStorage> { AcceptAllCookiesStorage() }
+        
         // KtorClient - Use factory to always get current instance
         factory { 
             KtorClient(
                 tokenProvider = get(),
                 baseUrl = get<AppConfig>().baseUrl + "/api/v1", // Add the API path to the base URL
-                enableLogging = get<AppConfig>().isDevelopment
+                enableLogging = get<AppConfig>().isDevelopment,
+                cookiesStorage = get()
             ) 
         }
         
