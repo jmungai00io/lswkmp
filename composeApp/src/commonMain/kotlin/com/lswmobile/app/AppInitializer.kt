@@ -5,12 +5,14 @@ import com.lswmobile.app.data.repository.InMemoryUserRepository
 import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
-import com.lswmobile.app.network.SimpleTokenProvider
+import com.lswmobile.app.network.PersistentTokenProvider
+import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.viewmodel.AuthViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import com.russhwolf.settings.Settings
 
 /**
  * Centralizes initialization of app components to ensure they're only created once
@@ -18,7 +20,7 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
  */
 object AppInitializer {
     // Singleton instances
-    private var tokenProvider: SimpleTokenProvider? = null
+    private var tokenProvider: TokenProvider? = null
     private var ktorClient: KtorClient? = null
     private var api: LivestockWealthApi? = null
     private var authRepository: AuthRepository? = null
@@ -41,7 +43,8 @@ object AppInitializer {
             val appConfig = AppConfigFactory.get()
             
             // Create dependencies
-            tokenProvider = SimpleTokenProvider()
+            val settings = Settings()
+            tokenProvider = PersistentTokenProvider(settings)
             cookiesStorage = AcceptAllCookiesStorage()
             
             // Configure client with platform-specific settings
@@ -105,7 +108,7 @@ object AppInitializer {
     }
     
     // Accessor methods
-    fun getTokenProvider(): SimpleTokenProvider {
+    fun getTokenProvider(): TokenProvider {
         ensureInitialized()
         return tokenProvider!!
     }

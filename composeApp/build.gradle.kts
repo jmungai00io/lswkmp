@@ -106,6 +106,9 @@ kotlin {
             // Permissions
             implementation("dev.icerock.moko:permissions-compose:0.18.0")
             implementation("network.chaintech:cmp-country-code-picker:1.0.1")
+
+            // Persistent key-value storage for tokens (KMP)
+            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

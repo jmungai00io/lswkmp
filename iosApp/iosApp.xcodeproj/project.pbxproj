@@ -377,6 +377,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Livestock Wealth";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture photos for identity verification and profile updates.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need photo library access to select and preview images for your profile and verification.";
@@ -420,6 +421,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Livestock Wealth";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture photos for identity verification and profile updates.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need photo library access to select and preview images for your profile and verification.";

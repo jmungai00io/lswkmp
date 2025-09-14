@@ -68,6 +68,8 @@ class KtorClient(
                             tokenProvider.saveTokens(newAccessToken, newRefreshToken)
                             BearerTokens(newAccessToken, newRefreshToken)
                         } else {
+                            // Refresh failed; clear tokens so we don't keep sending expired ones
+                            tokenProvider.clearTokens()
                             null
                         }
                     } catch (e: Exception) {
