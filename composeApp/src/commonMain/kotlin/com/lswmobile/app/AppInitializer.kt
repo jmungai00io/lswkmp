@@ -1,11 +1,18 @@
 package com.lswmobile.app
 
 import com.lswmobile.app.config.AppConfigFactory
+import com.lswmobile.app.data.repository.InMemoryUserRepository
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.KtorClient
 import com.lswmobile.app.network.LivestockWealthApi
-import com.lswmobile.app.network.SimpleTokenProvider
+import com.lswmobile.app.network.PersistentTokenProvider
+import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.viewmodel.AuthViewModel
+import com.lswmobile.app.viewmodel.UserViewModel
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import com.russhwolf.settings.Settings
 
 /**
  * Centralizes initialization of app components to ensure they're only created once
@@ -13,11 +20,14 @@ import com.lswmobile.app.viewmodel.AuthViewModel
  */
 object AppInitializer {
     // Singleton instances
-    private var tokenProvider: SimpleTokenProvider? = null
+    private var tokenProvider: TokenProvider? = null
     private var ktorClient: KtorClient? = null
     private var api: LivestockWealthApi? = null
     private var authRepository: AuthRepository? = null
     private var authViewModel: AuthViewModel? = null
+    private var userRepository: UserRepository? = null
+    private var userViewModel: UserViewModel? = null
+    private var cookiesStorage: CookiesStorage? = null
     
     // Track initialization state
     private var isInitialized = false
@@ -30,37 +40,75 @@ object AppInitializer {
         if (isInitialized) return
         
         try {
-            println("Initializing app components")
-            
-            // Get platform-specific configuration
             val appConfig = AppConfigFactory.get()
             
             // Create dependencies
-            tokenProvider = SimpleTokenProvider()
+            val settings = Settings()
+            tokenProvider = PersistentTokenProvider(settings)
+            cookiesStorage = AcceptAllCookiesStorage()
             
             // Configure client with platform-specific settings
             ktorClient = KtorClient(
                 tokenProvider = tokenProvider!!,
                 baseUrl = appConfig.baseUrl, // Use baseUrl from AppConfig
-                enableLogging = appConfig.isDevelopment // Enable logging based on environment
+                enableLogging = appConfig.isDevelopment, // Enable logging based on environment
+                cookiesStorage = cookiesStorage!!
             )
-            
-            println("Using API baseUrl: ${appConfig.baseUrl}, environment: ${appConfig.environmentName}")
             
             api = LivestockWealthApi(ktorClient!!)
             authRepository = AuthRepository(api!!, tokenProvider!!)
             authViewModel = AuthViewModel(authRepository!!)
+            userRepository = InMemoryUserRepository(api!!)
+            userViewModel = UserViewModel(userRepository!!)
             
             isInitialized = true
-            println("App initialization complete")
         } catch (e: Exception) {
-            println("Error during initialization: ${e.message}")
             throw e
         }
     }
     
+    /**
+     * Recreates the KtorClient and API instances to pick up token changes
+     * Call this after authentication completes to ensure tokens are used in requests
+     */
+    fun reinitializeNetworkClients() {
+        ensureInitialized()
+        
+        try {
+            val appConfig = AppConfigFactory.get()
+            
+            // Recreate the KtorClient with the current tokenProvider
+            ktorClient = KtorClient(
+                tokenProvider = tokenProvider!!,
+                baseUrl = appConfig.baseUrl,
+                enableLogging = appConfig.isDevelopment,
+                cookiesStorage = cookiesStorage ?: AcceptAllCookiesStorage()
+            )
+            
+            // Recreate API with new client
+            api = LivestockWealthApi(ktorClient!!)
+            
+            // Update auth repository with new API
+            authRepository = AuthRepository(api!!, tokenProvider!!)
+            authViewModel = AuthViewModel(authRepository!!)
+            userRepository = InMemoryUserRepository(api!!)
+            userViewModel = UserViewModel(userRepository!!)
+            
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    
+    /**
+     * Clear cookies (e.g., on logout) and keep using the same shared storage instance
+     */
+    fun clearCookies() {
+        // Replace with a new empty storage to drop all cookies
+        cookiesStorage = AcceptAllCookiesStorage()
+    }
+    
     // Accessor methods
-    fun getTokenProvider(): SimpleTokenProvider {
+    fun getTokenProvider(): TokenProvider {
         ensureInitialized()
         return tokenProvider!!
     }
@@ -83,6 +131,16 @@ object AppInitializer {
     fun getAuthViewModel(): AuthViewModel {
         ensureInitialized()
         return authViewModel!!
+    }
+    
+    fun getUserRepository(): UserRepository {
+        ensureInitialized()
+        return userRepository!!
+    }
+    
+    fun getUserViewModel(): UserViewModel {
+        ensureInitialized()
+        return userViewModel!!
     }
     
     private fun ensureInitialized() {

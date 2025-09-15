@@ -7,6 +7,7 @@ import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -19,7 +20,8 @@ import kotlinx.serialization.json.Json
 class KtorClient(
     private val tokenProvider: TokenProvider, 
     private val baseUrl: String,
-    private val enableLogging: Boolean = true
+    private val enableLogging: Boolean = true,
+    private val cookiesStorage: CookiesStorage = AcceptAllCookiesStorage()
 ) {
 
     val client = HttpClient {
@@ -39,6 +41,11 @@ class KtorClient(
             }
         }
         
+        // Accept and store cookies (needed for httpOnly refreshToken set by server)
+        install(HttpCookies) {
+            storage = cookiesStorage
+        }
+        
         install(Auth) {
             bearer {
                 loadTokens {
@@ -52,21 +59,28 @@ class KtorClient(
                 }
                 
                 refreshTokens {
-                    val refreshToken = tokenProvider.getRefreshToken() ?: return@refreshTokens null
-                    
+                    val refreshToken = tokenProvider.getRefreshToken() // May be null/empty when using httpOnly cookies
+
                     try {
-                        val tokenResponse = tokenProvider.refreshTokens(refreshToken)
+                        val tokenResponse = tokenProvider.refreshTokens(refreshToken ?: "")
                         if (tokenResponse != null) {
                             val (newAccessToken, newRefreshToken) = tokenResponse
                             tokenProvider.saveTokens(newAccessToken, newRefreshToken)
                             BearerTokens(newAccessToken, newRefreshToken)
                         } else {
+                            // Refresh failed; clear tokens so we don't keep sending expired ones
+                            tokenProvider.clearTokens()
                             null
                         }
                     } catch (e: Exception) {
                         tokenProvider.clearTokens()
                         null
                     }
+                }
+                
+                sendWithoutRequest { request ->
+                    // Don't send auth for auth endpoints
+                    !request.url.encodedPath.contains("/auth/")
                 }
             }
         }
@@ -75,7 +89,7 @@ class KtorClient(
             url(baseUrl)
             contentType(ContentType.Application.Json)
         }
-        
+
         // Handle client-side errors (e.g., timeout, network issues)
         HttpResponseValidator {
             validateResponse { response ->
@@ -101,3 +115,4 @@ class KtorClient(
 class UnauthorizedException(message: String) : Exception(message)
 class ForbiddenException(message: String) : Exception(message)
 class NotFoundException(message: String) : Exception(message)
+

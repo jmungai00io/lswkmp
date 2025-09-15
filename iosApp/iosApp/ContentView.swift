@@ -5,8 +5,6 @@ import ComposeApp
 // Initialize Kotlin crash handling
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        // Initialize any needed iOS-specific setup here
-        print("iOS app initialized")
         return true
     }
 }
@@ -21,7 +19,6 @@ struct ComposeView: UIViewControllerRepresentable {
         do {
             viewController = MainViewControllerKt.MainViewController()
         } catch {
-            print("Error creating MainViewController: \(error)")
             let errorVC = UIViewController()
             let label = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 100))
             label.text = "Error initializing: \(error.localizedDescription)"
@@ -45,8 +42,6 @@ struct ContentView: View {
         ComposeView()
             .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
             .onAppear {
-                // Log when the view appears
-                print("ComposeView appeared")
             }
     }
 }

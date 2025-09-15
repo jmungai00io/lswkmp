@@ -41,13 +41,30 @@ class UserRepository(private val api: LivestockWealthApi) {
         firstName: String? = null,
         lastName: String? = null,
         phoneNumber: String? = null,
-        email: String? = null
+        email: String? = null,
+        dateOfBirth: String? = null,
+        country: String? = null,
+        town: String? = null,
+        address: String? = null,
+        zipCode: String? = null,
+        gender: String? = null
     ): Result<UpdateProfileResponse> {
         return try {
             _userState.value = UserState.Loading
-            val updateProfileBody = UpdateProfileBody(firstName, lastName, phoneNumber, email)
+            val updateProfileBody = UpdateProfileBody(
+                firstName = firstName,
+                lastName = lastName,
+                phoneNumber = phoneNumber,
+                email = email,
+                dateOfBirth = dateOfBirth,
+                country = country,
+                town = town,
+                address = address,
+                zipCode = zipCode,
+                gender = gender
+            )
             val response = api.updateProfile(updateProfileBody)
-            _userState.value = UserState.Success(response.user)
+            _userState.value = UserState.Success(response.data)
             Result.success(response)
         } catch (e: Exception) {
             _userState.value = UserState.Error(e.message ?: "Unknown error")

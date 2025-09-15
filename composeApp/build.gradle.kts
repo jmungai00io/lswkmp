@@ -40,7 +40,10 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            // Ensure resources are included in the framework
+            export(compose.components.resources)
         }
+
     }
     
     sourceSets {
@@ -49,10 +52,28 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
+            
+            // Material Icons - Android only
+            implementation("androidx.compose.material:material-icons-core:1.5.4")
+            implementation("androidx.compose.material:material-icons-extended:1.5.4")
+            
+            // Coil for image loading
+            implementation("io.coil-kt:coil-compose:2.5.0")
+            
+            // CameraX dependencies
+            implementation("androidx.camera:camera-core:1.3.1")
+            implementation("androidx.camera:camera-camera2:1.3.1")
+            implementation("androidx.camera:camera-lifecycle:1.3.1")
+            implementation("androidx.camera:camera-view:1.3.1")
+            implementation("androidx.camera:camera-extensions:1.3.1")
+            
+            // Permissions
+            implementation("com.google.accompanist:accompanist-permissions:0.32.0")
         }
         
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            api(compose.components.resources)
         }
         
         commonMain.dependencies {
@@ -60,14 +81,11 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            
-            // Material Icons
-//            implementation("androidx.compose.material:material-icons-core:1.5.4")
-//            implementation("androidx.compose.material:material-icons-extended:1.5.4")
             
             // Ktor
             implementation(libs.ktor.core)
@@ -84,6 +102,13 @@ kotlin {
             // Koin for Dependency Injection
             implementation("io.insert-koin:koin-core:3.5.0")
             implementation("io.insert-koin:koin-compose:1.1.0")
+            
+            // Permissions
+            implementation("dev.icerock.moko:permissions-compose:0.18.0")
+            implementation("network.chaintech:cmp-country-code-picker:1.0.1")
+
+            // Persistent key-value storage for tokens (KMP)
+            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -102,12 +127,13 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-    
+
     flavorDimensions += "type"
     productFlavors {
         create("development") {
             dimension = "type"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
+//            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:4000\"")
+            buildConfigField("String", "BASE_URL", "\"https://staging.api.livestockwealth.com\"")
             buildConfigField("String", "WEB_BASE_URL", "\"https://staging.livestockwealth.com\"")
             buildConfigField("String", "ONESIGNAL_APP_ID", secretsProperties["ONESIGNAL_APP_ID_DEVELOPMENT"].toString())
             applicationIdSuffix = ".dev"
@@ -177,12 +203,12 @@ android {
     }
 }
 
-// Fix for syncComposeResourcesForIos task configuration issues
+// Enable syncComposeResourcesForIos task to ensure resources are properly included in iOS bundle
 tasks.named("syncComposeResourcesForIos") {
-    enabled = false  // Completely disable this task
-    outputs.upToDateWhen { true }  // Make it always up-to-date
+    enabled = true
 }
 
 dependencies {
+    implementation(libs.androidx.camera.lifecycle)
     debugImplementation(compose.uiTooling)
 }

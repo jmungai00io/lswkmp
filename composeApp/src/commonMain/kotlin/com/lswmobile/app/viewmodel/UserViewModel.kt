@@ -2,121 +2,111 @@ package com.lswmobile.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.model.UserResponse
-import com.lswmobile.app.network.repository.UserRepository
-import com.lswmobile.app.network.repository.UserState
-import kotlinx.coroutines.flow.Flow
+import com.lswmobile.app.utils.ErrorUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for user-related operations
+ * ViewModel for managing user data and operations
  */
 class UserViewModel(
     private val userRepository: UserRepository
 ) : ViewModel() {
     
-    // StateFlow from the repository
-    val userState: Flow<UserState> = userRepository.userState
-    
-    // Internal state for UI
-    private val _uiState = MutableStateFlow<UserVMUiState>(UserVMUiState.Idle)
-    val uiState: StateFlow<UserVMUiState> = _uiState.asStateFlow()
-    
-    // User data
+    // User state
     private val _user = MutableStateFlow<UserResponse?>(null)
     val user: StateFlow<UserResponse?> = _user.asStateFlow()
     
-    /**
-     * Load current user profile
-     */
-    fun loadUserProfile() {
+    // Loading state
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    
+    // Error state
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    
+    // KYC verification state
+    private val _isKYCVerified = MutableStateFlow(false)
+    val isKYCVerified: StateFlow<Boolean> = _isKYCVerified.asStateFlow()
+    
+    init {
+        // Observe user changes from repository
         viewModelScope.launch {
-            _uiState.value = UserVMUiState.Loading
-            userRepository.getCurrentUser()
-                .onSuccess { 
-                    _user.value = it
-                    _uiState.value = UserVMUiState.Success.Profile("Profile loaded successfully")
-                }
-                .onFailure { 
-                    _uiState.value = UserVMUiState.Error(it.message ?: "Failed to load user profile")
-                }
+            userRepository.currentUser.collect { user ->
+                _user.value = user
+                _isKYCVerified.value = user?.kycVerification?.status=="VERIFIED"
+            }
         }
     }
     
     /**
-     * Update user profile
+     * Fetch user data from API
      */
-    fun updateProfile(
-        firstName: String? = null,
-        lastName: String? = null,
-        phoneNumber: String? = null,
-        email: String? = null
-    ) {
+    fun fetchUser() {
         viewModelScope.launch {
-            _uiState.value = UserVMUiState.Loading
-            userRepository.updateProfile(firstName, lastName, phoneNumber, email)
-                .onSuccess { 
-                    _user.value = it.user
-                    _uiState.value = UserVMUiState.Success.Profile(it.message)
-                }
-                .onFailure { 
-                    _uiState.value = UserVMUiState.Error(it.message ?: "Failed to update profile")
-                }
+            try {
+                _isLoading.value = true
+                _error.value = null
+                
+                val result = userRepository.fetchUser()
+                
+                result.fold(
+                    onSuccess = { user ->
+                        _user.value = user
+                        _isKYCVerified.value = user.kycVerification?.status=="VERIFIED"
+                    },
+                    onFailure = { exception ->
+                        val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
+                        _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to fetch user data")
+                    }
+                )
+            } catch (e: Exception) {
+                _error.value = ErrorUtils.extractErrorMessage(e, "An unexpected error occurred")
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
     
     /**
-     * Update user preferences
+     * Update user data locally
      */
-    fun updatePreferences(notifications: Boolean, marketing: Boolean) {
+    fun updateUser(user: UserResponse) {
         viewModelScope.launch {
-            _uiState.value = UserVMUiState.Loading
-            userRepository.updatePreferences(notifications, marketing)
-                .onSuccess { 
-                    _uiState.value = UserVMUiState.Success.Preferences("Preferences updated successfully")
-                    // Reload user profile to get updated preferences
-                    loadUserProfile()
-                }
-                .onFailure { 
-                    _uiState.value = UserVMUiState.Error(it.message ?: "Failed to update preferences")
-                }
+            try {
+                userRepository.updateUser(user)
+                _user.value = user
+                _isKYCVerified.value = user.kycVerification?.status=="VERIFIED"
+            } catch (e: Exception) {
+                _error.value = ErrorUtils.extractErrorMessage(e, "Failed to update user data")
+            }
         }
     }
     
     /**
-     * Get user investment overview
+     * Clear user data (for logout)
      */
-    fun loadUserOverview() {
+    fun clearUser() {
         viewModelScope.launch {
-            _uiState.value = UserVMUiState.Loading
-            userRepository.getUserOverview()
-                .onSuccess { 
-                    _uiState.value = UserVMUiState.Success.Overview("Overview loaded successfully")
-                }
-                .onFailure { 
-                    _uiState.value = UserVMUiState.Error(it.message ?: "Failed to load overview")
-                }
+            try {
+                userRepository.clearUser()
+                _user.value = null
+                _isKYCVerified.value = false
+                _error.value = null
+            } catch (e: Exception) {
+                _error.value = ErrorUtils.extractErrorMessage(e, "Failed to clear user data")
+            }
         }
     }
-}
-
-/**
- * UI state for user-related operations
- */
-sealed class UserVMUiState {
-    object Idle : UserVMUiState()
-    object Loading : UserVMUiState()
     
-    // Different types of success states
-    sealed class Success(val message: String) : UserVMUiState() {
-        class Profile(message: String) : Success(message)
-        class Preferences(message: String) : Success(message)
-        class Overview(message: String) : Success(message)
-        class Generic(message: String) : Success(message)
+    /**
+     * Clear error state
+     */
+    fun clearError() {
+        _error.value = null
     }
-    
-    data class Error(val message: String) : UserVMUiState()
 }

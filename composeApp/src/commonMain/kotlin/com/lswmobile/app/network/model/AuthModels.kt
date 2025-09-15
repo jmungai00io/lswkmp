@@ -55,10 +55,7 @@ data class RegisterBody(
  * Refresh token response
  */
 @Serializable
-data class RefreshTokenPayload(
-    val accessToken: String,
-    val refreshToken: String
-)
+class RefreshTokenPayload (val token: String?)
 
 /**
  * Passkey registration options response

@@ -1,6 +1,10 @@
 package com.lswmobile.app.network.repository
 
+import com.lswmobile.app.AppInitializer
+import com.lswmobile.app.config.AppConfigFactory
 import com.lswmobile.app.network.LivestockWealthApi
+import com.lswmobile.app.network.RefreshableTokenProvider
+import com.lswmobile.app.network.SessionManager
 import com.lswmobile.app.network.TokenProvider
 import com.lswmobile.app.network.model.*
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +21,43 @@ class AuthRepository(
     private val api: LivestockWealthApi,
     private val tokenProvider: TokenProvider
 ) {
+    private fun isLikelyJwt(token: String): Boolean {
+        // Basic sanity check: JWT typically has 3 dot-separated parts
+        return token.count { it == '.' } == 2 && token.length > 20
+    }
+
+    private fun sanitizeAccessToken(raw: String): String {
+        return raw.trim()
+            .removePrefix("Bearer ")
+            .removePrefix("bearer ")
+            .trim()
+    }
+
+    init {
+        // Wire refresh delegate if using SimpleTokenProvider so Ktor Auth can refresh using cookies
+        (tokenProvider as? RefreshableTokenProvider)?.setRefreshDelegate { _ ->
+            // Call refresh endpoint: server sets new httpOnly cookie and returns { token }
+            val response = api.refreshToken()
+            val tokenElement = response["token"]
+            val parsed = tokenElement?.jsonPrimitive?.content
+            val newAccessToken = parsed?.let { sanitizeAccessToken(it) }
+            val dotCount = newAccessToken?.count { it == '.' } ?: -1
+            if (AppConfigFactory.get().isDevelopment) {
+                println("[AuthRepository] refreshToken response parsed='${parsed?.take(12)}...' sanitized='${newAccessToken?.take(12)}...' dots=${dotCount}")
+            }
+            if (newAccessToken != null && newAccessToken.isNotBlank() && newAccessToken != "false" && isLikelyJwt(newAccessToken)) {
+                // Return pair: accessToken and empty refresh token string (cookie carries refresh)
+                SessionManager.notifySuccess()
+                Pair(newAccessToken, tokenProvider.getRefreshToken() ?: "")
+            } else {
+                if (AppConfigFactory.get().isDevelopment) {
+                    println("[AuthRepository] refreshToken invalid or missing token, treating as failed refresh")
+                }
+                SessionManager.notifyUnauthorized()
+                null
+            }
+        }
+    }
     // StateFlow to observe login state
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: Flow<LoginState> = _loginState.asStateFlow()
@@ -35,7 +76,6 @@ class AuthRepository(
      */
     suspend fun login(email: String, password: String, mode: String) {
         try {
-            println("AuthRepository.login: Starting login process with email: $email, mode: $mode")
             _loginState.value = LoginState.Loading
             
             // Store credentials for later use in OTP verification
@@ -43,22 +83,19 @@ class AuthRepository(
             tempPassword = password
             
             val response = api.loginUser(LoginBody(email, password), mode)
-            println("AuthRepository.login: Login successful, response received")
-            
+
             // Extract and store token from response
             if (response.containsKey("token")) {
                 tempToken = response["token"]?.jsonPrimitive?.content
 
-                println("Token extracted: ${tempToken?.take(10)}...")
             } else {
-                println("No token found in response")
+                null
             }
             
             _loginState.value = LoginState.Success(response)
         } catch (e: Exception) {
-            println("AuthRepository.login: Error during login: ${e.message}")
-            e.printStackTrace()
             _loginState.value = LoginState.Error(e.message ?: "Unknown error")
+            throw e
         }
     }
     
@@ -84,8 +121,6 @@ class AuthRepository(
                 PreRegisterBody(email, password, phoneNumber, firstName, lastName),
                 mode
             )
-            
-            // Extract and store token from response
             if (response.containsKey("token")) {
                 tempToken = response["token"]?.jsonPrimitive?.content
             }
@@ -121,8 +156,7 @@ class AuthRepository(
             if (response.containsKey("token") && response["token"] != null) {
                 val finalToken = response["token"]?.jsonPrimitive?.content
                 tokenProvider.saveTokens(finalToken ?: "", "")
-                
-                // Clear temp storage
+                AppInitializer.reinitializeNetworkClients()
                 tempEmail = null
                 tempPassword = null
                 tempToken = null
@@ -137,13 +171,27 @@ class AuthRepository(
     /**
      * Refresh token
      */
-    suspend fun refreshToken(): Result<RefreshTokenPayload> {
+    suspend fun refreshToken(): Result<JsonObject> {
         return try {
             val response = api.refreshToken()
-            // Save the new tokens
-            tokenProvider.saveTokens(response.accessToken, response.refreshToken)
-            Result.success(response)
+            // Extract access token from body and save; refresh token is rotated in httpOnly cookie
+            val tokenElement = response["token"]
+            val parsed = tokenElement?.jsonPrimitive?.content
+            val accessToken = parsed?.let { sanitizeAccessToken(it) }
+            val dotCount = accessToken?.count { it == '.' } ?: -1
+            if (AppConfigFactory.get().isDevelopment) {
+                println("[AuthRepository] manual refreshToken parsed='${parsed?.take(12)}...' sanitized='${accessToken?.take(12)}...' dots=${dotCount}")
+            }
+            if (accessToken != null && accessToken.isNotBlank() && accessToken != "false" && isLikelyJwt(accessToken)) {
+                tokenProvider.saveTokens(accessToken, tokenProvider.getRefreshToken() ?: "")
+                SessionManager.notifySuccess()
+                Result.success(response)
+            } else {
+                SessionManager.notifyUnauthorized()
+                Result.failure(IllegalStateException("Invalid access token from refresh"))
+            }
         } catch (e: Exception) {
+            SessionManager.notifyUnauthorized()
             Result.failure(e)
         }
     }
@@ -156,6 +204,8 @@ class AuthRepository(
             val response = api.logOutUser()
             // Clear tokens
             tokenProvider.clearTokens()
+            // Clear refresh cookies stored on client
+            AppInitializer.clearCookies()
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

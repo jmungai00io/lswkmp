@@ -2,13 +2,14 @@ package com.lswmobile.app.network
 
 import com.lswmobile.app.network.model.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.cookies.cookies
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.content.*
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import com.lswmobile.app.config.AppConfigFactory
 
 /**
  * API client for Livestock Wealth app
@@ -21,12 +22,22 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Login user
      */
     suspend fun loginUser(loginBody: LoginBody, mode: String): JsonObject {
-        print("LivestockWealthApi loginUser mode: $mode")
-        return client.client.post {
+        val response = client.client.post {
             url("/auth/request-otp/$mode")
             setBody(loginBody)
             parameter("mode", mode)
-        }.body()
+        }
+        if (AppConfigFactory.get().isDevelopment) {
+            runCatching {
+                val cookies = client.client.cookies(response.request.url)
+                val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+                val masked = rt?.value?.let { v ->
+                    if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+                } ?: "<none>"
+                println("[LivestockWealthApi] loginUser Set-Cookie refreshToken=${masked}")
+            }
+        }
+        return response.body()
     }
     
     /**
@@ -54,10 +65,21 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Send OTP
      */
     suspend fun sendOtp(endpoint: String, otpBody: SendOTPBody): JsonObject {
-        return client.client.post {
+        val response = client.client.post {
             url(endpoint)
             setBody(otpBody)
-        }.body()
+        }
+        if (AppConfigFactory.get().isDevelopment) {
+            runCatching {
+                val cookies = client.client.cookies(response.request.url)
+                val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+                val masked = rt?.value?.let { v ->
+                    if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+                } ?: "<none>"
+                println("[LivestockWealthApi] sendOtp Set-Cookie refreshToken=${masked}")
+            }
+        }
+        return response.body()
     }
     
     /**
@@ -73,10 +95,23 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Refresh token
      */
-    suspend fun refreshToken(): RefreshTokenPayload {
-        return client.client.post {
+    suspend fun refreshToken(): JsonObject {
+        // Server sets new httpOnly cookie and returns { token: <accessToken> }
+        val response = client.client.get {
             url("/auth/refresh-token")
-        }.body()
+        }
+        // Inspect cookie storage to verify refreshToken presence (masked)
+        if (AppConfigFactory.get().isDevelopment) {
+            runCatching {
+                val cookies = client.client.cookies(response.request.url)
+                val rt = cookies.firstOrNull { it.name.equals("refreshToken", ignoreCase = true) }
+                val masked = rt?.value?.let { v ->
+                    if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
+                } ?: "<none>"
+                println("[LivestockWealthApi] refresh-token Set-Cookie refreshToken=${masked}")
+            }
+        }
+        return response.body()
     }
     
     /**
@@ -95,7 +130,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getUser(): UserResponse {
         return client.client.get {
-            url("/users/me")
+            url("/users/current")
         }.body()
     }
     
@@ -103,8 +138,8 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Update user profile
      */
     suspend fun updateProfile(updateProfileBody: UpdateProfileBody): UpdateProfileResponse {
-        return client.client.patch {
-            url("/users/me")
+        return client.client.put {
+            url("/users/current")
             setBody(updateProfileBody)
         }.body()
     }
@@ -132,14 +167,26 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Upload avatar
      */
     suspend fun uploadAvatar(fileBytes: ByteArray, fileName: String): ByteArray {
+
+        // Determine MIME type based on file extension
+        val mimeType = when {
+            fileName.lowercase().endsWith(".jpg") || fileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+            fileName.lowercase().endsWith(".png") -> "image/png"
+            fileName.lowercase().endsWith(".webp") -> "image/webp"
+            else -> "image/jpeg" // Default to JPEG
+        }
+        
+
         val response = client.client.submitFormWithBinaryData(
-            url = "/users/me/avatar",
+            url = "/users/upload-avatar",
             formData = formData {
                 append("file", fileBytes, Headers.build {
                     append(HttpHeaders.ContentDisposition, "filename=$fileName")
+                    append(HttpHeaders.ContentType, mimeType)
                 })
             }
         )
+        
         return response.readBytes()
     }
     
@@ -209,21 +256,73 @@ class LivestockWealthApi(private val client: KtorClient) {
      * Get products
      */
     suspend fun getProducts(category: String? = null, limit: Int = 20, offset: Int = 0): ProductsResponse {
-        return client.client.get {
-            url("/products")
-            category?.let { parameter("category", it) }
-            parameter("limit", limit)
-            parameter("offset", offset)
-        }.body()
+        try {
+            val response = client.client.get {
+                url("/products")
+                category?.let { parameter("category", it) }
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }
+            
+            val responseText = response.bodyAsText()
+
+            return response.body()
+        } catch (e: Exception) {
+            return ProductsResponse(success = false)
+        }
     }
     
     /**
      * Get product
      */
-    suspend fun getProduct(productId: String): ProductFarmland {
+    suspend fun getProduct(productId: String): ProductClassic {
         return client.client.get {
             url("/products/$productId")
         }.body()
+    }
+    
+    /**
+     * Get farmlands
+     */
+    suspend fun getFarmlands(limit: Int = 20, offset: Int = 0): FarmlandsResponse {
+        try {
+            val response = client.client.get {
+                url("/farmland")
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+
+            return response.body()
+        } catch (e: Exception) {
+            return FarmlandsResponse(success = false, data = emptyList())
+        }
+    }
+    
+    // =============== PRODUCT PREORDER ENDPOINTS ===============
+    
+    /**
+     * Preorder a product that is currently out of stock
+     */
+    suspend fun preorderProduct(productType: String): PreorderResponse {
+        try {
+            val response = client.client.post {
+                url("/transactions/orders/preorder")
+                setBody(PreorderRequest(productType))
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+
+            return response.body()
+        } catch (e: Exception) {
+            return PreorderResponse(
+                success = false,
+                error = e.message ?: "Unknown error occurred during preorder"
+            )
+        }
     }
     
     // =============== CART ENDPOINTS ===============
@@ -278,6 +377,29 @@ class LivestockWealthApi(private val client: KtorClient) {
     // =============== ORDERS ENDPOINTS ===============
     
     /**
+     * Create a marketplace order with the given items and amount
+     * This endpoint handles both farmlands and products but they can't be mixed in a single order
+     */
+    suspend fun createMarketplaceOrder(orderItems: List<MarketplaceOrderItem>, amount: Double): MarketplaceOrderResponse {
+        try {
+            val response = client.client.post {
+                url("/transactions/orders")
+                setBody(CreateMarketplaceOrderRequest(orderItems, amount))
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+
+            return response.body()
+        } catch (e: Exception) {
+            return MarketplaceOrderResponse(
+                success = false,
+                error = e.message ?: "Unknown error occurred during order creation"
+            )
+        }
+    }
+    
+    /**
      * Create order
      */
     suspend fun createOrder(createOrderBody: CreateOrderBody): OrderResponse {
@@ -307,23 +429,85 @@ class LivestockWealthApi(private val client: KtorClient) {
         }.body()
     }
     
+    /**
+     * Get my orders from transactions
+     * Returns a list of the user's marketplace orders
+     */
+    suspend fun getMyOrders(): MyOrdersResponse {
+        try {
+            val response = client.client.get {
+                url("/transactions/orders/my-orders")
+            }
+            
+            // Log the raw response for debugging
+            val responseText = response.bodyAsText()
+
+            return response.body()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    
+    /**
+     * Get order details by order number from transactions
+     * Returns detailed information about a specific marketplace order
+     */
+    suspend fun getOrderByNumber(orderNumber: Int): OrderWithFullUserResponse {
+        try {
+            val response = client.client.get {
+                url("/transactions/orders/$orderNumber")
+            }
+            
+            val responseText = response.bodyAsText()
+
+            val parsedResponse = response.body<OrderWithFullUserResponse>()
+            
+            if (parsedResponse.success) {
+                val orderData = parsedResponse.data
+            }
+            
+            return parsedResponse
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    
+    /**
+     * Update payment method for an order
+     */
+    suspend fun updatePaymentMethod(orderId: String, paymentBody: PaymentBody): JsonObject {
+        return try {
+
+            val response = client.client.put {
+                url("/transactions/orders/$orderId/payment-method")
+                setBody(paymentBody)
+            }
+            
+            response.body()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    
     // =============== BENEFICIARY ENDPOINTS ===============
     
     /**
      * Get beneficiaries
      */
-    suspend fun getBeneficiaries(): MyBeneficiariesResponse {
+    suspend fun getBeneficiaries(page: Int = 1, limit: Int = 10): MyBeneficiariesResponse {
         return client.client.get {
-            url("/beneficiaries")
+            url("/users/beneficiaries")
+            parameter("page", page)
+            parameter("limit", limit)
         }.body()
     }
     
     /**
      * Add beneficiary
      */
-    suspend fun addBeneficiary(beneficiary: Beneficiary): MyBeneficiariesResponse {
+    suspend fun addBeneficiary(beneficiary: Beneficiary): AddBeneficiaryResponse {
         return client.client.post {
-            url("/beneficiaries")
+            url("/users/add-beneficiary")
             setBody(beneficiary)
         }.body()
     }
@@ -333,7 +517,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun updateBeneficiary(beneficiaryId: String, beneficiary: Beneficiary): MyBeneficiariesResponse {
         return client.client.patch {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/beneficiaries/$beneficiaryId")
             setBody(beneficiary)
         }.body()
     }
@@ -343,7 +527,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun deleteBeneficiary(beneficiaryId: String): JsonObject {
         return client.client.delete {
-            url("/beneficiaries/$beneficiaryId")
+            url("/users/delete-beneficiary/$beneficiaryId")
         }.body()
     }
     
@@ -354,17 +538,35 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWithdrawals(): MyWithdrawalsResponse {
         return client.client.get {
-            url("/withdrawals")
+            url("/transactions/withdrawals/my-withdrawals")
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal by ID
+     */
+    suspend fun getWithdrawal(withdrawalId: String): GetWithdrawalResponse {
+        return client.client.get {
+            url("/transactions/withdrawals/$withdrawalId")
         }.body()
     }
     
     /**
      * Request withdrawal
      */
-    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): GetWithdrawalResponse {
+    suspend fun requestWithdrawal(withdrawal: WithdrawalBody): CreateWithdrawalResponse {
         return client.client.post {
-            url("/withdrawals")
+            url("/transactions/withdrawals")
             setBody(withdrawal)
+        }.body()
+    }
+    
+    /**
+     * Get withdrawal fees and local banks
+     */
+    suspend fun getWithdrawalFeesAndBanks(): LocalBanksResponse {
+        return client.client.get {
+            url("/transactions/withdrawal-fees-and-banks")
         }.body()
     }
     
@@ -375,7 +577,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getBankDetails(): EftDetailsServerResponse {
         return client.client.get {
-            url("/finance/bank-details")
+            url("/transactions/eft-bank-details")
         }.body()
     }
     
@@ -384,9 +586,24 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun setupDebitOrder(debitOrderBody: DebitOrderBody): JsonObject {
         return client.client.post {
-            url("/finance/debit-order")
+            url("/transactions/debit-orders")
             setBody(debitOrderBody)
         }.body()
+    }
+    
+    /**
+     * Get local banks
+     */
+    suspend fun getLocalBanks(): BanksResponse {
+        return try {
+            val response = client.client.get {
+                url("/transactions/local-banks")
+            }
+            val body = response.body<BanksResponse>()
+            body
+        } catch (e: Exception) {
+            throw e
+        }
     }
     
     /**
@@ -394,7 +611,17 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun getWalletOverview(): WalletOverview {
         return client.client.get {
-            url("/finance/wallet")
+            url("/transactions/statements/balance")
+        }.body()
+    }
+    
+    /**
+     * Get my assets
+     */
+    suspend fun getMyAssets(allocated: Boolean? = null): GetAssetsResponse {
+        return client.client.get {
+            url("/transactions/orders/my-items")
+            allocated?.let { parameter("allocated", it) }
         }.body()
     }
     
@@ -403,29 +630,91 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Get news feed
      */
-    suspend fun getNewsFeed(limit: Int = 20, offset: Int = 0): NewsFeedResponse {
+    suspend fun getNewsFeed(page: Int = 1, limit: Int = 10): NewsFeedResponse {
         return client.client.get {
             url("/news")
             parameter("limit", limit)
-            parameter("offset", offset)
+            parameter("page", page)
         }.body()
     }
     
     /**
-     * Like news item
+     * Toggle like on news item
      */
-    suspend fun likeNewsItem(newsId: String): JsonObject {
+    suspend fun toggleNewsLike(newsId: String): JsonObject {
         return client.client.post {
             url("/news/$newsId/like")
         }.body()
     }
     
+    // =============== KYC ENDPOINTS ===============
+    
     /**
-     * Unlike news item
+     * Upload KYC documents
      */
-    suspend fun unlikeNewsItem(newsId: String): JsonObject {
-        return client.client.delete {
-            url("/news/$newsId/like")
+    suspend fun uploadKycDocuments(
+        governmentIdBytes: ByteArray,
+        proofOfAddressBytes: ByteArray,
+        selfieBytes: ByteArray,
+        governmentIdFileName: String,
+        proofOfAddressFileName: String,
+        selfieFileName: String
+    ): KycUploadResponse {
+        return try {
+
+            val govtIdMimeType = when {
+                governmentIdFileName.lowercase().endsWith(".jpg") || governmentIdFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                governmentIdFileName.lowercase().endsWith(".png") -> "image/png"
+                governmentIdFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
+            }
+            
+            val proofOfAddressMimeType = when {
+                proofOfAddressFileName.lowercase().endsWith(".jpg") || proofOfAddressFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                proofOfAddressFileName.lowercase().endsWith(".png") -> "image/png"
+                proofOfAddressFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
+            }
+            
+            val selfieMimeType = when {
+                selfieFileName.lowercase().endsWith(".jpg") || selfieFileName.lowercase().endsWith(".jpeg") -> "image/jpeg"
+                selfieFileName.lowercase().endsWith(".png") -> "image/png"
+                selfieFileName.lowercase().endsWith(".webp") -> "image/webp"
+                else -> "image/jpeg" // Default to JPEG
+            }
+            
+
+            val response = client.client.submitFormWithBinaryData(
+                url = "/kyc/upload-documents",
+                formData = formData {
+                    append("govtId", governmentIdBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$governmentIdFileName")
+                        append(HttpHeaders.ContentType, govtIdMimeType)
+                    })
+                    append("proofOfAddress", proofOfAddressBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$proofOfAddressFileName")
+                        append(HttpHeaders.ContentType, proofOfAddressMimeType)
+                    })
+                    append("selfie", selfieBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=$selfieFileName")
+                        append(HttpHeaders.ContentType, selfieMimeType)
+                    })
+                }
+            )
+            
+           val responseBody: KycUploadResponse = response.body()
+            responseBody
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    
+    /**
+     * Get KYC status
+     */
+    suspend fun getKycStatus(): KycStatusResponse {
+        return client.client.get {
+            url("/kyc/status")
         }.body()
     }
 }

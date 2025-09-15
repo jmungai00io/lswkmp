@@ -3,6 +3,9 @@ package com.lswmobile.app.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -111,14 +114,14 @@ fun LivestockPasswordField(
             } 
         },
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-//        trailingIcon = {
-//            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-//                Icon(
-//                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-//                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
-//                )
-//            }
-//        },
+        trailingIcon = {
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                )
+            }
+        },
         colors = TextFieldDefaults.colors(
             /* containers */
             focusedContainerColor   = MaterialTheme.colorScheme.surface,
