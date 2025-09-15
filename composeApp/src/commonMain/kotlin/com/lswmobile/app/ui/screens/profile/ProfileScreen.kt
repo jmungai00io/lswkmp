@@ -1,5 +1,6 @@
 package com.lswmobile.app.ui.screens.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,12 +8,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
+import com.lswmobile.app.ui.theme.NetworkImage
 import com.lswmobile.app.viewmodel.UserViewModel
 
 /**
@@ -103,7 +108,11 @@ fun ProfileScreen(
                     .padding(16.dp)
             ) {
                 // User Profile Header
-                UserProfileHeader(user = user, isKYCVerified = isKYCVerified)
+                UserProfileHeader(
+                    user = user,
+                    isKYCVerified = isKYCVerified,
+                    onAvatarClick = onNavigateToUploadAvatar
+                )
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
@@ -136,7 +145,8 @@ fun ProfileScreen(
 @Composable
 private fun UserProfileHeader(
     user: UserResponse?,
-    isKYCVerified: Boolean
+    isKYCVerified: Boolean,
+    onAvatarClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,12 +167,24 @@ private fun UserProfileHeader(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = AppIcons.Outlined.AccountCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    if (user?.avatarUrl?.isNotBlank() == true) {
+                        NetworkImage(
+                            url = user.avatarUrl,
+                            contentDescription = "Profile avatar",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .clickable { onAvatarClick() },
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = AppIcons.Outlined.AccountCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
             

@@ -41,8 +41,7 @@ fun OtpVerificationScreen(
     var isLoading by remember { mutableStateOf(false) }
     var resendEnabled by remember { mutableStateOf(true) }
     
-    println("We are in OtpVerificationScreen with email: $email")
-    
+
     // Collect UI state
     LaunchedEffect(Unit) {
         authViewModel.uiState.collectLatest { state ->
@@ -59,8 +58,6 @@ fun OtpVerificationScreen(
                 // Handle other success cases
                 is AuthUiState.Success -> {
                     isLoading = false
-                    // We handle other success types but don't navigate
-                    println("Received success: ${state.message} but not navigating")
                 }
                 
                 is AuthUiState.Error -> {

@@ -94,3 +94,39 @@ data class Statement(
     val note: String,
     val user: UserResponse
 )
+
+/**
+ * Dividend payout dates
+ */
+@Serializable
+data class DividendPayoutDates(
+    val _id: String?,
+    val projectedPaymentDate: String?,
+    val invoiceDate: String?
+)
+
+/**
+ * My asset
+ */
+@Serializable
+data class MyAsset(
+    val productType: String,
+    val dateOfAllocation: String?,
+    val dividendAmount: Double,
+    val dividendPayoutDates: List<DividendPayoutDates>?,
+    val valueToday: Double,
+    val priceOfAsset: Double,
+    val dateOfDividendEvaluation: String?
+)
+
+/**
+ * Get assets response
+ */
+@Serializable
+data class GetAssetsResponse(
+    val success: Boolean?,
+    val data: List<MyAsset>?,
+    val totalPages: Int?,
+    val currentPage: Int?,
+    val totalCount: Int?
+)

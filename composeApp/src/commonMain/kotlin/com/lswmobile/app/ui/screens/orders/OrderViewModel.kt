@@ -167,7 +167,6 @@ class OrderViewModel(
                 val balance = walletService.getWalletBalance()
                 _walletBalance.value = balance
             } catch (e: Exception) {
-                println("OrderViewModel: Error loading wallet balance: ${ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")}")
             }
         }
     }
@@ -194,7 +193,6 @@ class OrderViewModel(
                     loadWalletBalance()
                 }
             } catch (e: Exception) {
-                println("OrderViewModel: Error processing wallet payment: ${ErrorUtils.extractErrorMessage(e, "Failed to process wallet payment")}")
             } finally {
                 _isProcessingWalletPayment.value = false
             }

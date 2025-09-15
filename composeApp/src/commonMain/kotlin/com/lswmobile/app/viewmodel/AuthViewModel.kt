@@ -21,11 +21,9 @@ class AuthViewModel(
     private val userRepository: UserRepository? = null
 ) : ViewModel() {
     
-    // StateFlows from the repository
     val loginState: Flow<LoginState> = authRepository.loginState
     val registrationState: Flow<RegistrationState> = authRepository.registrationState
     
-    // Internal state for UI
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
     
@@ -33,25 +31,17 @@ class AuthViewModel(
      * Login user with email and password
      */
     fun login(email: String, password: String, mode: String) {
-        println("AuthViewModel.login: Function called with email: $email, mode: $mode")
         viewModelScope.launch {
-            println("AuthViewModel.login: Inside coroutine scope")
             _uiState.value = AuthUiState.Loading
             try {
-                println("AuthViewModel.login: About to call repository")
                 authRepository.login(email, password, mode)
-                println("AuthViewModel.login: Repository call completed")
-                
-                // Check login state to decide what to do next
-                // If we have a token, we can navigate to OTP verification
+
                 if (authRepository.hasToken()) {
                     _uiState.value = AuthUiState.Success.Login("Login successful, OTP required")
                 } else {
                     _uiState.value = AuthUiState.Idle
                 }
             } catch (e: Exception) {
-                println("AuthViewModel.login: Exception caught: ${e.message}")
-                e.printStackTrace()
                 _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(e))
             }
         }
@@ -86,11 +76,9 @@ class AuthViewModel(
             _uiState.value = AuthUiState.Loading
             authRepository.verifyOtp(email, otp, endpoint)
                 .onSuccess {
-                    println("OTP verification successful: $it")
                     _uiState.value = AuthUiState.Success.OtpVerification("OTP verified successfully")
                 }
                 .onFailure {
-                    println("OTP verification failed: ${it.message}")
                     val exception = if (it is Exception) it else Exception(it.message, it)
                     _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
                 }
@@ -148,6 +136,5 @@ sealed class AuthUiState {
         class Registration(message: String) : Success(message)
         class Generic(message: String) : Success(message)
     }
-    
     data class Error(val message: String) : AuthUiState()
 }

@@ -22,9 +22,11 @@ import kotlin.math.sin
  * Since Material icons are not available on iOS, we create simple placeholder icons
  * that visually represent the same concepts
  */
-internal actual object IconProvider {
-    actual val filledIcons: AppIcons.FilledIcons = IOSFilledIcons
-    actual val outlinedIcons: AppIcons.OutlinedIcons = IOSOutlinedIcons
+// Deprecated: platform IconProvider removed by common-only refactor.
+internal object IconProviderRemoved {
+    // Keep references so the compiler doesn't strip the helpers during incremental builds
+    private val filledIconsRemoved = IOSFilledIcons
+    private val outlinedIconsRemoved = IOSOutlinedIcons
     
     /**
      * Create a simple placeholder icon for iOS
@@ -938,52 +940,53 @@ internal actual object IconProvider {
     /**
      * iOS implementation of Filled icons using placeholder vectors
      */
-    private object IOSFilledIcons : AppIcons.FilledIcons {
-        override val Home: ImageVector = createPlaceholderIcon("Home")
-        override val ShoppingCart: ImageVector = createPlaceholderIcon("ShoppingCart")
-        override val Wallet: ImageVector = createPlaceholderIcon("Wallet")
-        override val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle")
-        override val List: ImageVector = createPlaceholderIcon("List")
-        override val Newspaper: ImageVector = createPlaceholderIcon("Newspaper")
+    private object IOSFilledIcons {
+        val Home: ImageVector = createPlaceholderIcon("Home")
+        val ShoppingCart: ImageVector = createPlaceholderIcon("ShoppingCart")
+        val Wallet: ImageVector = createPlaceholderIcon("Wallet")
+        val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle")
+        val List: ImageVector = createPlaceholderIcon("List")
+        val Newspaper: ImageVector = createPlaceholderIcon("Newspaper")
         
-        override val Add: ImageVector = createPlaceholderIcon("Add")
-        override val ArrowForward: ImageVector = createPlaceholderIcon("ArrowForward")
-        override val ArrowDownward: ImageVector = createPlaceholderIcon("ArrowDownward")
-        override val ArrowUpward: ImageVector = createPlaceholderIcon("ArrowUpward")
+        val Add: ImageVector = createPlaceholderIcon("Add")
+        val ArrowForward: ImageVector = createPlaceholderIcon("ArrowForward")
+        val ArrowDownward: ImageVector = createPlaceholderIcon("ArrowDownward")
+        val ArrowUpward: ImageVector = createPlaceholderIcon("ArrowUpward")
         
-        override val Description: ImageVector = createPlaceholderIcon("Description")
-        override val Folder: ImageVector = createPlaceholderIcon("Folder")
-        override val Receipt: ImageVector = createPlaceholderIcon("Receipt")
+        val Description: ImageVector = createPlaceholderIcon("Description")
+        val Folder: ImageVector = createPlaceholderIcon("Folder")
+        val Receipt: ImageVector = createPlaceholderIcon("Receipt")
         
-        override val Check: ImageVector = createPlaceholderIcon("Check")
-        override val Clear: ImageVector = createPlaceholderIcon("Clear")
-        override val Error: ImageVector = createPlaceholderIcon("Error")
-        override val FilterList: ImageVector = createPlaceholderIcon("FilterList")
-        override val Search: ImageVector = createPlaceholderIcon("Search")
-        override val Schedule: ImageVector = createPlaceholderIcon("Schedule")
-        override val LocationOn: ImageVector = createPlaceholderIcon("LocationOn")
-        override val Alarm: ImageVector = createPlaceholderIcon("Alarm")
-        override val CheckCircle: ImageVector = createPlaceholderIcon("CheckCircle")
-        override val Refresh: ImageVector = createPlaceholderIcon("Refresh")
-        override val Back: ImageVector = createPlaceholderIcon("Back")
-        override val KeyboardArrowDown: ImageVector = createPlaceholderIcon("KeyboardArrowDown")
-        override val KeyboardArrowUp: ImageVector = createPlaceholderIcon("KeyboardArrowUp")
-        override val Favorite: ImageVector = createPlaceholderIcon("Favorite")
-        override val Close: ImageVector = createPlaceholderIcon("Close")
-        override val ChevronLeft: ImageVector = createPlaceholderIcon("ChevronLeft")
-        override val ChevronRight: ImageVector = createPlaceholderIcon("ChevronRight")
+        val Check: ImageVector = createPlaceholderIcon("Check")
+        val Clear: ImageVector = createPlaceholderIcon("Clear")
+        val Error: ImageVector = createPlaceholderIcon("Error")
+        val FilterList: ImageVector = createPlaceholderIcon("FilterList")
+        val Search: ImageVector = createPlaceholderIcon("Search")
+        val Schedule: ImageVector = createPlaceholderIcon("Schedule")
+        val LocationOn: ImageVector = createPlaceholderIcon("LocationOn")
+        val Alarm: ImageVector = createPlaceholderIcon("Alarm")
+        val CheckCircle: ImageVector = createPlaceholderIcon("CheckCircle")
+        val Refresh: ImageVector = createPlaceholderIcon("Refresh")
+        val Back: ImageVector = createPlaceholderIcon("Back")
+        val KeyboardArrowDown: ImageVector = createPlaceholderIcon("KeyboardArrowDown")
+        val KeyboardArrowUp: ImageVector = createPlaceholderIcon("KeyboardArrowUp")
+        val Favorite: ImageVector = createPlaceholderIcon("Favorite")
+        val Close: ImageVector = createPlaceholderIcon("Close")
+        val ChevronLeft: ImageVector = createPlaceholderIcon("ChevronLeft")
+        val ChevronRight: ImageVector = createPlaceholderIcon("ChevronRight")
     }
     
     /**
      * iOS implementation of Outlined icons using placeholder vectors
      */
-    private object IOSOutlinedIcons : AppIcons.OutlinedIcons {
-        override val Home: ImageVector = createPlaceholderIcon("Home.Outlined")
-        override val ShoppingCart: ImageVector = createPlaceholderIcon("ShoppingCart.Outlined")
-        override val Wallet: ImageVector = createPlaceholderIcon("Wallet.Outlined")
-        override val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle.Outlined")
-        override val List: ImageVector = createPlaceholderIcon("List.Outlined")
-        override val Newspaper: ImageVector = createPlaceholderIcon("Newspaper.Outlined")
-        override val FavoriteBorder: ImageVector = createPlaceholderIcon("FavoriteBorder")
+    private object IOSOutlinedIcons {
+        val Portfolio: ImageVector = createPlaceholderIcon("Portfolio.Outlined")
+        val Home: ImageVector = createPlaceholderIcon("Home.Outlined")
+        val ShoppingCart: ImageVector = createPlaceholderIcon("ShoppingCart.Outlined")
+        val Wallet: ImageVector = createPlaceholderIcon("Wallet.Outlined")
+        val AccountCircle: ImageVector = createPlaceholderIcon("AccountCircle.Outlined")
+        val List: ImageVector = createPlaceholderIcon("List.Outlined")
+        val Newspaper: ImageVector = createPlaceholderIcon("Newspaper.Outlined")
+        val FavoriteBorder: ImageVector = createPlaceholderIcon("FavoriteBorder")
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
  * @param onRefresh Callback to be invoked when a refresh is triggered
  * @param modifier Modifier to be applied to the container
  * @param lazyGridState Optional LazyGridState to check scroll position
+ * @param lazyListState Optional LazyListState to check scroll position
  * @param content The content to be displayed inside the container
  */
 @Composable
@@ -42,6 +44,7 @@ fun PullToRefreshContainer(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
     lazyGridState: LazyGridState? = null,
+    lazyListState: LazyListState? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     val refreshTriggerDistance = with(LocalDensity.current) { 80.dp.toPx() }
@@ -51,9 +54,15 @@ fun PullToRefreshContainer(
     // Check if we're at the top of the scrollable content
     val isAtTop by remember {
         derivedStateOf {
-            lazyGridState?.let { state ->
-                state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0
-            } ?: true // If no state provided, assume we can refresh (backward compatibility)
+            when {
+                lazyGridState != null -> {
+                    lazyGridState.firstVisibleItemIndex == 0 && lazyGridState.firstVisibleItemScrollOffset == 0
+                }
+                lazyListState != null -> {
+                    lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+                }
+                else -> true // If no state provided, assume we can refresh (backward compatibility)
+            }
         }
     }
     

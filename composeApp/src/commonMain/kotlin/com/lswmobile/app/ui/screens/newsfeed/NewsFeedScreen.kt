@@ -3,6 +3,7 @@ package com.lswmobile.app.ui.screens.newsfeed
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -34,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lswmobile.app.network.model.NewsFeedItem
 import com.lswmobile.app.ui.components.PullToRefreshContainer
+import com.lswmobile.app.ui.resources.ResourceHelper
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.NetworkImage
@@ -173,7 +175,8 @@ fun NewsFeedScreen(
                 else -> {
                     PullToRefreshContainer(
                         isRefreshing = isRefreshing,
-                        onRefresh = { viewModel.refreshNewsFeed() }
+                        onRefresh = { viewModel.refreshNewsFeed() },
+                        lazyListState = listState
                     ) {
                         LazyColumn(
                             state = listState,
@@ -240,6 +243,34 @@ private fun NewsFeedCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            Row(Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+                ) {
+                Image(
+                    painter = ResourceHelper.loadShortLogo(),
+                    contentDescription = "Livestock Wealth Logo",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(8.dp)
+                )
+
+                Column(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(
+                        text = "Livestock Wealth",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    // Date
+                    Text(
+                        text = formatDate(newsItem.createdAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             // Content
             Text(
                 text = newsItem.content,
@@ -269,16 +300,13 @@ private fun NewsFeedCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Date
-                Text(
-                    text = formatDate(newsItem.createdAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
                 
                 // Like button
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(
                         onClick = onLikeClick,

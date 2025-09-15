@@ -159,15 +159,6 @@ data class Product(
 )
 
 /**
- * Get assets response
- */
-@Serializable
-data class GetAssetsResponse(
-    val assets: List<Asset>,
-    val message: String
-)
-
-/**
  * Asset model
  */
 @Serializable

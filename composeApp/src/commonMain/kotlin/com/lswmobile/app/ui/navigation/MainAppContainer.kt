@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lswmobile.app.AppInitializer
@@ -38,10 +39,12 @@ import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
 import com.lswmobile.app.ui.screens.wallet.RequestWithdrawalScreen
 import com.lswmobile.app.ui.screens.wallet.MyWithdrawalsScreen
 import com.lswmobile.app.ui.screens.wallet.ViewWithdrawalScreen
+import com.lswmobile.app.ui.screens.web.WebViewScreen
 import com.lswmobile.app.viewmodel.BeneficiaryViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
 import com.lswmobile.app.viewmodel.WithdrawalViewModel
+import com.lswmobile.app.viewmodel.WalletViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -59,11 +62,13 @@ fun MainAppContainer() {
     val withdrawalViewModel = koinInject<WithdrawalViewModel>()
     val eftPaymentViewModel = koinInject<EftPaymentViewModel>()
     val debitPaymentViewModel = koinInject<DebitPaymentViewModel>()
+    val walletViewModel = koinInject<WalletViewModel>()
     
 //    val financeRepo = remember { SampleFinanceRepository.getInstance() }
     
     // Save only the route name string instead of the Screen object
-    var currentRoute by rememberSaveable { mutableStateOf(Screen.MarketPlace.route) }
+    // Default start destination: News Feed
+    var currentRoute by rememberSaveable { mutableStateOf(Screen.NewsFeed.route) }
     
     // Selected order number for detail view
     var selectedOrderNumber by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -73,6 +78,9 @@ fun MainAppContainer() {
     
     // Selected withdrawal ID for detail view
     var selectedWithdrawalId by rememberSaveable { mutableStateOf<String?>(null) }
+    
+    // Selected web URL for WebView screen
+    var selectedWebUrl by rememberSaveable { mutableStateOf<String?>(null) }
     
     // Convert the route string to a Screen object
     val currentScreen = remember(currentRoute) {
@@ -99,7 +107,8 @@ fun MainAppContainer() {
             currentRoute == Screen.AddBeneficiary.route -> Screen.AddBeneficiary
             currentRoute == Screen.MyBeneficiaries.route -> Screen.MyBeneficiaries
             currentRoute == Screen.UploadAvatar.route -> Screen.UploadAvatar
-            else -> Screen.MarketPlace // Default fallback
+            currentRoute == Screen.WebView.route -> Screen.WebView
+            else -> Screen.NewsFeed // Default fallback
         }
     }
     
@@ -110,7 +119,6 @@ fun MainAppContainer() {
     
     // Fetch user data when the container is first loaded
     LaunchedEffect(Unit) {
-        println("MainAppContainer: Fetching user data after authentication")
         userViewModel.fetchUser()
     }
     
@@ -139,7 +147,11 @@ fun MainAppContainer() {
                         MarketplaceScreen(
                             viewModel = marketplaceViewModel,
                             onNavigateToNewsScreen = { onScreenSelected(Screen.NewsFeed) },
-                            onNavigateToCheckout = { onScreenSelected(Screen.Checkout) }
+                            onNavigateToCheckout = { onScreenSelected(Screen.Checkout) },
+                            onOpenWebUrl = { url ->
+                                selectedWebUrl = url
+                                onScreenSelected(Screen.WebView)
+                            }
                         )
                     }
                     
@@ -161,7 +173,7 @@ fun MainAppContainer() {
                     
                     Screen.Wallet -> {
                         WalletScreen(
-//                            repository = financeRepo,
+                            viewModel = walletViewModel,
                             onNavigateToPortfolio = { onScreenSelected(Screen.MyPortfolio) },
                             onNavigateToAssets = { onScreenSelected(Screen.MyAssets) },
                             onNavigateToStatement = { onScreenSelected(Screen.MyStatement) },
@@ -227,7 +239,6 @@ fun MainAppContainer() {
                                 }
                                 
                                 if (!hasProducts && !hasFarmlands) {
-                                    println("Checkout pressed but cart is empty")
                                 }
                             },
                             isOrdering = isOrdering,
@@ -265,10 +276,6 @@ fun MainAppContainer() {
                                     currentRoute = "debit_payment/$orderNum"
                                 },
                                 onNavigateToWalletPayment = { orderNum ->
-                                    // Handle wallet payment - this could be a direct API call
-                                    // For now, we'll navigate to a wallet payment screen or handle it directly
-                                    println("Wallet payment for order #$orderNum")
-                                    // You could implement direct wallet payment here
                                 }
                             )
                         } ?: run {
@@ -368,7 +375,6 @@ fun MainAppContainer() {
                             onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
                             onEditBeneficiary = { beneficiaryId ->
                                 // TODO: Implement edit beneficiary logic
-                                println("Edit beneficiary: $beneficiaryId")
                             },
                             onDeleteBeneficiary = { beneficiaryId ->
                                 // Show confirmation dialog and delete
@@ -410,9 +416,24 @@ fun MainAppContainer() {
                         }
                     }
                     
+                    Screen.WebView -> {
+                        selectedWebUrl?.let { url ->
+                            WebViewScreen(
+                                url = url,
+                                onNavigateBack = {
+                                    // Return to marketplace by default
+                                    onScreenSelected(Screen.MarketPlace)
+                                }
+                            )
+                        } ?: run {
+                            ScreenUnderConstruction(currentScreen.titleRes)
+                        }
+                    }
+                    
                     Screen.UploadAvatar -> {
                         val userRepository = koinInject<com.lswmobile.app.network.repository.UserRepository>()
                         val coroutineScope = rememberCoroutineScope()
+                        val user by userViewModel.user.collectAsState()
                         val uploadAvatarViewModel = remember {
                             com.lswmobile.app.viewmodel.UploadAvatarViewModel(
                                 userRepository = userRepository,
@@ -422,7 +443,8 @@ fun MainAppContainer() {
                         
                         com.lswmobile.app.ui.screens.profile.UploadAvatarScreen(
                             viewModel = uploadAvatarViewModel,
-                            onNavigateBack = { onScreenSelected(Screen.Profile) }
+                            onNavigateBack = { onScreenSelected(Screen.Profile) },
+                            avatarUrl = user?.avatarUrl
                         )
                     }
                     

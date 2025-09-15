@@ -7,6 +7,7 @@ import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -19,7 +20,8 @@ import kotlinx.serialization.json.Json
 class KtorClient(
     private val tokenProvider: TokenProvider, 
     private val baseUrl: String,
-    private val enableLogging: Boolean = true
+    private val enableLogging: Boolean = true,
+    private val cookiesStorage: CookiesStorage = AcceptAllCookiesStorage()
 ) {
 
     val client = HttpClient {
@@ -39,12 +41,16 @@ class KtorClient(
             }
         }
         
+        // Accept and store cookies (needed for httpOnly refreshToken set by server)
+        install(HttpCookies) {
+            storage = cookiesStorage
+        }
+        
         install(Auth) {
             bearer {
                 loadTokens {
                     val accessToken = tokenProvider.getAccessToken()
                     val refreshToken = tokenProvider.getRefreshToken()
-                    println("KtorClient: Loading tokens - Access token available: ${accessToken != null}, length: ${accessToken?.length ?: 0}")
                     if (accessToken != null) {
                         BearerTokens(accessToken, refreshToken ?: "")
                     } else {
@@ -53,22 +59,20 @@ class KtorClient(
                 }
                 
                 refreshTokens {
-                    val refreshToken = tokenProvider.getRefreshToken() ?: return@refreshTokens null
-                    println("KtorClient: Attempting to refresh tokens")
-                    
+                    val refreshToken = tokenProvider.getRefreshToken() // May be null/empty when using httpOnly cookies
+
                     try {
-                        val tokenResponse = tokenProvider.refreshTokens(refreshToken)
+                        val tokenResponse = tokenProvider.refreshTokens(refreshToken ?: "")
                         if (tokenResponse != null) {
                             val (newAccessToken, newRefreshToken) = tokenResponse
-                            println("KtorClient: Tokens refreshed successfully")
                             tokenProvider.saveTokens(newAccessToken, newRefreshToken)
                             BearerTokens(newAccessToken, newRefreshToken)
                         } else {
-                            println("KtorClient: Token refresh failed, no new tokens returned")
+                            // Refresh failed; clear tokens so we don't keep sending expired ones
+                            tokenProvider.clearTokens()
                             null
                         }
                     } catch (e: Exception) {
-                        println("KtorClient: Token refresh failed with exception: ${e.message}")
                         tokenProvider.clearTokens()
                         null
                     }
@@ -85,7 +89,7 @@ class KtorClient(
             url(baseUrl)
             contentType(ContentType.Application.Json)
         }
-        
+
         // Handle client-side errors (e.g., timeout, network issues)
         HttpResponseValidator {
             validateResponse { response ->
@@ -111,3 +115,4 @@ class KtorClient(
 class UnauthorizedException(message: String) : Exception(message)
 class ForbiddenException(message: String) : Exception(message)
 class NotFoundException(message: String) : Exception(message)
+

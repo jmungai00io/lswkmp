@@ -1,6 +1,5 @@
 package com.lswmobile.app.ui.screens.wallet
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -31,7 +31,6 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -39,51 +38,48 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.lswmobile.app.network.model.Statement
+import com.lswmobile.app.network.model.MyAsset
+import com.lswmobile.app.network.model.WalletOverview
+import com.lswmobile.app.ui.components.ErrorDisplay
 import com.lswmobile.app.ui.components.PullToRefreshContainer
 import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.DefaultCornerRadius
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.math.absoluteValue
+import com.lswmobile.app.viewmodel.WalletViewModel
+import com.lswmobile.app.util.NumberFormatUtils
 
 /**
- * Wallet screen showing financial overview and recent transactions
+ * Wallet screen showing financial overview and assets
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
-
+    viewModel: WalletViewModel,
     onNavigateToPortfolio: () -> Unit,
     onNavigateToAssets: () -> Unit,
     onNavigateToStatement: () -> Unit,
     onNavigateToWithdrawals: () -> Unit,
     onRequestWithdrawal: () -> Unit
 ) {
-    // Collect data from the repository
-//    val walletOverview by repository.walletOverview.collectAsState(initial = null)
-//    val statements by repository.statements.collectAsState(initial = emptyList())
+    // Collect data from the ViewModel
+    val walletOverview by viewModel.walletOverview.collectAsState()
+    val assets by viewModel.assets.collectAsState()
+    val isLoadingOverview by viewModel.isLoadingOverview.collectAsState()
+    val isLoadingAssets by viewModel.isLoadingAssets.collectAsState()
+    val overviewError by viewModel.overviewError.collectAsState()
+    val assetsError by viewModel.assetsError.collectAsState()
     
     // Track pull-to-refresh state
-    var isRefreshing by remember { mutableStateOf(false) }
+    val isRefreshing = isLoadingOverview || isLoadingAssets
     
     // Setup scrolling behavior for the large title (iOS-style)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -99,12 +95,7 @@ fun WalletScreen(
         PullToRefreshContainer(
             isRefreshing = isRefreshing,
             onRefresh = {
-                isRefreshing = true
-                // Simulate a refresh
-                kotlinx.coroutines.GlobalScope.launch {
-                    delay(1500) // Simulate network delay
-                    isRefreshing = false
-                }
+                viewModel.refresh()
             }
         ) {
             LazyColumn(
@@ -117,12 +108,20 @@ fun WalletScreen(
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.medium.dp)
             ) {
                 // Balance Card
-//                item {
-//                    BalanceCard(
-//                        balance = walletOverview?.balance ?: 0.0,
-//                        onRequestWithdrawal = onRequestWithdrawal
-//                    )
-//                }
+                item {
+                    if (overviewError != null) {
+                        ErrorDisplay(
+                            message = overviewError!!,
+                            onDismiss = { viewModel.clearOverviewError() }
+                        )
+                    } else {
+                        BalanceCard(
+                            walletOverview = walletOverview,
+                            isLoading = isLoadingOverview,
+                            onRequestWithdrawal = onRequestWithdrawal
+                        )
+                    }
+                }
                 
                 // Quick Actions
                 item {
@@ -134,10 +133,10 @@ fun WalletScreen(
                     )
                 }
                 
-                // Recent Transactions
+                // My Assets Section
                 item {
                     Text(
-                        text = "Recent Transactions",
+                        text = "My Assets",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(
@@ -147,23 +146,83 @@ fun WalletScreen(
                     )
                 }
                 
-                // Transaction items
-//                items(statements.take(10)) { statement ->
-//                    TransactionItem(statement = statement)
-//                }
-                
-                // View All button
-                item {
-                    FilledTonalButton(
-                        onClick = onNavigateToStatement,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = AppTheme.spacing.medium.dp)
-                    ) {
-                        Text("View All Transactions")
+                // Assets error or content
+                if (assetsError != null) {
+                    item {
+                        ErrorDisplay(
+                            message = assetsError!!,
+                            onDismiss = { viewModel.clearAssetsError() }
+                        )
                     }
-                    
-                    Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+                } else if (isLoadingAssets) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(AppTheme.spacing.large.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else if (assets.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = AppTheme.spacing.medium.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(AppTheme.spacing.large.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Outlined.Portfolio,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+                                Text(
+                                    text = "No Assets Yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "Start investing to see your assets here",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Asset items
+                    items(assets) { asset ->
+                        AssetItem(asset = asset)
+                    }
+                }
+                
+                // View All Assets button
+                if (assets.isNotEmpty()) {
+                    item {
+                        FilledTonalButton(
+                            onClick = onNavigateToAssets,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = AppTheme.spacing.medium.dp)
+                        ) {
+                            Text("View All Assets")
+                        }
+                        
+                        Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+                    }
                 }
             }
         }
@@ -202,54 +261,100 @@ private fun WalletTopBar(
  */
 @Composable
 private fun BalanceCard(
-    balance: Double,
+    walletOverview: WalletOverview?,
+    isLoading: Boolean,
     onRequestWithdrawal: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AppTheme.spacing.medium.dp),
-        shape = RoundedCornerShape(DefaultCornerRadius),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(AppTheme.spacing.medium.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppTheme.spacing.large.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Current Balance",
+                text = "Total Balance",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             
             Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
             
-            Text(
-                text = "R${balance.toDouble().toString().take(10)}",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = NumberFormatUtils.formatCurrencyR(walletOverview?.balance ?: 0.0),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             
             Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            
+            // Additional balance information
+            if (!isLoading && walletOverview != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Available",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = NumberFormatUtils.formatCurrencyR(walletOverview.availableBalance),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    
+                    if (walletOverview.totalPriceOfAssetsInWaitingList > 0) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Pending",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = NumberFormatUtils.formatCurrencyR(walletOverview.totalPriceOfAssetsInWaitingList),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(AppTheme.spacing.medium.dp))
+            }
             
             Button(
                 onClick = onRequestWithdrawal,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                modifier = Modifier.padding(top = AppTheme.spacing.medium.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = AppIcons.Filled.ArrowUpward,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(AppTheme.spacing.small.dp))
                 Text("Request Withdrawal")
             }
         }
@@ -270,21 +375,21 @@ private fun QuickActions(
         contentPadding = PaddingValues(horizontal = AppTheme.spacing.medium.dp),
         horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.small.dp)
     ) {
-        item {
-            QuickActionItem(
-                icon = AppIcons.Filled.Folder,
-                label = "Portfolio",
-                onClick = onNavigateToPortfolio
-            )
-        }
-        
-        item {
-            QuickActionItem(
-                icon = AppIcons.Filled.Home,
-                label = "Assets",
-                onClick = onNavigateToAssets
-            )
-        }
+//        item {
+//            QuickActionItem(
+//                icon = AppIcons.Filled.Folder,
+//                label = "Portfolio",
+//                onClick = onNavigateToPortfolio
+//            )
+//        }
+//
+//        item {
+//            QuickActionItem(
+//                icon = AppIcons.Filled.Home,
+//                label = "Assets",
+//                onClick = onNavigateToAssets
+//            )
+//        }
         
         item {
             QuickActionItem(
@@ -352,120 +457,128 @@ private fun QuickActionItem(
 }
 
 /**
- * List item for a transaction
+ * List item for an asset
  */
 @Composable
-private fun TransactionItem(statement: Statement) {
-    Column(
+private fun AssetItem(asset: MyAsset) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AppTheme.spacing.medium.dp)
+            .padding(horizontal = AppTheme.spacing.medium.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = AppTheme.spacing.small.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(AppTheme.spacing.medium.dp)
         ) {
-            // Transaction icon and info
             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val isIncoming = statement.amount > 0
-                
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isIncoming) MaterialTheme.colorScheme.tertiaryContainer
-                            else MaterialTheme.colorScheme.errorContainer
-                        ),
-                    contentAlignment = Alignment.Center
+                // Asset icon and info
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (isIncoming) AppIcons.Filled.ArrowDownward else AppIcons.Filled.ArrowUpward,
-                        contentDescription = if (isIncoming) "Incoming" else "Outgoing",
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Outlined.Portfolio,
+                            contentDescription = "Asset",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(AppTheme.spacing.medium.dp))
+                    
+                    Column {
+                        Text(
+                            text = asset.productType.replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        
+                        Text(
+                            text = asset.dateOfAllocation ?: "N/A",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 
-                Spacer(modifier = Modifier.width(AppTheme.spacing.small.dp))
-                
-                Column {
+                // Current Value
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
                     Text(
-                        text = statement.label,
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = NumberFormatUtils.formatCurrencyR(asset.valueToday),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = MaterialTheme.colorScheme.tertiary
                     )
-                    
                     Text(
-                        text = formatDate(statement.dateOfTransaction),
+                        text = "Current Value",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             
-            // Amount
-            Text(
-                text = "${if (statement.amount > 0) "+" else ""}R${statement.amount.toDouble().toString().take(10)}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = if (statement.amount > 0) MaterialTheme.colorScheme.tertiary
-                       else MaterialTheme.colorScheme.error
-            )
+            // Additional asset details
+            if (asset.dividendAmount > 0 || asset.priceOfAsset > 0) {
+                Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (asset.priceOfAsset > 0) {
+                        Column {
+                            Text(
+                                text = "Purchase Price",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = NumberFormatUtils.formatCurrencyR(asset.priceOfAsset),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    
+                    if (asset.dividendAmount > 0) {
+                        Column(
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = "Dividend",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = NumberFormatUtils.formatCurrencyR(asset.dividendAmount),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
-}
-
-/**
- * Format a date to a readable string
- */
-private fun formatDate(date: String): String {
-    return try {
-        val localDate = LocalDate.parse(date.split("T")[0])
-        "${localDate.dayOfMonth} ${getMonthName(localDate.monthNumber)} ${localDate.year}"
-    } catch (e: Exception) {
-        date // Fallback to raw date if parsing fails
-    }
-}
-
-/**
- * Get month name from month number
- */
-private fun getMonthName(month: Int): String {
-    return when (month) {
-        1 -> "Jan"
-        2 -> "Feb"
-        3 -> "Mar"
-        4 -> "Apr"
-        5 -> "May"
-        6 -> "Jun"
-        7 -> "Jul"
-        8 -> "Aug"
-        9 -> "Sep"
-        10 -> "Oct"
-        11 -> "Nov"
-        12 -> "Dec"
-        else -> "Unknown"
-    }
-}
-
-@Preview
-@Composable
-private fun WalletScreenPreview() {
-//    val repository = SampleFinanceRepository.getInstance()
-    
-    WalletScreen(
-//        repository = repository,
-        onNavigateToPortfolio = {},
-        onNavigateToAssets = {},
-        onNavigateToStatement = {},
-        onNavigateToWithdrawals = {},
-        onRequestWithdrawal = {}
-    )
 }

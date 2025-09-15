@@ -46,7 +46,6 @@ fun AppNavigation(
     
     // For debugging - print the current route whenever it changes
     LaunchedEffect(currentRoute) {
-        println("Navigation: Current route changed to $currentRoute")
     }
 
     // Check authentication state
@@ -56,7 +55,6 @@ fun AppNavigation(
     LaunchedEffect(uiState) {
         when (uiState) {
             is AuthUiState.Success.OtpVerification -> {
-                println("Navigation: OTP verification successful, changing to MAIN")
                 currentRoute = AppRoute.MAIN
             }
             else -> { /* No action for other states */ }
@@ -69,11 +67,9 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateToOtp = { userEmail ->
                     email = userEmail
-                    println("Navigation: Changing route from LOGIN to OTP_VERIFICATION")
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },
                 onNavigateToRegister = {
-                    println("Navigation: Changing route from LOGIN to REGISTER")
                     currentRoute = AppRoute.REGISTER
                 },
                 onNavigateToForgotPassword = {
@@ -87,7 +83,6 @@ fun AppNavigation(
                 email = email,
                 authViewModel = authViewModel,
                 onNavigateToHome = {
-                    println("Navigation: Changing route from OTP_VERIFICATION to MAIN")
                     currentRoute = AppRoute.MAIN
                 }
             )
@@ -102,11 +97,9 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateToOtp = { userEmail ->
                     email = userEmail
-                    println("Navigation: Changing route from REGISTER to OTP_VERIFICATION")
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },
                 onNavigateToLogin = {
-                    println("Navigation: Changing route from REGISTER to LOGIN")
                     currentRoute = AppRoute.LOGIN
                 }
             )
@@ -116,7 +109,6 @@ fun AppNavigation(
             ForgotPasswordScreen(
                 authViewModel = authViewModel,
                 onNavigateToLogin = {
-                    println("Navigation: Changing route from FORGOT_PASSWORD to LOGIN")
                     currentRoute = AppRoute.LOGIN
                 }
             )

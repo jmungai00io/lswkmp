@@ -23,7 +23,6 @@ class KycRepository(
         selfieFileName: String
     ): Result<KycUploadResponse> {
         return try {
-            println("KycRepository: Uploading KYC documents")
             val response = api.uploadKycDocuments(
                 governmentIdBytes = governmentIdBytes,
                 proofOfAddressBytes = proofOfAddressBytes,
@@ -32,10 +31,8 @@ class KycRepository(
                 proofOfAddressFileName = proofOfAddressFileName,
                 selfieFileName = selfieFileName
             )
-            println("KycRepository: KYC documents uploaded successfully")
             Result.success(response)
         } catch (e: Exception) {
-            println("KycRepository: Error uploading KYC documents: ${e.message}")
             Result.failure(e)
         }
     }
@@ -45,12 +42,9 @@ class KycRepository(
      */
     suspend fun getKycStatus(): Result<KycStatusResponse> {
         return try {
-            println("KycRepository: Fetching KYC status")
             val response = api.getKycStatus()
-            println("KycRepository: KYC status fetched successfully")
             Result.success(response)
         } catch (e: Exception) {
-            println("KycRepository: Error fetching KYC status: ${e.message}")
             Result.failure(e)
         }
     }

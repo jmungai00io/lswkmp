@@ -31,7 +31,6 @@ class WalletService(private val api: LivestockWealthApi) {
                 0.0
             }
         } catch (e: Exception) {
-            println("WalletService: Error fetching wallet balance: ${e.message}")
             0.0
         }
     }
@@ -49,9 +48,7 @@ class WalletService(private val api: LivestockWealthApi) {
      */
     suspend fun processWalletPayment(orderNumber: Int, amount: Double): Boolean {
         return try {
-            println("WalletService: Processing wallet payment for order #$orderNumber, amount: R$amount")
-            
-            // Create payment body with wallet payment type
+
             val paymentBody = PaymentBody(
                 paymentMethod = "WALLET",
                 paymentType = PaymentCompletionType.FULL_PAYMENT
@@ -64,11 +61,8 @@ class WalletService(private val api: LivestockWealthApi) {
             // Update wallet balance (subtract payment amount from positive balance)
             val currentBalance = _walletBalance.value
             _walletBalance.value = currentBalance - amount
-            println("WalletService: Wallet payment processed successfully")
-            println("WalletService: Response: $response")
             true
         } catch (e: Exception) {
-            println("WalletService: Error processing wallet payment: ${e.message}")
             false
         }
     }

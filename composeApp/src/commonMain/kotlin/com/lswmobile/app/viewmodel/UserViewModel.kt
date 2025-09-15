@@ -52,23 +52,19 @@ class UserViewModel(
                 _isLoading.value = true
                 _error.value = null
                 
-                println("UserViewModel: Fetching user data")
                 val result = userRepository.fetchUser()
                 
                 result.fold(
                     onSuccess = { user ->
-                        println("UserViewModel: User fetched successfully")
                         _user.value = user
                         _isKYCVerified.value = user.kycVerification?.status=="VERIFIED"
                     },
                     onFailure = { exception ->
-                        println("UserViewModel: Error fetching user: ${exception.message}")
                         val errorException = if (exception is Exception) exception else Exception(exception.message, exception)
                         _error.value = ErrorUtils.extractErrorMessage(errorException, "Failed to fetch user data")
                     }
                 )
             } catch (e: Exception) {
-                println("UserViewModel: Unexpected error: ${e.message}")
                 _error.value = ErrorUtils.extractErrorMessage(e, "An unexpected error occurred")
             } finally {
                 _isLoading.value = false

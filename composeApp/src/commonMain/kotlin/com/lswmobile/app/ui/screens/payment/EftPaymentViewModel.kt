@@ -81,13 +81,11 @@ class EftPaymentViewModel(
             val response = api.getBankDetails()
             if (response.success) {
                 _eftDetails.value = response.data
-                println("EftPaymentViewModel: Bank details loaded successfully")
             } else {
                 _errorMessage.value = "Failed to load bank details"
             }
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load bank details")
-            println("EftPaymentViewModel: Error fetching bank details: ${e.message}")
         }
     }
     
@@ -100,7 +98,6 @@ class EftPaymentViewModel(
             // The order will be available through the repository's state
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load order details")
-            println("EftPaymentViewModel: Error loading order details: ${e.message}")
         }
     }
     
@@ -111,10 +108,8 @@ class EftPaymentViewModel(
         try {
             val balance = walletService.getWalletBalance()
             _walletBalance.value = balance
-            println("EftPaymentViewModel: Wallet balance loaded: $balance")
         } catch (e: Exception) {
             _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Failed to load wallet balance")
-            println("EftPaymentViewModel: Error loading wallet balance: ${e.message}")
         }
     }
     
@@ -145,9 +140,7 @@ class EftPaymentViewModel(
                 _isConfirming.value = true
                 _errorMessage.value = null
                 
-                println("EftPaymentViewModel: Confirming EFT payment for order #$orderNumber")
-                println("EftPaymentViewModel: Payment type: $paymentType")
-                
+
                 // Create payment body with correct payment type string
                 val paymentTypeString = when (paymentType) {
                     PaymentType.TOPUP_ONLY -> PaymentCompletionType.TOPUP_ONLY
@@ -163,16 +156,12 @@ class EftPaymentViewModel(
                 // Make the actual API call
                 val response = api.updatePaymentMethod(orderNumber.toString(), paymentBody)
                 
-                println("EftPaymentViewModel: EFT payment confirmed successfully")
-                println("EftPaymentViewModel: Response: $response")
-                
+
                 // Success - trigger callback
                 onSuccess()
                 
             } catch (e: Exception) {
                 _errorMessage.value = ErrorUtils.extractErrorMessage(e, "Payment failed")
-                println("EftPaymentViewModel: Error confirming EFT payment: ${e.message}")
-                e.printStackTrace()
             } finally {
                 _isConfirming.value = false
             }

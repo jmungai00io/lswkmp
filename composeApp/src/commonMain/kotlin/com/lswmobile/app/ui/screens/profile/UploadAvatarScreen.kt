@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.lswmobile.app.ui.components.CameraView
 import com.lswmobile.app.ui.components.loadImageFromBytes
 import com.lswmobile.app.ui.theme.AppIcons
+import com.lswmobile.app.ui.theme.NetworkImage
 import com.lswmobile.app.viewmodel.UploadAvatarViewModel
 import kotlinx.datetime.Clock
 
@@ -27,7 +28,8 @@ import kotlinx.datetime.Clock
 @Composable
 fun UploadAvatarScreen(
     viewModel: UploadAvatarViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    avatarUrl: String? = null
 ) {
     // Observe ViewModel state
     val isUploading = viewModel.isUploading
@@ -44,6 +46,7 @@ fun UploadAvatarScreen(
         uploadError = uploadError,
         uploadSuccess = uploadSuccess,
         onNavigateBack = onNavigateBack,
+        avatarUrl = avatarUrl,
         onUploadAvatar = { fileBytes, fileName ->
             viewModel.uploadAvatar(fileBytes, fileName)
         },
@@ -65,6 +68,7 @@ fun UploadAvatarContent(
     uploadSuccess: Boolean = false,
     onNavigateBack: () -> Unit = {},
     onAvatarUploaded: () -> Unit = {},
+    avatarUrl: String? = null,
     onUploadAvatar: (ByteArray, String) -> Unit = { _, _ -> },
     onClearError: () -> Unit = {}
 ) {
@@ -135,7 +139,8 @@ fun UploadAvatarContent(
                     } else {
                         // Initial state - ready to take photo
                         InitialContent(
-                            onTakePhoto = { showCamera = true }
+                            onTakePhoto = { showCamera = true },
+                            avatarUrl = avatarUrl
                         )
                     }
                 }
@@ -160,7 +165,8 @@ fun UploadAvatarContent(
 
 @Composable
 private fun InitialContent(
-    onTakePhoto: () -> Unit
+    onTakePhoto: () -> Unit,
+    avatarUrl: String? = null
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -174,12 +180,21 @@ private fun InitialContent(
                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = AppIcons.Filled.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-            )
+            if (!avatarUrl.isNullOrBlank()) {
+                NetworkImage(
+                    url = avatarUrl,
+                    contentDescription = "Current avatar",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = AppIcons.Filled.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

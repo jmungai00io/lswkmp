@@ -82,7 +82,8 @@ import kotlinx.coroutines.launch
 fun MarketplaceScreen(
     viewModel: MarketplaceViewModel,
     onNavigateToNewsScreen: () -> Unit,
-    onNavigateToCheckout: () -> Unit
+    onNavigateToCheckout: () -> Unit,
+    onOpenWebUrl: (String) -> Unit
 ) {
     // Collect products and farmlands from the ViewModel
     val products by viewModel.products.collectAsState()
@@ -117,8 +118,6 @@ fun MarketplaceScreen(
 
     // Check token and load data
     LaunchedEffect(Unit) {
-        val token = AppInitializer.getTokenProvider().getAccessToken()
-        println("MarketplaceScreen: Current access token: ${token?.take(10)}...")
         viewModel.loadProducts()
         viewModel.loadFarmlands()
     }
@@ -219,7 +218,7 @@ fun MarketplaceScreen(
                         0 -> FarmlandProductsGrid(
                             products = farmlands,
                             isLoading = isLoadingFarmlands,
-                            onProductClick = { /* Handle product click */ },
+                            onProductClick = { url -> url?.let(onOpenWebUrl) },
                             onAddToCart = { productId ->
                                 viewModel.addFarmlandToCart(productId, 1)
 
@@ -232,7 +231,7 @@ fun MarketplaceScreen(
                         1 -> RegularProductsGrid(
                             products = products,
                             isLoading = isLoadingProducts,
-                            onProductClick = { /* Handle product click */ },
+                            onProductClick = { url -> url?.let(onOpenWebUrl) },
                             onAddToCart = { productId ->
                                 viewModel.addProductToCart(productId, 1)
                             },
@@ -360,7 +359,7 @@ private fun MarketplaceTopBar(
 private fun FarmlandProductsGrid(
     products: List<Farmland>,
     isLoading: Boolean,
-    onProductClick: (String) -> Unit,
+    onProductClick: (String?) -> Unit,
     onAddToCart: (String) -> Unit,
     viewModel: MarketplaceViewModel,
     lazyGridState: LazyGridState
@@ -393,7 +392,7 @@ private fun FarmlandProductsGrid(
                     items(products) { product ->
                         FarmlandCard(
                             product = product,
-                            onClick = { onProductClick(product._id) },
+                            onClick = { onProductClick(product.infoUrl) },
                             onAddToCart = { 
                                 // Check if product is out of stock
                                 if (product.inStock == false) {
@@ -419,7 +418,7 @@ private fun FarmlandProductsGrid(
 private fun RegularProductsGrid(
     products: List<ProductClassic>,
     isLoading: Boolean,
-    onProductClick: (String) -> Unit,
+    onProductClick: (String?) -> Unit,
     onAddToCart: (String) -> Unit,
     viewModel: MarketplaceViewModel,
     lazyGridState: LazyGridState
@@ -452,7 +451,7 @@ private fun RegularProductsGrid(
                     items(products) { product ->
                         ProductFarmlandCard(
                             product = product,
-                            onClick = { onProductClick(product._id) },
+                            onClick = { onProductClick(product.infoUrl) },
                             onAddToCart = { 
                                 // Check if product is out of stock
                                 if (product.inStock == false) {
@@ -474,7 +473,6 @@ private fun RegularProductsGrid(
 /**
  * Card component for displaying a ProductFarmland
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductFarmlandCard(
     product: ProductClassic,
@@ -615,7 +613,8 @@ private fun ProductFarmlandCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
+
+
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -667,6 +666,10 @@ private fun ProductFarmlandCard(
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(if (isOutOfStock) "Preorder" else "Add to Cart")
                     }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (!product.infoUrl.isNullOrBlank()) {
+                    ProductTextButton(onClick)
                 }
             }
         }
@@ -853,8 +856,30 @@ private fun FarmlandCard(
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(if (isOutOfStock) "Preorder" else "Add to Cart")
                     }
+
+
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (!product.infoUrl.isNullOrBlank()) {
+                    ProductTextButton(onClick)
+
                 }
             }
+        }
+    }
+}
+@Composable
+fun ProductTextButton(onClick: () -> Unit) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AppTheme.spacing.medium.dp)
+            .padding(bottom = AppTheme.spacing.medium.dp),
+        horizontalArrangement = Arrangement.Center
+    ){
+        TextButton(onClick = onClick) {
+            Text("READ MORE ...")
         }
     }
 }

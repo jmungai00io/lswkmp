@@ -21,27 +21,22 @@ class InMemoryUserRepository(
     
     override suspend fun fetchUser(): Result<UserResponse> {
         return try {
-            println("InMemoryUserRepository: Fetching user from API")
             val userResponse = api.getUser()
-            println("InMemoryUserRepository: User fetched successfully - ${userResponse.firstName} ${userResponse.lastName}")
-            
+
             // Store user locally
             currentUserFlow.value = userResponse
             
             Result.success(userResponse)
         } catch (e: Exception) {
-            println("InMemoryUserRepository: Error fetching user: ${e.message}")
             Result.failure(e)
         }
     }
     
     override suspend fun updateUser(user: UserResponse) {
-        println("InMemoryUserRepository: Updating user data locally")
         currentUserFlow.value = user
     }
     
     override suspend fun clearUser() {
-        println("InMemoryUserRepository: Clearing user data")
         currentUserFlow.value = null
     }
     

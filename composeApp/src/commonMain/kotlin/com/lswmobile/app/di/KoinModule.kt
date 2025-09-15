@@ -25,12 +25,15 @@ import com.lswmobile.app.viewmodel.NewsFeedViewModel
 import com.lswmobile.app.viewmodel.UpdateProfileViewModel
 import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.WithdrawalViewModel
+import com.lswmobile.app.viewmodel.WalletViewModel
 import com.lswmobile.app.di.OrderModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import io.ktor.client.plugins.cookies.CookiesStorage
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 
 /**
  * Koin module definitions for dependency injection
@@ -48,12 +51,16 @@ object KoinModule {
         // AppConfig
         single<AppConfig> { AppConfigFactory.get() }
         
+        // Shared cookie storage across all clients (ensures refresh cookie persists)
+        single<CookiesStorage> { AcceptAllCookiesStorage() }
+        
         // KtorClient - Use factory to always get current instance
         factory { 
             KtorClient(
                 tokenProvider = get(),
                 baseUrl = get<AppConfig>().baseUrl + "/api/v1", // Add the API path to the base URL
-                enableLogging = get<AppConfig>().isDevelopment
+                enableLogging = get<AppConfig>().isDevelopment,
+                cookiesStorage = get()
             ) 
         }
         
@@ -99,6 +106,7 @@ object KoinModule {
         factory { BeneficiaryViewModel(get(), get()) }
         factory { UpdateProfileViewModel(get<NetworkUserRepository>(), get()) }
         factory { WithdrawalViewModel(get(), get()) }
+        factory { WalletViewModel(get()) }
     }
     
     /**

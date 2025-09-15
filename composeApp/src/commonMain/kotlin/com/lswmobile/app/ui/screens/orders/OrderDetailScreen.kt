@@ -641,10 +641,7 @@ fun InsufficientBalanceDialog(
 @Composable
 private fun OrderItemsSection(order: OrderWithFullUser) {
     // Debug logging to see what's happening with items
-    println("OrderDetailScreen: Displaying items for order #${order.orderNumber}")
-    println("OrderDetailScreen: Number of items: ${order.items.size}")
     order.items.forEachIndexed { index, item ->
-        println("OrderDetailScreen: Item $index - ID: ${item._id}, ProductType: ${item.productType}, Price: ${item.priceOfAsset}")
     }
     
     Card(
@@ -673,7 +670,6 @@ private fun OrderItemsSection(order: OrderWithFullUser) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                println("OrderDetailScreen: No items found in order")
             } else {
                 order.items.forEach { item ->
                     OrderItemCard(item)
