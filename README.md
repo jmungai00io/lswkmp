@@ -123,7 +123,13 @@ The current implementation generates realistic JPEG images (100x100 pixels) that
 ./gradlew installDebug
 
 # Run on iOS (requires Xcode)
-open iosApp/iosApp.xcodeproj
+# 1) Install CocoaPods dependencies and generate the workspace
+#    (from the iosApp/ directory):
+#
+#    pod install
+#
+# 2) Open the generated workspace (NOT the .xcodeproj):
+open iosApp/iosApp.xcworkspace
 ```
 
 ## Architecture

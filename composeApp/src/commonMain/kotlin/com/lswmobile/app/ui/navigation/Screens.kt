@@ -65,6 +65,12 @@ fun Screen.icon(selected: Boolean): ImageVector {
         Screen.Profile -> if (selected) AppIcons.Filled.AccountCircle else AppIcons.Outlined.AccountCircle
         Screen.NewsFeed -> if (selected) AppIcons.Filled.Newspaper else AppIcons.Outlined.Newspaper
         Screen.Checkout -> AppIcons.Filled.ShoppingCart
+        // Finance-related drawer items
+        Screen.MyPortfolio -> AppIcons.Outlined.Portfolio
+        Screen.MyAssets -> AppIcons.Filled.Folder
+        Screen.MyStatement -> AppIcons.Filled.Receipt
+        Screen.MyWithdrawals -> AppIcons.Filled.ArrowUpward
+        Screen.MyBeneficiaries -> if (selected) AppIcons.Filled.AccountCircle else AppIcons.Outlined.AccountCircle
         else -> AppIcons.Filled.Home // Default icon
     }
 }
