@@ -1,11 +1,27 @@
 import UIKit
 import SwiftUI
+import UserNotifications
 import ComposeApp
 
 // Initialize Kotlin crash handling
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        // Set notification delegate to capture taps
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
         return true
+    }
+
+    // Open the file when tapping the notification created by Kotlin code (userInfo contains filePath)
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        if let filePath = response.notification.request.content.userInfo["filePath"] as? String {
+            let url = URL(fileURLWithPath: filePath)
+            DispatchQueue.main.async {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+        }
+        completionHandler()
     }
 }
 

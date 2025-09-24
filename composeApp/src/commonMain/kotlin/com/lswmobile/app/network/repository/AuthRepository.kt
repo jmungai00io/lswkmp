@@ -42,17 +42,12 @@ class AuthRepository(
             val parsed = tokenElement?.jsonPrimitive?.content
             val newAccessToken = parsed?.let { sanitizeAccessToken(it) }
             val dotCount = newAccessToken?.count { it == '.' } ?: -1
-            if (AppConfigFactory.get().isDevelopment) {
-                println("[AuthRepository] refreshToken response parsed='${parsed?.take(12)}...' sanitized='${newAccessToken?.take(12)}...' dots=${dotCount}")
-            }
+
             if (newAccessToken != null && newAccessToken.isNotBlank() && newAccessToken != "false" && isLikelyJwt(newAccessToken)) {
                 // Return pair: accessToken and empty refresh token string (cookie carries refresh)
                 SessionManager.notifySuccess()
                 Pair(newAccessToken, tokenProvider.getRefreshToken() ?: "")
             } else {
-                if (AppConfigFactory.get().isDevelopment) {
-                    println("[AuthRepository] refreshToken invalid or missing token, treating as failed refresh")
-                }
                 SessionManager.notifyUnauthorized()
                 null
             }
@@ -179,9 +174,6 @@ class AuthRepository(
             val parsed = tokenElement?.jsonPrimitive?.content
             val accessToken = parsed?.let { sanitizeAccessToken(it) }
             val dotCount = accessToken?.count { it == '.' } ?: -1
-            if (AppConfigFactory.get().isDevelopment) {
-                println("[AuthRepository] manual refreshToken parsed='${parsed?.take(12)}...' sanitized='${accessToken?.take(12)}...' dots=${dotCount}")
-            }
             if (accessToken != null && accessToken.isNotBlank() && accessToken != "false" && isLikelyJwt(accessToken)) {
                 tokenProvider.saveTokens(accessToken, tokenProvider.getRefreshToken() ?: "")
                 SessionManager.notifySuccess()

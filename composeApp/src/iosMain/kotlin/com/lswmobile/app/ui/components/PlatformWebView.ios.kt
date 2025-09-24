@@ -54,7 +54,6 @@ actual fun PlatformWebView(
                 }
 
                 override fun webView(webView: WKWebView, didFailProvisionalNavigation: WKNavigation?, withError: NSError) {
-                    println("WKWebView didFailProvisionalNavigation error: ${withError.localizedDescription}")
                 }
 
 //                override fun webView(webView: WKWebView, didFailNavigation: WKNavigation?, withError: NSError) {

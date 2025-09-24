@@ -52,6 +52,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
+            implementation(libs.androidx.core.ktx)
             
             // Material Icons - Android only
             implementation("androidx.compose.material:material-icons-core:1.5.4")

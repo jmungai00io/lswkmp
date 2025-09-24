@@ -82,17 +82,23 @@ data class WalletOverview(
 @Serializable
 data class Statement(
     val _id: String,
-    val userId: String,
     val reference: String,
-    val label: String,
-    val dateOfTransaction: String,
-    val amount: Double,
-    val balance: Double,
+    val label: String? = null,
     val transactionType: String,
-    val paymentMethod: String,
-    val paymentRef: String,
-    val note: String,
-    val user: UserResponse
+    val note: String? = null,
+    val paymentRef: String? = null,
+    val paymentMethod: String? = null,
+    val amount: Double,
+    val dateOfTransaction: String? = null,
+    val balance: Double,
+    val user: String? = null
+)
+
+@Serializable
+data class StatementsResponse(
+    val success: Boolean,
+    val data: List<Statement> = emptyList(),
+    val message: String? = null
 )
 
 /**

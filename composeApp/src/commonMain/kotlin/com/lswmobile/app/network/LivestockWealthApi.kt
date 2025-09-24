@@ -34,7 +34,6 @@ class LivestockWealthApi(private val client: KtorClient) {
                 val masked = rt?.value?.let { v ->
                     if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
                 } ?: "<none>"
-                println("[LivestockWealthApi] loginUser Set-Cookie refreshToken=${masked}")
             }
         }
         return response.body()
@@ -76,7 +75,6 @@ class LivestockWealthApi(private val client: KtorClient) {
                 val masked = rt?.value?.let { v ->
                     if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
                 } ?: "<none>"
-                println("[LivestockWealthApi] sendOtp Set-Cookie refreshToken=${masked}")
             }
         }
         return response.body()
@@ -108,7 +106,6 @@ class LivestockWealthApi(private val client: KtorClient) {
                 val masked = rt?.value?.let { v ->
                     if (v.length > 10) "${v.take(4)}...${v.takeLast(4)}(len=${v.length})" else "<short>"
                 } ?: "<none>"
-                println("[LivestockWealthApi] refresh-token Set-Cookie refreshToken=${masked}")
             }
         }
         return response.body()
@@ -613,6 +610,39 @@ class LivestockWealthApi(private val client: KtorClient) {
         return client.client.get {
             url("/transactions/statements/balance")
         }.body()
+    }
+
+    /**
+     * Get my statements (wallet transactions)
+     */
+    suspend fun getMyStatements(): StatementsResponse {
+        return client.client.get {
+            url("/transactions/statements/my-statements")
+        }.body()
+    }
+
+    /**
+     * Download my statement PDF for a user
+     * Returns the raw PDF bytes
+     */
+    suspend fun downloadStatementPdf(userId: String): ByteArray {
+        val response = client.client.get {
+            // matches the React path: `transactions/statements/export/${currentUser._id}`
+            url("/transactions/statements/export/$userId")
+        }
+        return response.readBytes()
+    }
+
+    /**
+     * Download Tax Certificate for a specific year
+     * Returns the raw PDF bytes
+     */
+    suspend fun downloadTaxCertificate(year: Int): ByteArray {
+        val response = client.client.get {
+            url("/certificates/tax")
+            parameter("year", year)
+        }
+        return response.readBytes()
     }
     
     /**

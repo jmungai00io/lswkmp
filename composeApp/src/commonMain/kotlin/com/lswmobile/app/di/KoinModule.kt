@@ -107,6 +107,7 @@ object KoinModule {
         factory { UpdateProfileViewModel(get<NetworkUserRepository>(), get()) }
         factory { WithdrawalViewModel(get(), get()) }
         factory { WalletViewModel(get()) }
+        factory { com.lswmobile.app.viewmodel.StatementViewModel(get()) }
     }
     
     /**

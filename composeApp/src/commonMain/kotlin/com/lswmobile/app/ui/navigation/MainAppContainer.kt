@@ -26,6 +26,7 @@ import com.lswmobile.app.ui.screens.payment.DebitPaymentViewModel
 import com.lswmobile.app.ui.screens.payment.EftPaymentScreen
 import com.lswmobile.app.ui.screens.payment.EftPaymentViewModel
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
+import com.lswmobile.app.ui.screens.statement.MyStatementScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
@@ -357,6 +358,13 @@ fun MainAppContainer() {
                         UpdateProfileScreen(
                             user = user,
                             onNavigateBack = { onScreenSelected(Screen.Profile) }
+                        )
+                    }
+
+                    Screen.MyStatement -> {
+                        // Provide the My Statement screen with required dependencies
+                        MyStatementScreen(
+                            onNavigateBack = { onScreenSelected(Screen.Wallet) },
                         )
                     }
                     

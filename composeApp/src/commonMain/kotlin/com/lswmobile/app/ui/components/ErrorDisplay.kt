@@ -55,7 +55,7 @@ fun ErrorDisplay(
     onDismiss: () -> Unit
 ) {
     val isVisible = !message.isNullOrBlank()
-    
+    print(message)
     // Auto-hide for toast mode
     LaunchedEffect(message) {
         if (isVisible && !isModal && autoHideDuration > 0) {
