@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.model.Statement
+import com.lswmobile.app.platform.NotificationPermissionManager
 import com.lswmobile.app.platform.PlatformFileUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,11 +59,16 @@ class StatementViewModel(
                 if (!result.success) {
                     _downloadError.value = result.error ?: "Failed to save file"
                 } else {
-                    PlatformFileUtils.showDownloadCompletedNotification(
-                        title = "Statement downloaded",
-                        message = "Tap to open",
-                        filePath = result.filePath
-                    )
+                    val permissionGranted = NotificationPermissionManager.ensurePermission()
+                    if (permissionGranted) {
+                        PlatformFileUtils.showDownloadCompletedNotification(
+                            title = "Statement downloaded",
+                            message = "Tap to open",
+                            filePath = result.filePath
+                        )
+                    } else {
+                        _downloadError.value = "Statement saved to Downloads. Enable notifications to tap it directly."
+                    }
                 }
             } catch (e: Exception) {
                 _downloadError.value = e.message ?: "Failed to download statement"
@@ -82,11 +88,16 @@ class StatementViewModel(
                 if (!result.success) {
                     _downloadError.value = result.error ?: "Failed to save file"
                 } else {
-                    PlatformFileUtils.showDownloadCompletedNotification(
-                        title = "Tax certificate $year downloaded",
-                        message = "Tap to open",
-                        filePath = result.filePath
-                    )
+                    val permissionGranted = NotificationPermissionManager.ensurePermission()
+                    if (permissionGranted) {
+                        PlatformFileUtils.showDownloadCompletedNotification(
+                            title = "Tax certificate $year downloaded",
+                            message = "Tap to open",
+                            filePath = result.filePath
+                        )
+                    } else {
+                        _downloadError.value = "Certificate saved to Downloads. Enable notifications to tap it directly."
+                    }
                 }
             } catch (e: Exception) {
                 _downloadError.value = e.message ?: "Failed to download tax certificate"

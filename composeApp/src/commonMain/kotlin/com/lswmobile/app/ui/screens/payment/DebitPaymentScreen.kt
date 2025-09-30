@@ -6,13 +6,18 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -411,6 +416,8 @@ private fun DebitPaymentForm(
     selectedPaymentType: PaymentType?,
     onPaymentTypeSelected: (PaymentType) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -471,6 +478,14 @@ private fun DebitPaymentForm(
             onValueChange = onFullNameChange,
             label = { Text("Full Name") },
             isError = fullNameError.isNotEmpty(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Text
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(DefaultCornerRadius)
         )
@@ -520,6 +535,14 @@ private fun DebitPaymentForm(
             onValueChange = onAccountNumberChange,
             label = { Text("Account Number") },
             isError = accountNumberError.isNotEmpty(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Number
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(DefaultCornerRadius)
         )
@@ -549,6 +572,14 @@ private fun DebitPaymentForm(
             onValueChange = onPhoneChange,
             label = { Text("Phone Number") },
             isError = phoneError.isNotEmpty(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Phone
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(DefaultCornerRadius)
         )
@@ -603,6 +634,14 @@ private fun DebitPaymentForm(
             onValueChange = onAddressChange,
             label = { Text("Address") },
             isError = addressError.isNotEmpty(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Text
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(DefaultCornerRadius)
         )
@@ -1058,12 +1097,22 @@ private fun SignatureSection(
     mandateError: String,
     signTouched: Boolean
 ) {
+    val focusManager = LocalFocusManager.current
+    
     Column(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = debitMandateSign,
             onValueChange = onMandateSignChange,
             label = { Text("Full name in CAPS") },
             isError = mandateError.isNotEmpty(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Text
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(DefaultCornerRadius)
         )

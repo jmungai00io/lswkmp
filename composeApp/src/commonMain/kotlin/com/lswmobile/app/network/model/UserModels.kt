@@ -11,8 +11,8 @@ data class UserResponse(
     @SerialName("_id")
     val _id: String,
     val email: String,
-    val customerRef: String,
-    val isKYCed: Boolean,
+    val customerRef: String?=null,
+    val isKYCed: Boolean?=false,
     val firstName: String,
     val lastName: String,
     val phoneNumber: String,
