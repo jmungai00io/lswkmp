@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.lswmobile.app.network.model.KycStatuses
 import com.lswmobile.app.network.model.UserResponse
 import com.lswmobile.app.ui.theme.AppIcons
-import com.lswmobile.app.ui.theme.AppTheme
 import com.lswmobile.app.ui.theme.NetworkImage
 import com.lswmobile.app.viewmodel.UserViewModel
 
@@ -36,7 +35,8 @@ fun ProfileScreen(
     onNavigateToAddBeneficiary: () -> Unit = {},
     onNavigateToMyBeneficiaries: () -> Unit = {},
     onNavigateToUploadAvatar: () -> Unit = {},
-    onRefreshUser: () -> Unit = {}
+    onRefreshUser: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     // Setup scrolling behavior for the large title (iOS-style)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -135,7 +135,8 @@ fun ProfileScreen(
                 
                 // Settings Section
                 SettingsSection(
-                    onNavigateToUploadAvatar = onNavigateToUploadAvatar
+                    onNavigateToUploadAvatar = onNavigateToUploadAvatar,
+                    onLogout = onLogout
                 )
             }
         }
@@ -321,7 +322,8 @@ private fun BeneficiaryManagementSection(
 
 @Composable
 private fun SettingsSection(
-    onNavigateToUploadAvatar: () -> Unit
+    onNavigateToUploadAvatar: () -> Unit,
+    onLogout: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -344,6 +346,21 @@ private fun SettingsSection(
                 subtitle = "Change your profile picture",
                 onClick = onNavigateToUploadAvatar
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onLogout,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Logout",
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
         }
     }
 }

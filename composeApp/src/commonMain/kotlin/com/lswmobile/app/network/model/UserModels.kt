@@ -29,7 +29,7 @@ data class UserResponse(
     val kycVerification: KycVerification? = null,
     val updatedAt: String,
     val kycDocumentsSubmissionDate: String? = "",
-    val lastLoginLocation: String,
+    val lastLoginLocation: String?="",
     val avatarUrl: String? = "",
     val dateOfBirth: String? = "",
     val gender: String? = "",

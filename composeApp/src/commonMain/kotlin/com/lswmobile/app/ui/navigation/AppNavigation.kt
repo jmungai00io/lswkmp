@@ -57,6 +57,10 @@ fun AppNavigation(
             is AuthUiState.Success.OtpVerification -> {
                 currentRoute = AppRoute.MAIN
             }
+            is AuthUiState.Success.Logout -> {
+                currentRoute = AppRoute.LOGIN
+                authViewModel.resetUiState()
+            }
             else -> { /* No action for other states */ }
         }
     }
@@ -89,7 +93,7 @@ fun AppNavigation(
         }
         
         AppRoute.MAIN -> {
-            MainAppContainer()
+            MainAppContainer(authViewModel = authViewModel)
         }
         
         AppRoute.REGISTER -> {

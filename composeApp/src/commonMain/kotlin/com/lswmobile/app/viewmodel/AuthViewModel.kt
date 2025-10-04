@@ -95,13 +95,20 @@ class AuthViewModel(
                 .onSuccess {
                     // Clear user data when logging out
                     userRepository?.clearUser()
-                    _uiState.value = AuthUiState.Success.Generic("Logged out successfully")
+                    _uiState.value = AuthUiState.Success.Logout("Logged out successfully")
                 }
                 .onFailure {
                     val exception = if (it is Exception) it else Exception(it.message, it)
                     _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
                 }
         }
+    }
+
+    /**
+     * Reset UI state to idle after handling an auth event
+     */
+    fun resetUiState() {
+        _uiState.value = AuthUiState.Idle
     }
     
     /**
@@ -135,6 +142,7 @@ sealed class AuthUiState {
         class OtpVerification(message: String) : Success(message)
         class Registration(message: String) : Success(message)
         class Generic(message: String) : Success(message)
+        class Logout(message: String) : Success(message)
     }
     data class Error(val message: String) : AuthUiState()
 }

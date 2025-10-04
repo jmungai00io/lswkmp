@@ -11,11 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.lswmobile.app.AppInitializer
 import com.lswmobile.app.ui.components.AdaptiveScaffold
+import com.lswmobile.app.ui.screens.cart.CartScreen
 import com.lswmobile.app.ui.screens.marketplace.MarketplaceScreen
 import com.lswmobile.app.ui.screens.newsfeed.NewsFeedScreen
 import com.lswmobile.app.ui.screens.orders.MyOrdersScreen
@@ -25,27 +23,26 @@ import com.lswmobile.app.ui.screens.payment.DebitPaymentScreen
 import com.lswmobile.app.ui.screens.payment.DebitPaymentViewModel
 import com.lswmobile.app.ui.screens.payment.EftPaymentScreen
 import com.lswmobile.app.ui.screens.payment.EftPaymentViewModel
+import com.lswmobile.app.ui.screens.profile.AccountVerificationScreen
+import com.lswmobile.app.ui.screens.profile.AddBeneficiaryScreen
+import com.lswmobile.app.ui.screens.profile.KycDocumentUploadScreen
+import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
 import com.lswmobile.app.ui.screens.profile.ProfileScreen
+import com.lswmobile.app.ui.screens.profile.UpdateProfileScreen
 import com.lswmobile.app.ui.screens.statement.MyStatementScreen
+import com.lswmobile.app.ui.screens.wallet.MyWithdrawalsScreen
+import com.lswmobile.app.ui.screens.wallet.RequestWithdrawalScreen
+import com.lswmobile.app.ui.screens.wallet.ViewWithdrawalScreen
 import com.lswmobile.app.ui.screens.wallet.WalletScreen
+import com.lswmobile.app.ui.screens.web.WebViewScreen
 import com.lswmobile.app.ui.theme.LivestockWealthTheme
 import com.lswmobile.app.ui.utils.rememberWindowSizeInfo
-import com.lswmobile.app.ui.screens.cart.CartScreen
-import com.lswmobile.app.ui.screens.profile.KycProcessScreen
-import com.lswmobile.app.ui.screens.profile.KycDocumentUploadScreen
-import com.lswmobile.app.ui.screens.profile.AccountVerificationScreen
-import com.lswmobile.app.ui.screens.profile.UpdateProfileScreen
-import com.lswmobile.app.ui.screens.profile.AddBeneficiaryScreen
-import com.lswmobile.app.ui.screens.profile.MyBeneficiariesScreen
-import com.lswmobile.app.ui.screens.wallet.RequestWithdrawalScreen
-import com.lswmobile.app.ui.screens.wallet.MyWithdrawalsScreen
-import com.lswmobile.app.ui.screens.wallet.ViewWithdrawalScreen
-import com.lswmobile.app.ui.screens.web.WebViewScreen
+import com.lswmobile.app.viewmodel.AuthViewModel
 import com.lswmobile.app.viewmodel.BeneficiaryViewModel
-import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.KycViewModel
-import com.lswmobile.app.viewmodel.WithdrawalViewModel
+import com.lswmobile.app.viewmodel.UserViewModel
 import com.lswmobile.app.viewmodel.WalletViewModel
+import com.lswmobile.app.viewmodel.WithdrawalViewModel
 import org.koin.compose.koinInject
 
 /**
@@ -54,7 +51,9 @@ import org.koin.compose.koinInject
  * appropriate screen content
  */
 @Composable
-fun MainAppContainer() {
+fun MainAppContainer(
+    authViewModel: AuthViewModel
+) {
     // Get the ViewModels from Koin DI
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
     val orderViewModel = koinInject<OrderViewModel>()
@@ -199,7 +198,8 @@ fun MainAppContainer() {
                             onNavigateToAddBeneficiary = { onScreenSelected(Screen.AddBeneficiary) },
                             onNavigateToMyBeneficiaries = { onScreenSelected(Screen.MyBeneficiaries) },
                             onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) },
-                            onRefreshUser = { userViewModel.fetchUser() }
+                            onRefreshUser = { userViewModel.fetchUser() },
+                            onLogout = { authViewModel.logout() }
                         )
                     }
                     
