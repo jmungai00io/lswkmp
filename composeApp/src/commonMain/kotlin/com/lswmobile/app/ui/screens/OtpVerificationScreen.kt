@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.ui.resources.ResourceHelper
 import com.lswmobile.app.viewmodel.AuthUiState
 import com.lswmobile.app.viewmodel.AuthViewModel
@@ -34,7 +35,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 fun OtpVerificationScreen(
     email: String,
     authViewModel: AuthViewModel,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onNavigateToLogin: () -> Unit = {}
 ) {
     var otp by remember { mutableStateOf("") }
     var otpError by remember { mutableStateOf<String?>(null) }
@@ -78,14 +80,32 @@ fun OtpVerificationScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .clickable(
-                interactionSource = MutableInteractionSource(),
-                indication = null
-            ) {
-                focusManager.clearFocus()
-            },
-        contentAlignment = Alignment.Center
     ) {
+        // Back button in top-left corner
+        IconButton(
+            onClick = onNavigateToLogin,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = AppIcons.Filled.Back,
+                contentDescription = "Back to Login",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = MutableInteractionSource(),
+                    indication = null
+                ) {
+                    focusManager.clearFocus()
+                },
+            contentAlignment = Alignment.Center
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -211,6 +231,23 @@ fun OtpVerificationScreen(
                     Text("Resend")
                 }
             }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Back to login option
+            TextButton(
+                onClick = onNavigateToLogin,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = AppIcons.Filled.Back,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Back to Login")
+            }
+        }
         }
     }
 }

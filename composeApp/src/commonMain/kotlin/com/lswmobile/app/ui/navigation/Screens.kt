@@ -125,7 +125,7 @@ object NavigationGraphs {
         Screen.NewsFeed,
         Screen.MyOrders,
         Screen.Wallet,
-        Screen.MyPortfolio,
+//        Screen.MyPortfolio,
         Screen.MyAssets,
         Screen.MyStatement,
         Screen.MyWithdrawals,

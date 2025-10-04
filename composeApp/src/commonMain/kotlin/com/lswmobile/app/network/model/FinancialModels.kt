@@ -118,11 +118,11 @@ data class DividendPayoutDates(
 data class MyAsset(
     val productType: String,
     val dateOfAllocation: String?,
-    val dividendAmount: Double,
+    val dividendAmount: Double? = null,
     val dividendPayoutDates: List<DividendPayoutDates>?,
-    val valueToday: Double,
+    val valueToday: Double? = null,
     val priceOfAsset: Double,
-    val dateOfDividendEvaluation: String?
+    val dateOfDividendEvaluation: String? = null
 )
 
 /**

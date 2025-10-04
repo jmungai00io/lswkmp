@@ -522,7 +522,7 @@ private fun AssetItem(asset: MyAsset) {
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = NumberFormatUtils.formatCurrencyR(asset.valueToday),
+                        text = NumberFormatUtils.formatCurrencyR(asset.valueToday ?: asset.priceOfAsset),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -536,7 +536,7 @@ private fun AssetItem(asset: MyAsset) {
             }
             
             // Additional asset details
-            if (asset.dividendAmount > 0 || asset.priceOfAsset > 0) {
+            if ((asset.dividendAmount ?: 0.0) > 0 || asset.priceOfAsset > 0) {
                 Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
                 Divider()
                 Spacer(modifier = Modifier.height(AppTheme.spacing.small.dp))
@@ -560,7 +560,7 @@ private fun AssetItem(asset: MyAsset) {
                         }
                     }
                     
-                    if (asset.dividendAmount > 0) {
+                    if ((asset.dividendAmount ?: 0.0) > 0) {
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
@@ -570,7 +570,7 @@ private fun AssetItem(asset: MyAsset) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = NumberFormatUtils.formatCurrencyR(asset.dividendAmount),
+                                text = NumberFormatUtils.formatCurrencyR(asset.dividendAmount ?: 0.0),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.tertiary
