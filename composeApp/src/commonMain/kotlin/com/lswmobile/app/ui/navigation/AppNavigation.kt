@@ -1,26 +1,18 @@
 package com.lswmobile.app.ui.navigation
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import com.lswmobile.app.ui.resources.ResourceHelper
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.lswmobile.app.ui.screens.ForgotPasswordScreen
 import com.lswmobile.app.ui.screens.LoginScreen
 import com.lswmobile.app.ui.screens.OtpVerificationScreen
 import com.lswmobile.app.ui.screens.RegisterScreen
 import com.lswmobile.app.viewmodel.AuthUiState
 import com.lswmobile.app.viewmodel.AuthViewModel
-import org.jetbrains.compose.resources.ExperimentalResourceApi
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Main navigation routes
@@ -48,20 +40,19 @@ fun AppNavigation(
     LaunchedEffect(currentRoute) {
     }
 
-    // Check authentication state
-    val uiState by authViewModel.uiState.collectAsState(initial = null)
-    
     // Handle global authentication state changes
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is AuthUiState.Success.OtpVerification -> {
-                currentRoute = AppRoute.MAIN
+    LaunchedEffect(authViewModel) {
+        authViewModel.uiState.collectLatest { state ->
+            when (state) {
+                is AuthUiState.Success.OtpVerification -> {
+                    currentRoute = AppRoute.MAIN
+                }
+                is AuthUiState.Success.Logout -> {
+                    currentRoute = AppRoute.LOGIN
+                    authViewModel.resetUiState()
+                }
+                else -> Unit
             }
-            is AuthUiState.Success.Logout -> {
-                currentRoute = AppRoute.LOGIN
-                authViewModel.resetUiState()
-            }
-            else -> { /* No action for other states */ }
         }
     }
     
@@ -93,7 +84,12 @@ fun AppNavigation(
         }
         
         AppRoute.MAIN -> {
-            MainAppContainer(authViewModel = authViewModel)
+            MainAppContainer(
+                authViewModel = authViewModel,
+                onLogoutNavigateToLogin = {
+                    currentRoute = AppRoute.LOGIN
+                }
+            )
         }
         
         AppRoute.REGISTER -> {

@@ -191,7 +191,7 @@ class AuthRepository(
     /**
      * Logout
      */
-    suspend fun logout(): Result<JsonObject> {
+    suspend fun logout(): Result<Unit> {
         return try {
             val response = api.logOutUser()
             // Clear tokens

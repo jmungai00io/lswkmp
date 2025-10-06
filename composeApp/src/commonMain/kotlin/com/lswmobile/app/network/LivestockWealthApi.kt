@@ -8,6 +8,7 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.content.*
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import com.lswmobile.app.config.AppConfigFactory
 
@@ -114,10 +115,14 @@ class LivestockWealthApi(private val client: KtorClient) {
     /**
      * Logout user
      */
-    suspend fun logOutUser(): JsonObject {
-        return client.client.post {
+    suspend fun logOutUser(): Unit {
+        val response = client.client.get {
             url("/auth/logout")
-        }.body()
+        }
+
+        // Some environments return 204 with no payload, so just ensure the body is consumed.
+        runCatching { response.body<JsonElement>() }
+        return Unit
     }
     
     // =============== USER ENDPOINTS ===============

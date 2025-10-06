@@ -52,7 +52,8 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun MainAppContainer(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onLogoutNavigateToLogin: () -> Unit = {}
 ) {
     // Get the ViewModels from Koin DI
     val marketplaceViewModel = koinInject<com.lswmobile.app.ui.screens.marketplace.MarketplaceViewModel>()
@@ -199,7 +200,10 @@ fun MainAppContainer(
                             onNavigateToMyBeneficiaries = { onScreenSelected(Screen.MyBeneficiaries) },
                             onNavigateToUploadAvatar = { onScreenSelected(Screen.UploadAvatar) },
                             onRefreshUser = { userViewModel.fetchUser() },
-                            onLogout = { authViewModel.logout() }
+                            onLogout = {
+                                authViewModel.logout()
+                                onLogoutNavigateToLogin()
+                            }
                         )
                     }
                     
