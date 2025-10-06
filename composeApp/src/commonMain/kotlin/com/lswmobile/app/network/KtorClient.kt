@@ -79,8 +79,8 @@ class KtorClient(
                 }
                 
                 sendWithoutRequest { request ->
-                    // Don't send auth for auth endpoints
-                    !request.url.encodedPath.contains("/auth/")
+                    // Don't send auth for any auth endpoints; avoid leaking stale tokens to OTP/login flows
+                    !request.url.encodedPath.startsWith("/auth")
                 }
             }
         }
