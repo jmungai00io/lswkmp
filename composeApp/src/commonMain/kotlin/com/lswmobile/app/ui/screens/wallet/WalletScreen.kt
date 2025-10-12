@@ -391,13 +391,13 @@ private fun QuickActions(
 //            )
 //        }
         
-        item {
-            QuickActionItem(
-                icon = AppIcons.Filled.Description,
-                label = "Statement",
-                onClick = onNavigateToStatement
-            )
-        }
+//        item {
+//            QuickActionItem(
+//                icon = AppIcons.Filled.Description,
+//                label = "Statement",
+//                onClick = onNavigateToStatement
+//            )
+//        }
         
         item {
             QuickActionItem(
