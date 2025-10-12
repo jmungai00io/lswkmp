@@ -1,11 +1,13 @@
 package com.lswmobile.app.config
 
+import platform.Foundation.NSBundle
+import platform.Foundation.NSProcessInfo
+
 /**
  * iOS implementation of AppConfig
  */
 class IosAppConfig : AppConfig {
-    // Default to development values for iOS
-    private val currentEnv = "development" // This would ideally come from build settings
+    private val currentEnv: String = determineEnvironment()
     
     override val baseUrl: String
         get() = when (currentEnv) {
@@ -35,6 +37,21 @@ class IosAppConfig : AppConfig {
         
     override val environmentName: String
         get() = currentEnv
+
+    private fun determineEnvironment(): String {
+        val processEnv = (NSProcessInfo.processInfo.environment["APP_ENV"] as? String)?.ifBlank { null }
+        val bundleEnv = (NSBundle.mainBundle?.objectForInfoDictionaryKey("AppEnvironment") as? String)?.ifBlank { null }
+        return normalizeEnvironment(processEnv ?: bundleEnv)
+    }
+
+    private fun normalizeEnvironment(value: String?): String {
+        return when (value?.trim()?.lowercase()) {
+            "production", "prod", "release" -> "production"
+            "staging", "stage", "preprod" -> "staging"
+            "development", "dev", "debug" -> "development"
+            else -> "development"
+        }
+    }
 }
 
 /**

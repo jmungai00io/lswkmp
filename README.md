@@ -132,6 +132,26 @@ The current implementation generates realistic JPEG images (100x100 pixels) that
 open iosApp/iosApp.xcworkspace
 ```
 
+### iOS Environment Configuration
+
+- **Runtime detection**: `IosAppConfig` reads the `APP_ENV` environment variable or the `AppEnvironment` key inside `iosApp/iosApp/Info.plist`.
+- **Command-line builds**: Use the `build_ios_standalone.sh` flag to choose the backend environment:
+
+```bash
+# Build against staging (default is development)
+./build_ios_standalone.sh --env staging
+
+# Build against production
+./build_ios_standalone.sh --env production
+```
+
+- **Xcode builds**: Define the `APP_ENV` build setting (user-defined setting or `.xcconfig`) for each configuration:
+  - Debug → `APP_ENV=development`
+  - Staging → `APP_ENV=staging`
+  - Release → `APP_ENV=production`
+
+This keeps the API base URL, web URL, and OneSignal ID consistent with your selected environment without editing source files.
+
 ## Architecture
 
 The app follows MVVM architecture with:

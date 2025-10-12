@@ -4,11 +4,87 @@
 
 set -e  # Exit on error
 
+# -----------------------------
+# Configuration
+# -----------------------------
+ENVIRONMENT="development"
+
+usage() {
+    cat <<EOF
+Usage: $0 [--env <environment>]
+
+Options:
+  --env, -e   Target environment: development | staging | production
+              (aliases: dev, stage, prod, release)
+EOF
+}
+
+normalize_env() {
+    local input="$1"
+    input=$(printf '%s' "$input" | tr '[:upper:]' '[:lower:]')
+    case "$input" in
+        production|prod|release)
+            echo "production"
+            ;;
+        staging|stage|preprod)
+            echo "staging"
+            ;;
+        development|dev|debug)
+            echo "development"
+            ;;
+        "")
+            echo "development"
+            ;;
+        *)
+            echo "Unknown environment: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --env|-e)
+            if [[ -z "$2" ]]; then
+                echo "Error: --env requires a value" >&2
+                usage
+                exit 1
+            fi
+            ENVIRONMENT=$(normalize_env "$2")
+            shift 2
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 echo "===== Building Standalone iOS Framework ====="
+echo "Using environment: $ENVIRONMENT"
+
+# 0. Update Info.plist AppEnvironment entry so runtime can detect the environment
+PLIST_PATH="iosApp/iosApp/Info.plist"
+if [[ -f "$PLIST_PATH" ]]; then
+    if /usr/libexec/PlistBuddy -c "Print :AppEnvironment" "$PLIST_PATH" >/dev/null 2>&1; then
+        /usr/libexec/PlistBuddy -c "Set :AppEnvironment $ENVIRONMENT" "$PLIST_PATH"
+    else
+        /usr/libexec/PlistBuddy -c "Add :AppEnvironment string $ENVIRONMENT" "$PLIST_PATH"
+    fi
+    echo "Set AppEnvironment in Info.plist to '$ENVIRONMENT'"
+else
+    echo "Warning: Info.plist not found at $PLIST_PATH; cannot persist environment"
+fi
 
 # 1. Clean any existing build artifacts
 echo "Cleaning old build files..."
-./gradlew clean
+APP_ENV="$ENVIRONMENT" ./gradlew clean
 
 # 2. Create necessary directories
 echo "Creating framework directory structure..."
@@ -16,7 +92,7 @@ mkdir -p composeApp/build/cocoapods/framework/ComposeApp.framework/Resources
 
 # 3. Build the framework for iOS simulator
 echo "Building framework for iOS Simulator ARM64..."
-./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+APP_ENV="$ENVIRONMENT" ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 
 # 4. Copy the built framework to the expected location
 echo "Copying framework to expected location..."
@@ -47,7 +123,7 @@ fi
 
 # Let's try to also run the necessary Compose resource tasks
 echo "Running Compose resource generation tasks..."
-./gradlew :composeApp:generateComposeResClass
+APP_ENV="$ENVIRONMENT" ./gradlew :composeApp:generateComposeResClass
 
 # 6. Update our podspec for better resource handling
 echo "Updating podspec..."
@@ -125,7 +201,7 @@ EOL
 echo "===== Reinstalling CocoaPods ====="
 cd iosApp
 rm -rf Pods Podfile.lock
-pod install
+APP_ENV="$ENVIRONMENT" pod install
 
 echo "===== Setup complete! ====="
 echo ""

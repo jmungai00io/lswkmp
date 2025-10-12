@@ -390,7 +390,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lswtrying.app;
 				PRODUCT_NAME = "Livestock Wealth";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -436,7 +436,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lswmobile.app;
 				PRODUCT_NAME = "Livestock Wealth";
 				PROVISIONING_PROFILE_SPECIFIER = "";

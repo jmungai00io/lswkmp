@@ -1,54 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.1.0">
+<plist version="1.0">
 <dict>
+	<key>AppEnvironment</key>
+	<string>production</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<!-- App Transport Security: allow web content loads and exceptions for app's web domains -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<!-- Allow arbitrary loads only within WKWebView content -->
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
 			<key>livestockwealth.com</key>
 			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
 			<key>staging.livestockwealth.com</key>
 			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
 		</dict>
 	</dict>
-
-	<!-- Privacy usage descriptions required by App Store Connect -->
-	<key>NSContactsUsageDescription</key>
-	<string>We use your contacts to help you quickly add or select beneficiaries when making investments or withdrawals. We never upload your contacts without your consent.</string>
-
-	<key>NSMotionUsageDescription</key>
-	<string>Motion data may be used to enable optional motion-based interactions and improve in-app experiences. No motion data leaves your device.</string>
-
-	<!-- Suggested by App Store Connect notices -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Your location helps us show nearby opportunities and personalize content such as farm locations. Location access is optional.</string>
-
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Bluetooth may be used to securely connect to nearby accessories for optional features. We do not collect Bluetooth data.</string>
-
-	<!-- Backward compatibility for older iOS versions -->
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Bluetooth may be used to securely connect to nearby accessories for optional features. We do not collect Bluetooth data.</string>
-
-	<!-- Export Compliance: only uses exempt encryption (e.g., TLS via system APIs) -->
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
+	<key>NSContactsUsageDescription</key>
+	<string>We use your contacts to help you quickly add or select beneficiaries when making investments or withdrawals. We never upload your contacts without your consent.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location helps us show nearby opportunities and personalize content such as farm locations. Location access is optional.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Motion data may be used to enable optional motion-based interactions and improve in-app experiences. No motion data leaves your device.</string>
 </dict>
 </plist>
