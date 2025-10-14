@@ -117,6 +117,12 @@ data class WithdrawalFees(
     val ITL: Double
 )
 
+@Serializable
+data class WithdrawalFeesResponse(
+    val success: Boolean,
+    val data: WithdrawalFees
+)
+
 /**
  * Withdrawal status enum
  */

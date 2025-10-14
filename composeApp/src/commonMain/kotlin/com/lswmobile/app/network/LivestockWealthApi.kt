@@ -607,6 +607,15 @@ class LivestockWealthApi(private val client: KtorClient) {
             throw e
         }
     }
+
+    /**
+     * Get withdrawal fees
+     */
+    suspend fun getWithdrawalFees(): WithdrawalFeesResponse {
+        return client.client.get {
+            url("/transactions/withdrawal-fees")
+        }.body()
+    }
     
     /**
      * Get wallet overview

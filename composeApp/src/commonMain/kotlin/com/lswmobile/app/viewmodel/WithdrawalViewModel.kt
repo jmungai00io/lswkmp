@@ -218,6 +218,7 @@ class WithdrawalViewModel(
      */
     fun updateWithdrawalType(type: WithdrawalType) {
         selectedWithdrawalType = type
+        updateFee()
     }
     
     // Update country code and automatically set the withdrawal type based on it
@@ -229,6 +230,7 @@ class WithdrawalViewModel(
         } else {
             WithdrawalType.INTERNATIONAL
         }
+        updateFee()
     }
     
     /**

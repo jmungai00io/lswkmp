@@ -114,24 +114,41 @@ class WithdrawalRepository(private val api: LivestockWealthApi) {
     suspend fun getWithdrawalFeesAndBanks(): Result<LocalBanksResponse> {
         return try {
             _feesAndBanksState.value = FeesAndBanksState.Loading
-            val response = api.getLocalBanks()
-            if (response.success) {
-                // Create a LocalBanksResponse with default fees
-                val localBanksResponse = LocalBanksResponse(
-                    success = true,
-                    banks = response.banks,
-                    withdrawalFees = WithdrawalFees(LOCAL = 50.0, ITL = 150.0) // Default fees
-                )
-                _feesAndBanksState.value = FeesAndBanksState.Success(localBanksResponse)
-                Result.success(localBanksResponse)
-            } else {
-                _feesAndBanksState.value = FeesAndBanksState.Error("Failed to fetch fees and banks")
-                Result.failure(Exception("Failed to fetch fees and banks"))
+
+            val banksResponse = api.getLocalBanks()
+            if (!banksResponse.success) {
+                _feesAndBanksState.value = FeesAndBanksState.Error("Failed to fetch banks")
+                return Result.failure(Exception("Failed to fetch banks"))
             }
+
+            val fees = runCatching {
+                api.getWithdrawalFees()
+            }.fold(
+                onSuccess = { response ->
+                    if (response.success) response.data else DEFAULT_WITHDRAWAL_FEES
+                },
+                onFailure = { DEFAULT_WITHDRAWAL_FEES }
+            )
+
+            val localBanksResponse = LocalBanksResponse(
+                success = true,
+                banks = banksResponse.banks,
+                withdrawalFees = fees
+            )
+
+            _feesAndBanksState.value = FeesAndBanksState.Success(localBanksResponse)
+            Result.success(localBanksResponse)
         } catch (e: Exception) {
             _feesAndBanksState.value = FeesAndBanksState.Error(e.message ?: "Unknown error")
             Result.failure(e)
         }
+    }
+
+    companion object {
+        private val DEFAULT_WITHDRAWAL_FEES = WithdrawalFees(
+            LOCAL = 49.0,
+            ITL = 149.0
+        )
     }
     
     /**
