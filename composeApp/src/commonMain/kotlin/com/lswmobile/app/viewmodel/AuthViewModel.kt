@@ -2,6 +2,7 @@ package com.lswmobile.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lswmobile.app.auth.OtpFlowType
 import com.lswmobile.app.data.repository.UserRepository
 import com.lswmobile.app.network.repository.AuthRepository
 import com.lswmobile.app.network.repository.LoginState
@@ -53,6 +54,7 @@ class AuthViewModel(
     fun register(
         email: String,
         password: String,
+        confirmPassword: String,
         phoneNumber: String,
         firstName: String,
         lastName: String
@@ -60,7 +62,15 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             try {
-                authRepository.register(email, password, phoneNumber, firstName, lastName, "email")
+                authRepository.register(
+                    email = email,
+                    password = password,
+                    confirmPassword = confirmPassword,
+                    phoneNumber = phoneNumber,
+                    firstName = firstName,
+                    lastName = lastName,
+                    mode = "email"
+                )
                 _uiState.value = AuthUiState.Success.Registration("Registration successful")
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(e))
@@ -71,12 +81,29 @@ class AuthViewModel(
     /**
      * Verify OTP code
      */
-    fun verifyOtp(email: String, otp: String, endpoint: String) {
+    fun verifyOtp(email: String, otp: String, flowType: OtpFlowType) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            authRepository.verifyOtp(email, otp, endpoint)
+            authRepository.verifyOtp(email, otp, flowType)
                 .onSuccess {
                     _uiState.value = AuthUiState.Success.OtpVerification("OTP verified successfully")
+                }
+                .onFailure {
+                    val exception = if (it is Exception) it else Exception(it.message, it)
+                    _uiState.value = AuthUiState.Error(ErrorUtils.extractErrorMessage(exception))
+                }
+        }
+    }
+
+    /**
+     * Resend OTP based on the flow type (login or registration)
+     */
+    fun resendOtp(flowType: OtpFlowType) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            authRepository.resendOtp(flowType)
+                .onSuccess {
+                    _uiState.value = AuthUiState.Success.Generic("OTP resend requested")
                 }
                 .onFailure {
                     val exception = if (it is Exception) it else Exception(it.message, it)

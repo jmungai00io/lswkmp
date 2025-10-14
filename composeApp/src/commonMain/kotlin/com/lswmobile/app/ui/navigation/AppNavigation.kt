@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.lswmobile.app.auth.OtpNavigationState
 import com.lswmobile.app.ui.screens.ForgotPasswordScreen
 import com.lswmobile.app.ui.screens.LoginScreen
 import com.lswmobile.app.ui.screens.OtpVerificationScreen
@@ -36,6 +37,7 @@ fun AppNavigation(
     var currentRoute by remember { mutableStateOf(startDestination) }
     var email by remember { mutableStateOf("") }
     var previousRoute by remember { mutableStateOf<AppRoute?>(null) }
+    var otpNavigationState by remember { mutableStateOf<OtpNavigationState?>(null) }
     
     // For debugging - print the current route whenever it changes
     LaunchedEffect(currentRoute) {
@@ -61,8 +63,9 @@ fun AppNavigation(
         AppRoute.LOGIN -> {
             LoginScreen(
                 authViewModel = authViewModel,
-                onNavigateToOtp = { userEmail ->
-                    email = userEmail
+                onNavigateToOtp = { state ->
+                    email = state.email
+                    otpNavigationState = state
                     previousRoute = AppRoute.LOGIN
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },
@@ -76,17 +79,24 @@ fun AppNavigation(
         }
         
         AppRoute.OTP_VERIFICATION -> {
-            OtpVerificationScreen(
-                email = email,
-                authViewModel = authViewModel,
-                onNavigateToHome = {
-                    currentRoute = AppRoute.MAIN
-                },
-                onGoBack = {
-                    val destination = previousRoute ?: AppRoute.LOGIN
-                    currentRoute = destination
-                }
-            )
+            val state = otpNavigationState
+            if (state != null) {
+                OtpVerificationScreen(
+                    otpState = state,
+                    authViewModel = authViewModel,
+                    onNavigateToHome = {
+                        otpNavigationState = null
+                        currentRoute = AppRoute.MAIN
+                    },
+                    onGoBack = {
+                        otpNavigationState = null
+                        val destination = previousRoute ?: AppRoute.LOGIN
+                        currentRoute = destination
+                    }
+                )
+            } else {
+                currentRoute = AppRoute.LOGIN
+            }
         }
         
         AppRoute.MAIN -> {
@@ -101,8 +111,9 @@ fun AppNavigation(
         AppRoute.REGISTER -> {
             RegisterScreen(
                 authViewModel = authViewModel,
-                onNavigateToOtp = { userEmail ->
-                    email = userEmail
+                onNavigateToOtp = { state ->
+                    email = state.email
+                    otpNavigationState = state
                     previousRoute = AppRoute.REGISTER
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },

@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.rounded.Star
+import com.lswmobile.app.auth.OtpFlowType
+import com.lswmobile.app.auth.OtpNavigationState
 import com.lswmobile.app.ui.components.LivestockButton
 import com.lswmobile.app.ui.components.ErrorToast
 import com.lswmobile.app.ui.components.LivestockPasswordField
@@ -41,7 +43,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
-    onNavigateToOtp: (String) -> Unit,
+    onNavigateToOtp: (OtpNavigationState) -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit
 ) {
@@ -71,7 +73,12 @@ fun LoginScreen(
                 is AuthUiState.Success.Login -> {
                     isLoading = false
                     // Navigate to OTP screen when login is successful
-                    onNavigateToOtp(email)
+                    onNavigateToOtp(
+                        OtpNavigationState(
+                            email = email,
+                            flowType = OtpFlowType.LOGIN
+                        )
+                    )
                 }
                 
                 // Handle other success types (shouldn't normally happen in login screen)

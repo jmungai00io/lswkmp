@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lswmobile.app.auth.OtpFlowType
+import com.lswmobile.app.auth.OtpNavigationState
 import com.lswmobile.app.ui.components.LivestockButton
 import com.lswmobile.app.ui.components.LivestockPasswordField
 import com.lswmobile.app.ui.components.LivestockTextField
@@ -35,7 +37,7 @@ import org.jetbrains.compose.resources.DrawableResource
 @Composable
 fun RegisterScreen(
     authViewModel: AuthViewModel,
-    onNavigateToOtp: (String) -> Unit,
+    onNavigateToOtp: (OtpNavigationState) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     var firstName by remember { mutableStateOf("") }
@@ -76,7 +78,12 @@ fun RegisterScreen(
                 is AuthUiState.Success -> {
                     isLoading = false
                     // Navigate to OTP screen when registration is successful
-                    onNavigateToOtp(email)
+                    onNavigateToOtp(
+                        OtpNavigationState(
+                            email = email,
+                            flowType = OtpFlowType.REGISTER
+                        )
+                    )
                 }
                 is AuthUiState.Error -> {
                     isLoading = false
@@ -251,6 +258,7 @@ fun RegisterScreen(
                         authViewModel.register(
                             email = email,
                             password = password,
+                            confirmPassword = confirmPassword,
                             phoneNumber = phoneNumber,
                             firstName = firstName,
                             lastName = lastName
@@ -271,6 +279,7 @@ fun RegisterScreen(
                     authViewModel.register(
                         email = email,
                         password = password,
+                        confirmPassword = confirmPassword,
                         phoneNumber = phoneNumber,
                         firstName = firstName,
                         lastName = lastName

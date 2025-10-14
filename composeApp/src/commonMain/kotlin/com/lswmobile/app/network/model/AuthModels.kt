@@ -47,7 +47,14 @@ data class PreRegisterBody(
 @Serializable
 data class RegisterBody(
     val email: String,
-    val otp: String
+    val phoneNumber: String,
+    val firstName: String,
+    val lastName: String,
+    val password: String,
+    val confirmPassword: String,
+    val otp: String,
+    val code: String,
+    val token: String
 )
 
 /**

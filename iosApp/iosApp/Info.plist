@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>AppEnvironment</key>
-	<string>production</string>
+	<string>staging</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>

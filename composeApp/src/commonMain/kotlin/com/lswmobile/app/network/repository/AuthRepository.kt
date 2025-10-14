@@ -1,6 +1,7 @@
 package com.lswmobile.app.network.repository
 
 import com.lswmobile.app.AppInitializer
+import com.lswmobile.app.auth.OtpFlowType
 import com.lswmobile.app.config.AppConfigFactory
 import com.lswmobile.app.network.LivestockWealthApi
 import com.lswmobile.app.network.RefreshableTokenProvider
@@ -21,6 +22,10 @@ class AuthRepository(
     private val api: LivestockWealthApi,
     private val tokenProvider: TokenProvider
 ) {
+    private companion object {
+        private const val LOGIN_VERIFY_ENDPOINT = "/auth"
+    }
+
     private fun isLikelyJwt(token: String): Boolean {
         // Basic sanity check: JWT typically has 3 dot-separated parts
         return token.count { it == '.' } == 2 && token.length > 20
@@ -65,6 +70,11 @@ class AuthRepository(
     private var tempEmail: String? = null
     private var tempPassword: String? = null
     private var tempToken: String? = null
+    private var tempConfirmPassword: String? = null
+    private var tempFirstName: String? = null
+    private var tempLastName: String? = null
+    private var tempPhoneNumber: String? = null
+    private var tempOtpMode: String? = null
     
     /**
      * Login user
@@ -76,6 +86,7 @@ class AuthRepository(
             // Store credentials for later use in OTP verification
             tempEmail = email
             tempPassword = password
+            tempOtpMode = mode
             
             val response = api.loginUser(LoginBody(email, password), mode)
 
@@ -100,6 +111,7 @@ class AuthRepository(
     suspend fun register(
         email: String,
         password: String,
+        confirmPassword: String,
         phoneNumber: String,
         firstName: String,
         lastName: String,
@@ -111,6 +123,11 @@ class AuthRepository(
             // Store credentials for later use in OTP verification
             tempEmail = email
             tempPassword = password
+            tempConfirmPassword = confirmPassword
+            tempFirstName = firstName
+            tempLastName = lastName
+            tempPhoneNumber = phoneNumber
+            tempOtpMode = mode
             
             val response = api.preRegister(
                 PreRegisterBody(
@@ -134,38 +151,110 @@ class AuthRepository(
     /**
      * Verify OTP
      */
-    suspend fun verifyOtp(email: String, otp: String, endpoint: String): Result<JsonObject> {
+    suspend fun verifyOtp(email: String, otp: String, flowType: OtpFlowType): Result<JsonObject> {
         return try {
             // Use stored credentials if available, otherwise use the provided email
             val emailToUse = tempEmail ?: email
-            
-            val response = api.sendOtp(endpoint, SendOTPBody(
-                email = emailToUse,
-                firstName = null,
-                lastName = null,
-                phoneNumber = null,
-                password = tempPassword,
-                token = tempToken,
-                code = otp,
-                otp = otp,
-                isWhatsApp = false,
-                bioToken = null
-            ))
-            
-            // Clear temporary credentials after successful verification
-            if (response.containsKey("token") && response["token"] != null) {
-                val finalToken = response["token"]?.jsonPrimitive?.content
-                tokenProvider.saveTokens(finalToken ?: "", "")
-                AppInitializer.reinitializeNetworkClients()
-                tempEmail = null
-                tempPassword = null
-                tempToken = null
+            val response = when (flowType) {
+                OtpFlowType.LOGIN -> api.sendOtp(
+                    LOGIN_VERIFY_ENDPOINT,
+                    SendOTPBody(
+                        email = emailToUse,
+                        password = tempPassword,
+                        token = tempToken,
+                        code = otp,
+                        otp = otp,
+                        isWhatsApp = false
+                    )
+                )
+
+                OtpFlowType.REGISTER -> {
+                    val registerBody = createRegisterBody(emailToUse, otp)
+                    api.registerUser(registerBody)
+                }
             }
-            
+
+            response["token"]?.jsonPrimitive?.content?.let { finalToken ->
+                if (finalToken.isNotBlank()) {
+                    tokenProvider.saveTokens(finalToken, "")
+                    AppInitializer.reinitializeNetworkClients()
+                }
+            }
+
+            clearTempAuthState()
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun resendOtp(flowType: OtpFlowType): Result<Unit> {
+        return try {
+            when (flowType) {
+                OtpFlowType.LOGIN -> {
+                    val email = tempEmail ?: throw IllegalStateException("Email missing for login OTP resend")
+                    val password = tempPassword ?: throw IllegalStateException("Password missing for login OTP resend")
+                    val mode = tempOtpMode ?: "sms"
+                    api.loginUser(LoginBody(email, password), mode)
+                }
+
+                OtpFlowType.REGISTER -> {
+                    val email = tempEmail ?: throw IllegalStateException("Email missing for registration OTP resend")
+                    val phone = tempPhoneNumber ?: throw IllegalStateException("Phone number missing for registration OTP resend")
+                    val first = tempFirstName ?: throw IllegalStateException("First name missing for registration OTP resend")
+                    val last = tempLastName ?: throw IllegalStateException("Last name missing for registration OTP resend")
+                    val mode = tempOtpMode ?: "email"
+                    api.preRegister(
+                        PreRegisterBody(
+                            email = email,
+                            phoneNumber = phone,
+                            firstName = first,
+                            lastName = last
+                        ),
+                        mode
+                    )
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun createRegisterBody(email: String, otp: String): RegisterBody {
+        val phone = tempPhoneNumber
+        val first = tempFirstName
+        val last = tempLastName
+        val password = tempPassword
+        val confirm = tempConfirmPassword
+        val token = tempToken
+
+        if (phone == null || first == null || last == null || password == null || confirm == null || token == null) {
+            throw IllegalStateException("Missing registration context for OTP verification")
+        }
+
+        return RegisterBody(
+            email = email,
+            phoneNumber = phone,
+            firstName = first,
+            lastName = last,
+            password = password,
+            confirmPassword = confirm,
+            otp = otp,
+            code = otp,
+            token = token
+        )
+    }
+
+    private fun clearTempAuthState() {
+        tempEmail = null
+        tempPassword = null
+        tempConfirmPassword = null
+        tempFirstName = null
+        tempLastName = null
+        tempPhoneNumber = null
+        tempToken = null
+        tempOtpMode = null
     }
     
     /**

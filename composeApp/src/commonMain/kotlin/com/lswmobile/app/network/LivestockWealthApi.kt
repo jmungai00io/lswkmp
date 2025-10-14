@@ -54,7 +54,7 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun registerUser(registerBody: RegisterBody): JsonObject {
         return client.client.post {
-            url("/auth/register")
+            url("/users")
             setBody(registerBody)
         }.body()
     }

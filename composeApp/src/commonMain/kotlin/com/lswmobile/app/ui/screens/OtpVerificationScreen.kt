@@ -20,8 +20,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.lswmobile.app.ui.theme.AppIcons
+import com.lswmobile.app.auth.OtpFlowType
+import com.lswmobile.app.auth.OtpNavigationState
 import com.lswmobile.app.ui.resources.ResourceHelper
+import com.lswmobile.app.ui.theme.AppIcons
 import com.lswmobile.app.viewmodel.AuthUiState
 import com.lswmobile.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -33,11 +35,14 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OtpVerificationScreen(
-    email: String,
+    otpState: OtpNavigationState,
     authViewModel: AuthViewModel,
     onNavigateToHome: () -> Unit,
     onGoBack: () -> Unit = {}
 ) {
+    val email = otpState.email
+    val flowType = otpState.flowType
+
     var otp by remember { mutableStateOf("") }
     var otpError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -167,7 +172,7 @@ fun OtpVerificationScreen(
                     onDone = {
                         focusManager.clearFocus()
                         if (validateOtp(otp) == null) {
-                            authViewModel.verifyOtp(email, otp, "/auth")
+                            authViewModel.verifyOtp(email, otp, flowType)
                         } else {
                             otpError = validateOtp(otp)
                         }
@@ -185,7 +190,7 @@ fun OtpVerificationScreen(
                 onClick = {
                     focusManager.clearFocus()
                     if (validateOtp(otp) == null) {
-                        authViewModel.verifyOtp(email, otp, "/auth")
+                        authViewModel.verifyOtp(email, otp, flowType)
                     } else {
                         otpError = validateOtp(otp)
                     }
@@ -221,7 +226,7 @@ fun OtpVerificationScreen(
                 TextButton(
                     onClick = { 
                         if (resendEnabled) {
-                            authViewModel.login(email, "", "sms")
+                            authViewModel.resendOtp(flowType)
                             resendEnabled = false
                             // In a real app, you would start a timer here to re-enable after a cooldown period
                         }
