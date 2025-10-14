@@ -113,7 +113,12 @@ class AuthRepository(
             tempPassword = password
             
             val response = api.preRegister(
-                PreRegisterBody(email, password, phoneNumber, firstName, lastName),
+                PreRegisterBody(
+                    email = email,
+                    phoneNumber = phoneNumber,
+                    firstName = firstName,
+                    lastName = lastName
+                ),
                 mode
             )
             if (response.containsKey("token")) {

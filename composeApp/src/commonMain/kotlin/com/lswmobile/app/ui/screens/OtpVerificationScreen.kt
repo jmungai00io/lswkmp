@@ -36,7 +36,7 @@ fun OtpVerificationScreen(
     email: String,
     authViewModel: AuthViewModel,
     onNavigateToHome: () -> Unit,
-    onNavigateToLogin: () -> Unit = {}
+    onGoBack: () -> Unit = {}
 ) {
     var otp by remember { mutableStateOf("") }
     var otpError by remember { mutableStateOf<String?>(null) }
@@ -83,14 +83,14 @@ fun OtpVerificationScreen(
     ) {
         // Back button in top-left corner
         IconButton(
-            onClick = onNavigateToLogin,
+            onClick = onGoBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(8.dp)
         ) {
             Icon(
                 imageVector = AppIcons.Filled.Back,
-                contentDescription = "Back to Login",
+                contentDescription = "Go Back",
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -236,7 +236,7 @@ fun OtpVerificationScreen(
             
             // Back to login option
             TextButton(
-                onClick = onNavigateToLogin,
+                onClick = onGoBack,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
@@ -245,7 +245,7 @@ fun OtpVerificationScreen(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Back to Login")
+                Text("Go Back")
             }
         }
         }

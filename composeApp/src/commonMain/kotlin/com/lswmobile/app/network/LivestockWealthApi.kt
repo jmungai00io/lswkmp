@@ -26,7 +26,6 @@ class LivestockWealthApi(private val client: KtorClient) {
         val response = client.client.post {
             url("/auth/request-otp/$mode")
             setBody(loginBody)
-            parameter("mode", mode)
         }
         if (AppConfigFactory.get().isDevelopment) {
             runCatching {
@@ -45,9 +44,8 @@ class LivestockWealthApi(private val client: KtorClient) {
      */
     suspend fun preRegister(preRegisterBody: PreRegisterBody, mode: String): JsonObject {
         return client.client.post {
-            url("/auth/pre-register")
+            url("/auth/request-otp/$mode")
             setBody(preRegisterBody)
-            parameter("mode", mode)
         }.body()
     }
     

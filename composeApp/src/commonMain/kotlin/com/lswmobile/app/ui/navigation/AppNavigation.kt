@@ -35,6 +35,7 @@ fun AppNavigation(
 ) {
     var currentRoute by remember { mutableStateOf(startDestination) }
     var email by remember { mutableStateOf("") }
+    var previousRoute by remember { mutableStateOf<AppRoute?>(null) }
     
     // For debugging - print the current route whenever it changes
     LaunchedEffect(currentRoute) {
@@ -62,6 +63,7 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateToOtp = { userEmail ->
                     email = userEmail
+                    previousRoute = AppRoute.LOGIN
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },
                 onNavigateToRegister = {
@@ -79,6 +81,10 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateToHome = {
                     currentRoute = AppRoute.MAIN
+                },
+                onGoBack = {
+                    val destination = previousRoute ?: AppRoute.LOGIN
+                    currentRoute = destination
                 }
             )
         }
@@ -97,6 +103,7 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onNavigateToOtp = { userEmail ->
                     email = userEmail
+                    previousRoute = AppRoute.REGISTER
                     currentRoute = AppRoute.OTP_VERIFICATION
                 },
                 onNavigateToLogin = {
