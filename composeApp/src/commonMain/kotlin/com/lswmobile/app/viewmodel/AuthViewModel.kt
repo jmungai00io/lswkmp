@@ -85,8 +85,13 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             authRepository.verifyOtp(email, otp, flowType)
-                .onSuccess {
-                    _uiState.value = AuthUiState.Success.OtpVerification("OTP verified successfully")
+                .onSuccess { response ->
+                    val message = if (flowType == OtpFlowType.REGISTER && response.containsKey("_id")) {
+                        "Account created successfully. Please check your email to confirm and then log in."
+                    } else {
+                        "OTP verified successfully"
+                    }
+                    _uiState.value = AuthUiState.Success.OtpVerification(message)
                 }
                 .onFailure {
                     val exception = if (it is Exception) it else Exception(it.message, it)

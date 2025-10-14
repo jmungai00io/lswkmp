@@ -6,12 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.lswmobile.app.auth.OtpFlowType
 import com.lswmobile.app.auth.OtpNavigationState
 import com.lswmobile.app.ui.screens.ForgotPasswordScreen
 import com.lswmobile.app.ui.screens.LoginScreen
 import com.lswmobile.app.ui.screens.OtpVerificationScreen
 import com.lswmobile.app.ui.screens.RegisterScreen
 import com.lswmobile.app.viewmodel.AuthUiState
+
 import com.lswmobile.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.flow.collectLatest
 
@@ -47,9 +49,6 @@ fun AppNavigation(
     LaunchedEffect(authViewModel) {
         authViewModel.uiState.collectLatest { state ->
             when (state) {
-                is AuthUiState.Success.OtpVerification -> {
-                    currentRoute = AppRoute.MAIN
-                }
                 is AuthUiState.Success.Logout -> {
                     currentRoute = AppRoute.LOGIN
                     authViewModel.resetUiState()
@@ -87,6 +86,10 @@ fun AppNavigation(
                     onNavigateToHome = {
                         otpNavigationState = null
                         currentRoute = AppRoute.MAIN
+                    },
+                    onRegistrationComplete = {
+                        otpNavigationState = null
+                        currentRoute = AppRoute.LOGIN
                     },
                     onGoBack = {
                         otpNavigationState = null

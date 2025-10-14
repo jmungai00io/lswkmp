@@ -38,6 +38,7 @@ fun OtpVerificationScreen(
     otpState: OtpNavigationState,
     authViewModel: AuthViewModel,
     onNavigateToHome: () -> Unit,
+    onRegistrationComplete: () -> Unit = {},
     onGoBack: () -> Unit = {}
 ) {
     val email = otpState.email
@@ -47,6 +48,8 @@ fun OtpVerificationScreen(
     var otpError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var resendEnabled by remember { mutableStateOf(true) }
+    var registrationSuccessMessage by remember { mutableStateOf<String?>(null) }
+    var showRegistrationDialog by remember { mutableStateOf(false) }
     
 
     // Collect UI state
@@ -58,8 +61,16 @@ fun OtpVerificationScreen(
                 // Only navigate to home on OTP verification success
                 is AuthUiState.Success.OtpVerification -> {
                     isLoading = false
-                    // Navigate to home screen when OTP verification is successful
-                    onNavigateToHome()
+                    if (flowType == OtpFlowType.LOGIN) {
+                        authViewModel.resetUiState()
+                        onNavigateToHome()
+                    } else {
+                        registrationSuccessMessage = state.message
+                        showRegistrationDialog = true
+                    }
+                }
+                is AuthUiState.Success.Generic -> {
+                    isLoading = false
                 }
                 
                 // Handle other success cases
@@ -254,6 +265,27 @@ fun OtpVerificationScreen(
             }
         }
         }
+    }
+
+    if (showRegistrationDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Registration successful") },
+            text = {
+                Text(registrationSuccessMessage ?: "Account created successfully. Please check your email to confirm and then log in.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRegistrationDialog = false
+                        authViewModel.resetUiState()
+                        onRegistrationComplete()
+                    }
+                ) {
+                    Text("Go to Login")
+                }
+            }
+        )
     }
 }
 
