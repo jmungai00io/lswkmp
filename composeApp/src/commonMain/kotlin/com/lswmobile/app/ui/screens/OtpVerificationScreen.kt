@@ -92,6 +92,11 @@ fun OtpVerificationScreen(
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     
+    val handleBack: () -> Unit = {
+        authViewModel.resetUiState()
+        onGoBack()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -99,7 +104,7 @@ fun OtpVerificationScreen(
     ) {
         // Back button in top-left corner
         IconButton(
-            onClick = onGoBack,
+            onClick = handleBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(8.dp)
@@ -252,7 +257,7 @@ fun OtpVerificationScreen(
             
             // Back to login option
             TextButton(
-                onClick = onGoBack,
+                onClick = handleBack,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
